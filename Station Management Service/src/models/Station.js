@@ -7,8 +7,8 @@ const stationSchema = new mongoose.Schema(
     // Địa chỉ chi tiết
     address: { type: String, trim: true },
     // Toạ độ địa lý
-    latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
+    latitude: { type: Number, required: true },
     // Loại cổng sạc: CCS, AC_Type2, v.v.
     connector_type: { type: String, trim: true },
     // Công suất kW
