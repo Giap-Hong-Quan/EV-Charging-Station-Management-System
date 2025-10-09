@@ -1,7 +1,8 @@
 import express from "express";
-import { createStation,getAllStation,getStationById,deleteStation,updateStation,updateStationStatus } from "../controllers/StationController.js"; 
+import { createStation,getAllStation,getStationById,deleteStation,updateStation,updateStationStatus,searchStations } from "../controllers/StationController.js"; 
 
 const router=express.Router();
+router.get('/',searchStations)
 
 router.post('/',createStation);
 router.get('/',getAllStation);

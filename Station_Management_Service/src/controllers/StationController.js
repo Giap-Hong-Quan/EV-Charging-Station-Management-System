@@ -122,3 +122,56 @@ export const updateStationStatus=async (req,res)=>{
         res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
     }
 }
+//search station 
+export const searchStations = async (req, res) => {
+  try {
+    const { keyword, connector_type, lat, lng, radius = 5000, status } = req.query;
+    const filter = {};
+    let stations;
+
+    // 1️⃣ Search theo từ khóa
+    if (keyword) {
+      const regex = new RegExp(keyword, "i");
+      filter.$or = [{ name: regex }, { address: regex }];
+    }
+
+    // 2️⃣ Lọc theo loại cổng (không phân biệt hoa thường)
+    if (connector_type) {
+      filter.connector_type = new RegExp(`^${connector_type}$`, "i");
+    }
+
+    // 3️⃣ Lọc trạng thái
+    if (status) filter.status = status;
+
+    // 4️⃣ Nếu có lat/lng thì tìm quanh vị trí
+    if (lat && lng) {
+      const latitude = parseFloat(lat);
+      const longitude = parseFloat(lng);
+      const maxDistance = parseInt(radius);
+
+      stations = await Station.aggregate([
+        {
+          $geoNear: {
+            near: { type: "Point", coordinates: [longitude, latitude] },
+            distanceField: "distance",
+            spherical: true,
+            maxDistance,
+            query: filter,
+          },
+        },
+        { $sort: { distance: 1 } },
+      ]);
+    } else {
+      // ❗ Chỉ lọc bình thường (khi không có toạ độ)
+      stations = await Station.find(filter);
+    }
+
+    res.status(200).json({
+      count: stations.length,
+      stations,
+    });
+  } catch (error) {
+    console.error("Lỗi tìm kiếm trạm:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
