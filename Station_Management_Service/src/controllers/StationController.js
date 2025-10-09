@@ -12,13 +12,44 @@ import Station from "../models/station.js";
 // get all station 
 export const getAllStation = async (req, res) => {
   try {
-    const result = await Station.find();
-    res.status(200).json({ count: result.length, station: result });
+    const result = await Station.aggregate([
+      {
+        $facet: {
+          stations: [{ $sort: { createdAt: -1 } }],
+          countAll: [
+            { $count: "count" }
+          ],
+          countOnline: [
+            { $match: { status: "online" } },
+            { $count: "count" }
+          ],
+          countOffline: [
+            { $match: { status: "offline" } },
+            { $count: "count" }
+          ],
+          countMaintenance: [
+            { $match: { status: "maintenance" } },
+            { $count: "count" }
+          ]
+        }
+      }
+    ]);
+
+    // ✅ result là mảng có 1 phần tử duy nhất (do $facet)
+    const data = result[0] || {};
+    res.status(200).json({
+      stations: data.stations || [],
+      count: data.countAll?.[0]?.count || 0,
+      countOnline: data.countOnline?.[0]?.count || 0,
+      countOffline: data.countOffline?.[0]?.count || 0,
+      countMaintenance: data.countMaintenance?.[0]?.count || 0,
+    });
   } catch (error) {
-    console.error("Lỗi lấy trạm", error);
+    console.error("Lỗi lấy danh sách trạm:", error);
     res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
+
 // get by ai station
 export const getStationById = async (req, res) => {
   try {
