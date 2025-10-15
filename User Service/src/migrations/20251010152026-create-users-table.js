@@ -25,6 +25,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      socialProvider: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       socialProviderId: {
         type: Sequelize.STRING,
         allowNull: true,
@@ -32,12 +36,12 @@ module.exports = {
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.fn("NOW"),
       },
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        defaultValue: Sequelize.fn("NOW"),
       },
     });
 

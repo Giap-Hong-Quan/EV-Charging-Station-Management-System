@@ -11,9 +11,23 @@ module.exports = (sequelize, DataTypes) => {
   }
   UserRole.init(
     {
-      user_id: DataTypes.INTEGER,
-      role: DataTypes.STRING,
-      permissions: DataTypes.JSONB,
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "users",
+          key: "id",
+        },
+      },
+      role: {
+        type: DataTypes.ENUM("admin", "driver", "customer"),
+        allowNull: false,
+        defaultValue: "driver",
+      },
+      permissions: {
+        type: DataTypes.JSON,
+        allowNull: true,
+      },
     },
     {
       sequelize,

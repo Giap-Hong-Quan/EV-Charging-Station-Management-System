@@ -25,20 +25,29 @@ module.exports = {
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.fn("NOW"),
       },
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.fn("NOW"),
       },
     });
 
-    // Thêm index cho expires_at để dễ dọn dẹp token hết hạn
     await queryInterface.addIndex("auth_sessions", ["expires_at"], {
       name: "auth_sessions_expires_at_index",
+    });
+
+    await queryInterface.addIndex("auth_sessions", ["user_id"], {
+      name: "auth_sessions_user_id_index",
     });
   },
 
   down: async (queryInterface, Sequelize) => {
+    await queryInterface.removeIndex(
+      "auth_sessions",
+      "auth_sessions_user_id_index"
+    );
     await queryInterface.removeIndex(
       "auth_sessions",
       "auth_sessions_expires_at_index"
