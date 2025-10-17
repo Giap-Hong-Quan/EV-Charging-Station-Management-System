@@ -6,24 +6,16 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('notification_templates', function (Blueprint $table) {
             $table->id();
-            $table->string('type', 50);
-            $table->string('subject', 255);
-            $table->text('body');
-            $table->json('variables');
+            $table->string('name')->unique(); // Thay type bằng name
+            $table->text('content'); // Thay body bằng content
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('notification_templates');
