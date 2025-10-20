@@ -1,0 +1,10 @@
+import express from "express";
+import upload from "../middlewares/upload.js";
+import { createMaintenanceLog,getAllMaintenance,getMaintenanceById,updateMaintenance,updateMaintenanceStatus } from "../controllers/MaintenanceController.js";
+const router=express.Router();
+router.post('/',upload.single("image"),createMaintenanceLog);
+router.get('/',getAllMaintenance);
+router.get('/:id',getMaintenanceById);
+router.put('/:id',upload.single("image"),updateMaintenance);
+router.put('/:id/status',updateMaintenanceStatus);
+export default router;
