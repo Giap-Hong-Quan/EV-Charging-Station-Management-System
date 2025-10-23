@@ -13,4 +13,11 @@ class NotificationLog extends Model
         'message',
         'type'
     ];
+
+    // THÊM QUAN HỆ VỚI TEMPLATE
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(NotificationTemplate::class, 'template_id');
+    }
+
 }

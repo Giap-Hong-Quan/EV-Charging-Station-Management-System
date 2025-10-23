@@ -10,10 +10,23 @@ class NotificationTemplateSeeder extends Seeder
     public function run(): void
     {
         DB::table('notification_templates')->insert([
-            'type' => 'charging_complete',
-            'subject' => 'Phiên sạc của bạn đã hoàn tất',
-            'body' => '<p>Xin chào {{user_name}},<br>Phiên sạc tại <b>{{station_name}}</b> đã hoàn tất.<br>Tổng điện tiêu thụ: {{kwh}} kWh.</p>',
-            'variables' => json_encode(['user_name', 'station_name', 'kwh']),
+            'name' => 'charging_complete',  // SỬA 'type' -> 'name'
+            'content' => '<p>Xin chào {{user_name}},<br>Phiên sạc tại <b>{{station_name}}</b> đã hoàn tất.<br>Tổng điện tiêu thụ: {{kwh}} kWh.</p>',  // SỬA 'body' -> 'content'
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Có thể thêm các template khác
+        DB::table('notification_templates')->insert([
+            'name' => 'charging_started',
+            'content' => '<p>Xin chào {{user_name}},<br>Phiên sạc tại <b>{{station_name}}</b> đã bắt đầu.</p>',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('notification_templates')->insert([
+            'name' => 'low_balance',
+            'content' => '<p>Xin chào {{user_name}},<br>Số dư tài khoản của bạn sắp hết. Vui lòng nạp thêm tiền.</p>',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
