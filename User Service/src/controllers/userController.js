@@ -45,9 +45,19 @@ let handleEditUser = async (req, res) => {
 
 let handleGoogleLogin = async (req, res) => {
   try {
-    let message = await userService.handleGoogleLogin(req.body);
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        errCode: 1,
+        errMessage: "Google token is required",
+      });
+    }
+
+    let message = await userService.handleGoogleLogin(token);
     return res.status(200).json(message);
   } catch (error) {
+    console.error("Google login controller error:", error);
     return res.status(500).json({
       errCode: 1,
       errMessage: "Error from server",
@@ -70,9 +80,19 @@ let handleLogout = async (req, res) => {
 
 let handleForgotPassword = async (req, res) => {
   try {
-    let message = await userService.handleForgotPassword(req.body.email);
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        errCode: 1,
+        errMessage: "Email is required",
+      });
+    }
+
+    let message = await userService.handleForgotPassword(email);
     return res.status(200).json(message);
   } catch (error) {
+    console.error("Forgot password error:", error);
     return res.status(500).json({
       errCode: 1,
       errMessage: "Error from server",
@@ -100,9 +120,38 @@ let handleUpdateProfile = async (req, res) => {
   try {
     let data = req.body;
     data.id = req.user.id;
+
+    // Validate: chỉ cho phép fullName và address
+    const allowedFields = ["fullName", "address"];
+    const receivedFields = Object.keys(data);
+
+    // Kiểm tra nếu có field không được phép
+    const invalidFields = receivedFields.filter(
+      (field) => !allowedFields.includes(field) && field !== "id"
+    );
+
+    if (invalidFields.length > 0) {
+      return res.status(400).json({
+        errCode: 1,
+        errMessage: `Only fullName and address can be updated. Invalid fields: ${invalidFields.join(
+          ", "
+        )}`,
+      });
+    }
+
+    // Kiểm tra required fields
+    if (!data.fullName && !data.address) {
+      return res.status(400).json({
+        errCode: 1,
+        errMessage:
+          "At least one field (fullName or address) is required to update",
+      });
+    }
+
     let message = await userService.updateUserData(data);
     return res.status(200).json(message);
   } catch (error) {
+    console.error("Update profile error:", error);
     return res.status(500).json({
       errCode: 1,
       errMessage: "Error from server",
@@ -144,12 +193,13 @@ let handleGetUserById = async (req, res) => {
 
 let handleResetPassword = async (req, res) => {
   try {
-    const { resetToken, newPassword, confirmPassword } = req.body;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.user.id; // Lấy từ token
 
-    if (!resetToken || !newPassword || !confirmPassword) {
+    if (!newPassword || !confirmPassword) {
       return res.status(400).json({
         errCode: 1,
-        errMessage: "Token, new password and confirm password are required",
+        errMessage: "New password and confirm password are required",
       });
     }
 
@@ -161,11 +211,13 @@ let handleResetPassword = async (req, res) => {
     }
 
     let message = await userService.handleResetPassword(
-      resetToken,
+      userId,
+      currentPassword, // Có thể null nếu reset từ forgot password
       newPassword
     );
     return res.status(200).json(message);
   } catch (error) {
+    console.error("Reset password error:", error);
     return res.status(500).json({
       errCode: 1,
       errMessage: "Error from server",

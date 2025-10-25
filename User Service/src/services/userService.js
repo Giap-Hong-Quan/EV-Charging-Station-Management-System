@@ -202,19 +202,8 @@ let updateUserData = (data) => {
       if (user) {
         user.fullName = data.fullName;
         user.address = data.address;
-        if (data.email) user.email = data.email;
-        await user.save();
 
-        // Update role nếu có
-        if (data.role) {
-          await db.UserRole.update(
-            { role: data.role, permissions: data.permissions || {} },
-            {
-              where: { user_id: data.id },
-              returning: true,
-            }
-          );
-        }
+        await user.save();
 
         resolve({
           errCode: 0,
@@ -233,27 +222,24 @@ let updateUserData = (data) => {
 };
 
 // Xử lý login google
-let handleGoogleLogin = (data) => {
+let handleGoogleLogin = (googleToken) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const { token, email, name } = data;
-
       console.log("=== GOOGLE LOGIN DEBUG ===");
-      console.log("Token received:", token ? "YES" : "NO");
-      console.log("Token length:", token ? token.length : 0);
-      console.log("Client ID from env:", process.env.GOOGLE_CLIENT_ID);
+      console.log("Token received:", googleToken ? "YES" : "NO");
+      console.log("Token length:", googleToken ? googleToken.length : 0);
 
       let payload;
 
-      if (token && token.startsWith("eyJ")) {
+      if (googleToken && googleToken.startsWith("eyJ")) {
         console.log(
           "DEVELOPMENT: Bypassing Google verification for real token"
         );
         try {
-          const decoded = jwt.decode(token);
+          const decoded = jwt.decode(googleToken);
           payload = {
-            email: decoded.email || email || `user_${Date.now()}@gmail.com`,
-            name: decoded.name || name || "Google User",
+            email: decoded.email || `user_${Date.now()}@gmail.com`,
+            name: decoded.name || "Google User",
             sub: decoded.sub || `google_id_${Date.now()}`,
             picture: decoded.picture || "",
           };
@@ -262,8 +248,8 @@ let handleGoogleLogin = (data) => {
         } catch (decodeError) {
           console.log(" Token decode failed, using fallback");
           payload = {
-            email: email || `fallback_${Date.now()}@gmail.com`,
-            name: name || "Fallback User",
+            email: `fallback_${Date.now()}@gmail.com`,
+            name: "Fallback User",
             sub: `fallback_${Date.now()}`,
             picture: "",
           };
@@ -271,8 +257,8 @@ let handleGoogleLogin = (data) => {
       } else {
         console.log("DEVELOPMENT: Using mock token");
         payload = {
-          email: email || `mock_${Date.now()}@gmail.com`,
-          name: name || "Mock User",
+          email: `mock_${Date.now()}@gmail.com`,
+          name: "Mock User",
           sub: `mock_${Date.now()}`,
           picture: "",
         };
@@ -310,7 +296,7 @@ let handleGoogleLogin = (data) => {
         console.log(" Existing user found:", user.id);
       }
 
-      // Tạo JWT token
+      // Tạo JWT token cho hệ thống
       const jwtToken = jwt.sign(
         {
           id: user.id,
@@ -401,23 +387,36 @@ let handleForgotPassword = (email) => {
         return;
       }
 
-      // Tạo reset token
-      const resetToken = jwt.sign(
-        { id: user.id, email: user.email },
-        JWT_SECRET,
-        { expiresIn: "1h" }
+      // Tạo mật khẩu tạm thời 8 ký tự
+      const temporaryPassword = generateRandomPassword(8);
+
+      // Mã hóa mật khẩu tạm thời
+      const hashedPassword = await hashUserPassword(temporaryPassword);
+
+      // Cập nhật mật khẩu tạm thời trong database
+      user.password = hashedPassword;
+      await user.save();
+
+      // TODO: Gửi email chứa mật khẩu tạm thời
+      // await sendTemporaryPasswordEmail(user.email, temporaryPassword);
+
+      console.log(`Temporary password for ${user.email}: ${temporaryPassword}`);
+      console.log(
+        `Please implement sendTemporaryPasswordEmail function to send this password to user`
       );
 
-      // Gửi vể email
-      // await sendResetEmail(user.email, resetToken);
-
-      // Lưu reset token vào database
-      console.log(`Reset token for ${user.email}: ${resetToken}`);
+      // Xóa tất cả sessions cũ để bảo mật
+      await db.AuthSession.destroy({
+        where: { user_id: user.id },
+      });
 
       resolve({
         errCode: 0,
-        message: "Reset password email sent",
-        resetToken: resetToken,
+        message:
+          "Temporary password has been sent to your email. Please login and change your password.",
+        // Chỉ trả về password trong response cho mục đích test
+        // Trong production nên remove field này
+        newPassword: temporaryPassword, // ONLY FOR TESTING - REMOVE IN PRODUCTION
       });
     } catch (e) {
       reject(e);
@@ -425,41 +424,53 @@ let handleForgotPassword = (email) => {
   });
 };
 
-let handleResetPassword = (token, newPassword) => {
+let handleResetPassword = (userId, currentPassword, newPassword) => {
   return new Promise(async (resolve, reject) => {
     try {
-      // Kiểm tra độ dài mật khẩu
+      // Kiểm tra độ dài mật khẩu mới
       if (!newPassword || newPassword.length < 6) {
         resolve({
           errCode: 1,
-          message: "Password must be at least 6 characters long",
+          message: "New password must be at least 6 characters long",
         });
         return;
       }
 
-      // Xác minh token đặt lại
-      const decoded = jwt.verify(token, JWT_SECRET);
-
       let user = await db.User.findOne({
-        where: { id: decoded.id, email: decoded.email },
+        where: { id: userId },
       });
 
       if (!user) {
         resolve({
           errCode: 2,
-          message: "Invalid or expired reset token",
+          message: "User not found",
         });
         return;
+      }
+
+      // Kiểm tra mật khẩu hiện tại
+      if (currentPassword) {
+        const isCurrentPasswordValid = await bcrypt.compareSync(
+          currentPassword,
+          user.password
+        );
+        if (!isCurrentPasswordValid) {
+          resolve({
+            errCode: 3,
+            message: "Current password is incorrect",
+          });
+          return;
+        }
       }
 
       // Mã hóa mật khẩu mới
       const hashedPassword = await hashUserPassword(newPassword);
 
-      // Cập nhật mật khẩu
+      // Cập nhật mật khẩu mới
       user.password = hashedPassword;
       await user.save();
 
-      // Xóa tất cả sessions cũ để bảo mật
+      // Xóa tất cả sessions cũ để bảo mật (trừ session hiện tại nếu cần)
       await db.AuthSession.destroy({
         where: { user_id: user.id },
       });
@@ -469,19 +480,7 @@ let handleResetPassword = (token, newPassword) => {
         message: "Password reset successful",
       });
     } catch (e) {
-      if (e.name === "TokenExpiredError") {
-        resolve({
-          errCode: 3,
-          message: "Reset token has expired",
-        });
-      } else if (e.name === "JsonWebTokenError") {
-        resolve({
-          errCode: 4,
-          message: "Invalid reset token",
-        });
-      } else {
-        reject(e);
-      }
+      reject(e);
     }
   });
 };

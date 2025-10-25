@@ -17,6 +17,7 @@ let initWebRoutes = (app) => {
   );
   router.post(
     "/api/v1/auth/reset-password",
+    verifyToken,
     userController.handleResetPassword
   );
 
