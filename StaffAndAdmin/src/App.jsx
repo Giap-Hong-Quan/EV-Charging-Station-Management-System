@@ -1,11 +1,7 @@
+import AppRouter from "./routers"
 
 function App() {
-  
-
-  return (
-    
-     <h1>hell</h1>
-  )
+  return null;
 }
 
 export default App

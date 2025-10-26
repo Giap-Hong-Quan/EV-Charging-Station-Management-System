@@ -1,4 +1,4 @@
-import Station from "../models/station.js";
+import Station from "../models/Station.js";
 // create trạm 
  export const createStation =  async (req,res)=>{
     try {
@@ -129,21 +129,21 @@ export const searchStations = async (req, res) => {
     const filter = {};
     let stations;
 
-    // 1️⃣ Search theo từ khóa
+    // 1️ Search theo từ khóa
     if (keyword) {
       const regex = new RegExp(keyword, "i");
       filter.$or = [{ name: regex }, { address: regex }];
     }
 
-    // 2️⃣ Lọc theo loại cổng (không phân biệt hoa thường)
+    // 2️ Lọc theo loại cổng (không phân biệt hoa thường)
     if (connector_type) {
       filter.connector_type = new RegExp(`^${connector_type}$`, "i");
     }
 
-    // 3️⃣ Lọc trạng thái
+    // 3️ Lọc trạng thái
     if (status) filter.status = status;
 
-    // 4️⃣ Nếu có lat/lng thì tìm quanh vị trí
+    // 4️ Nếu có lat/lng thì tìm quanh vị trí
     if (lat && lng) {
       const latitude = parseFloat(lat);
       const longitude = parseFloat(lng);
@@ -162,7 +162,7 @@ export const searchStations = async (req, res) => {
         { $sort: { distance: 1 } },
       ]);
     } else {
-      // ❗ Chỉ lọc bình thường (khi không có toạ độ)
+      // Chỉ lọc bình thường (khi không có toạ độ)
       stations = await Station.find(filter);
     }
 

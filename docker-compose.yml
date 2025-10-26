@@ -1,0 +1,15 @@
+services:
+  #Station_Management_Service
+  station_management_service:
+    build: ./Station_Management_Service
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./Station_Management_Service/.env
+  #Analytics_Reporting_Service
+  analytics_reporting_service:
+    build: ./Analytics_Reporting_Service
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./Analytics_Reporting_Service/.env
