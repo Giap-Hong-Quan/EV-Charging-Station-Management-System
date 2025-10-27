@@ -1,12 +1,12 @@
 "use strict";
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("user_roles", {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
+    await queryInterface.createTable("auth_sessions", {
+      token: {
+        type: Sequelize.STRING(255),
         primaryKey: true,
-        type: Sequelize.INTEGER,
+        allowNull: false,
       },
       user_id: {
         type: Sequelize.INTEGER,
@@ -18,14 +18,9 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      role: {
-        type: Sequelize.ENUM("admin", "driver", "customer"),
+      expires_at: {
+        type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: "driver",
-      },
-      permissions: {
-        type: Sequelize.JSON,
-        allowNull: true,
       },
       created_at: {
         allowNull: false,
@@ -39,13 +34,24 @@ module.exports = {
       },
     });
 
-    await queryInterface.addIndex("user_roles", ["user_id"], {
-      name: "user_roles_user_id_index",
+    await queryInterface.addIndex("auth_sessions", ["expires_at"], {
+      name: "auth_sessions_expires_at_index",
+    });
+
+    await queryInterface.addIndex("auth_sessions", ["user_id"], {
+      name: "auth_sessions_user_id_index",
     });
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeIndex("user_roles", "user_roles_user_id_index");
-    await queryInterface.dropTable("user_roles");
+    await queryInterface.removeIndex(
+      "auth_sessions",
+      "auth_sessions_expires_at_index"
+    );
+    await queryInterface.removeIndex(
+      "auth_sessions",
+      "auth_sessions_user_id_index"
+    );
+    await queryInterface.dropTable("auth_sessions");
   },
 };

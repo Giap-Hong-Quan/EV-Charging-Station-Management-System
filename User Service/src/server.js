@@ -44,15 +44,82 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
-// Kết nối database
+// Hàm seed user roles
+const seedUserRoles = async () => {
+  try {
+    console.log(" Seeding user roles...");
+
+    const roles = [
+      {
+        id: 1,
+        role_name: "admin",
+        description: "Quản trị viên hệ thống",
+        permissions: {
+          can_manage_users: true,
+          can_manage_stations: true,
+          can_view_reports: true,
+          can_manage_roles: true,
+        },
+      },
+      {
+        id: 2,
+        role_name: "staff",
+        description: "Nhân viên",
+        permissions: {
+          can_manage_stations: true,
+          can_view_reports: true,
+          can_manage_orders: true,
+        },
+      },
+      {
+        id: 3,
+        role_name: "driver",
+        description: "Tài xế",
+        permissions: {
+          can_view_orders: true,
+          can_update_status: true,
+          can_view_assigned_orders: true,
+        },
+      },
+    ];
+
+    for (const roleData of roles) {
+      const [role, created] = await db.UserRole.findOrCreate({
+        where: { id: roleData.id },
+        defaults: roleData,
+      });
+
+      if (created) {
+        console.log(` Created role: ${roleData.role_name}`);
+      } else {
+        console.log(` Role already exists: ${roleData.role_name}`);
+      }
+    }
+
+    console.log(" User roles seeding completed!");
+  } catch (error) {
+    console.error(" Error seeding user roles:", error);
+    throw error;
+  }
+};
+
+// Kết nối database và seed data
 const connectDB = async () => {
   try {
     await db.sequelize.authenticate();
-    console.log("Database connection has been established successfully.");
+    console.log(" Database connection has been established successfully.");
 
     // Sync database (trong development)
-    await db.sequelize.sync({ alter: true });
+    const syncOptions =
+      process.env.NODE_ENV === "production"
+        ? { alter: false }
+        : { alter: true };
+
+    await db.sequelize.sync(syncOptions);
     console.log(" Database synced successfully.");
+
+    // Seed user roles
+    await seedUserRoles();
   } catch (error) {
     console.error(" Unable to connect to the database:", error);
     process.exit(1);
@@ -67,16 +134,17 @@ let port = process.env.PORT || 8082;
 // Khởi động máy chủ với database connection
 const startServer = async () => {
   try {
-    // Kết nối database
+    // Kết nối database và seed data
     await connectDB();
 
     // Khởi động server
     app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
-      console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(` Server is running on port ${port}`);
+      console.log(` Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(` JWT Secret: ${process.env.JWT_SECRET ? "Set" : "Not set"}`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    console.error(" Failed to start server:", error);
     process.exit(1);
   }
 };
@@ -84,9 +152,19 @@ const startServer = async () => {
 // Khởi động server
 startServer();
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    database: db.sequelize.authenticate ? "Connected" : "Disconnected",
+    environment: process.env.NODE_ENV || "development",
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error(" Error stack:", err.stack);
   res.status(500).json({
     errCode: 1,
     errMessage: "Something went wrong!",
@@ -99,6 +177,8 @@ app.use((req, res) => {
   res.status(404).json({
     errCode: 1,
     errMessage: "Endpoint not found",
+    path: req.path,
+    method: req.method,
   });
 });
 

@@ -3,9 +3,9 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      User.hasMany(models.UserRole, {
-        foreignKey: "user_id",
-        as: "roles",
+      User.belongsTo(models.UserRole, {
+        foreignKey: "role_id",
+        as: "role",
       });
       User.hasMany(models.AuthSession, {
         foreignKey: "user_id",
@@ -15,8 +15,13 @@ module.exports = (sequelize, DataTypes) => {
   }
   User.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
       email: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(255),
         allowNull: false,
         unique: true,
         validate: {
@@ -24,31 +29,39 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       password: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(255),
         allowNull: true,
       },
-      fullName: {
-        type: DataTypes.STRING,
+      full_name: {
+        type: DataTypes.STRING(255),
         allowNull: false,
+        field: "full_name",
       },
       address: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(255),
         allowNull: true,
       },
-      socialProvider: {
-        type: DataTypes.STRING,
-        allowNull: true,
+      role_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 3,
       },
-      socialProviderId: {
-        type: DataTypes.STRING,
+      social_provider: {
+        type: DataTypes.STRING(50),
         allowNull: true,
+        field: "social_provider",
+      },
+      social_provider_id: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        field: "social_provider_id",
       },
     },
     {
       sequelize,
       modelName: "User",
       tableName: "users",
-      underscored: false,
+      underscored: true,
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",

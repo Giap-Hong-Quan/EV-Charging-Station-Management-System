@@ -34,10 +34,24 @@ db.UserRole = require("./userRoles")(sequelize, Sequelize);
 db.AuthSession = require("./authSessions")(sequelize, Sequelize);
 
 // Define associations
-Object.keys(db).forEach((modelName) => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
-  }
+db.UserRole.hasMany(db.User, {
+  foreignKey: "role_id",
+  as: "users",
+});
+
+db.User.belongsTo(db.UserRole, {
+  foreignKey: "role_id",
+  as: "role",
+});
+
+db.User.hasMany(db.AuthSession, {
+  foreignKey: "user_id",
+  as: "sessions",
+});
+
+db.AuthSession.belongsTo(db.User, {
+  foreignKey: "user_id",
+  as: "user",
 });
 
 module.exports = db;

@@ -3,26 +3,27 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class UserRole extends Model {
     static associate(models) {
-      UserRole.belongsTo(models.User, {
-        foreignKey: "user_id",
-        as: "user",
+      UserRole.hasMany(models.User, {
+        foreignKey: "role_id",
+        as: "users",
       });
     }
   }
   UserRole.init(
     {
-      user_id: {
+      id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "users",
-          key: "id",
-        },
+        primaryKey: true,
+        autoIncrement: true,
       },
-      role: {
-        type: DataTypes.ENUM("admin", "driver", "customer"),
+      role_name: {
+        type: DataTypes.STRING(50),
         allowNull: false,
-        defaultValue: "driver",
+        unique: true,
+      },
+      description: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
       },
       permissions: {
         type: DataTypes.JSON,
@@ -35,6 +36,8 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "user_roles",
       underscored: true,
       timestamps: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
     }
   );
   return UserRole;

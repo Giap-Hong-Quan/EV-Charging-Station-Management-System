@@ -1,4 +1,3 @@
-// File: services/userService.js
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db from "../models/index";
@@ -56,30 +55,53 @@ let handleUserLogin = (email, password) => {
       let isExist = await checkUserEmail(email);
       if (isExist) {
         let user = await db.User.findOne({
-          attributes: ["id", "email", "password", "fullName", "address"],
+          attributes: [
+            "id",
+            "email",
+            "password",
+            "full_name",
+            "address",
+            "role_id",
+          ],
           where: { email: email },
-          raw: true,
+          include: [
+            {
+              model: db.UserRole,
+              as: "role",
+              attributes: ["role_name", "permissions"],
+            },
+          ],
+          raw: false,
         });
+
         if (user) {
           let check = await bcrypt.compareSync(password, user.password);
           if (check) {
-            // Lấy role từ bảng UserRole
-            const userRole = await db.UserRole.findOne({
-              where: { user_id: user.id },
-              order: [["created_at", "DESC"]],
-            });
-
-            const role = userRole ? userRole.role : "driver";
+            const role = user.role ? user.role.role_name : "driver";
 
             const token = jwt.sign(
-              { id: user.id, email: user.email, role: role },
+              {
+                id: user.id,
+                email: user.email,
+                role: role,
+                role_id: user.role_id,
+              },
               JWT_SECRET,
               { expiresIn: "1d" }
             );
+
             userData.errCode = 0;
             userData.errMessage = `OK`;
             delete user.password;
-            userData.user = user;
+            userData.user = {
+              id: user.id,
+              email: user.email,
+              fullName: user.full_name,
+              address: user.address,
+              role: role,
+              role_id: user.role_id,
+              permissions: user.role ? user.role.permissions : {},
+            };
             userData.token = token;
 
             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -120,26 +142,36 @@ let createNewUser = (data) => {
       } else {
         let hashPasswordFromBcrypt = await hashUserPassword(data.password);
 
+        let roleId = 3;
+
+        if (data.role_id) {
+          roleId = data.role_id;
+        } else if (data.role) {
+          const roleMap = {
+            admin: 1,
+            staff: 2,
+            driver: 3,
+          };
+          roleId = roleMap[data.role] || 3;
+        }
+
+        console.log("Creating user with role_id:", roleId); // Debug
+
         // Tạo user mới
         const newUser = await db.User.create({
           email: data.email,
           password: hashPasswordFromBcrypt,
-          fullName: data.fullName,
+          full_name: data.fullName,
           address: data.address,
-          socialProvider: data.socialProvider,
-          socialProviderId: data.socialProviderId,
-        });
-
-        // Tạo role cho user
-        await db.UserRole.create({
-          user_id: newUser.id,
-          role: data.role || "driver",
-          permissions: data.permissions || {},
+          role_id: roleId,
+          social_provider: data.socialProvider,
+          social_provider_id: data.socialProviderId,
         });
 
         resolve({
           errCode: 0,
           message: "OK",
+          user: newUser,
         });
       }
     } catch (e) {
@@ -162,11 +194,7 @@ let deleteUser = (userId) => {
         });
       }
 
-      // Xóa các bản ghi liên quan
-      await db.UserRole.destroy({
-        where: { user_id: userId },
-      });
-
+      // CHỈ xóa auth sessions
       await db.AuthSession.destroy({
         where: { user_id: userId },
       });
@@ -200,7 +228,7 @@ let updateUserData = (data) => {
         raw: false,
       });
       if (user) {
-        user.fullName = data.fullName;
+        user.full_name = data.fullName;
         user.address = data.address;
 
         await user.save();
@@ -269,39 +297,68 @@ let handleGoogleLogin = (googleToken) => {
       // Kiểm tra user tồn tại
       let user = await db.User.findOne({
         where: { email: payload.email },
+        include: [
+          {
+            model: db.UserRole,
+            as: "role",
+            attributes: ["id", "role_name", "permissions"],
+          },
+        ],
       });
 
       let isNewUser = false;
 
       if (!user) {
-        // Tạo user mới
+        // Tạo user mới với role mặc định là driver (role_id = 3)
         isNewUser = true;
         user = await db.User.create({
           email: payload.email,
-          fullName: payload.name,
-          socialProvider: "google",
-          socialProviderId: payload.sub,
+          full_name: payload.name,
+          social_provider: "google",
+          social_provider_id: payload.sub,
           password: "",
+          role_id: 3, // Default role: driver
         });
 
-        // Tạo default role
-        await db.UserRole.create({
-          user_id: user.id,
-          role: "driver",
-          permissions: null,
+        // Load thông tin role sau khi tạo user
+        user = await db.User.findOne({
+          where: { id: user.id },
+          include: [
+            {
+              model: db.UserRole,
+              as: "role",
+              attributes: ["id", "role_name", "permissions"],
+            },
+          ],
         });
 
-        console.log(" New user created:", user.id);
+        console.log(
+          " New user created:",
+          user.id,
+          "with role_id:",
+          user.role_id
+        );
       } else {
-        console.log(" Existing user found:", user.id);
+        console.log(
+          " Existing user found:",
+          user.id,
+          "with role_id:",
+          user.role_id
+        );
       }
+
+      // Lấy thông tin role name từ relationship
+      const roleName = user.role ? user.role.role_name : "driver";
+      const roleId = user.role_id || 3;
+      const permissions = user.role ? user.role.permissions : {};
 
       // Tạo JWT token cho hệ thống
       const jwtToken = jwt.sign(
         {
           id: user.id,
           email: user.email,
-          role: "driver",
+          role: roleName,
+          role_id: roleId,
         },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
@@ -316,6 +373,7 @@ let handleGoogleLogin = (googleToken) => {
       });
 
       console.log(" Google OAuth successful for user:", user.email);
+      console.log(" User role:", roleName, "Role ID:", roleId);
 
       resolve({
         errCode: 0,
@@ -326,8 +384,10 @@ let handleGoogleLogin = (googleToken) => {
         user: {
           id: user.id,
           email: user.email,
-          fullName: user.fullName,
-          role: "driver",
+          fullName: user.full_name, // Map full_name -> fullName trong response
+          role: roleName,
+          role_id: roleId,
+          permissions: permissions,
           isNewUser: isNewUser,
         },
       });
@@ -397,7 +457,7 @@ let handleForgotPassword = (email) => {
       user.password = hashedPassword;
       await user.save();
 
-      // TODO: Gửi email chứa mật khẩu tạm thời
+      //Gửi email chứa mật khẩu tạm thời
       // await sendTemporaryPasswordEmail(user.email, temporaryPassword);
 
       console.log(`Temporary password for ${user.email}: ${temporaryPassword}`);
@@ -414,9 +474,8 @@ let handleForgotPassword = (email) => {
         errCode: 0,
         message:
           "Temporary password has been sent to your email. Please login and change your password.",
-        // Chỉ trả về password trong response cho mục đích test
-        // Trong production nên remove field này
-        newPassword: temporaryPassword, // ONLY FOR TESTING - REMOVE IN PRODUCTION
+
+        newPassword: temporaryPassword,
       });
     } catch (e) {
       reject(e);
@@ -495,8 +554,8 @@ let getUserProfile = (userId) => {
         include: [
           {
             model: db.UserRole,
-            as: "roles",
-            attributes: ["role", "permissions"],
+            as: "role",
+            attributes: ["role_name", "permissions"],
           },
         ],
       });
@@ -521,8 +580,8 @@ let getAllUsers = () => {
         include: [
           {
             model: db.UserRole,
-            as: "roles",
-            attributes: ["role", "permissions"],
+            as: "role",
+            attributes: ["role_name", "permissions"],
           },
         ],
         order: [["created_at", "DESC"]],
@@ -544,8 +603,8 @@ let getUserById = (userId) => {
         include: [
           {
             model: db.UserRole,
-            as: "roles",
-            attributes: ["role", "permissions"],
+            as: "role",
+            attributes: ["role_name", "permissions"],
           },
         ],
       });
