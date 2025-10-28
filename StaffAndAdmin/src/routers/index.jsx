@@ -1,24 +1,42 @@
 import { createBrowserRouter } from "react-router-dom";
-import { dashboardRoutes } from "./dashboard";
-import Layout from "../layout/Layout";
 import Login from "../pages/Auth/Login";
 import RequireAuth from "../lib/RequireAuth";
+import Unauthorized from "@/pages/Unauthorized";
+import RoleRedirect from "@/lib/RoleRedirect";
+import { staffRoutes } from "./StaffRoutes";
+import { adminRoutes } from "./AdminRoutes";
+import LayoutStaff from "@/layouts/LayoutStaff";
+import LayoutAdmin from "@/layouts/LayoutAdmin";
+import NotFound from "@/pages/NotFound";
 
 const AppRouter = createBrowserRouter([
+    {path: "/login",element: <Login />},
+    { path: "/unauthorized", element: <Unauthorized /> },
+    { path: "/", element: <RoleRedirect /> },
+  
     {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/",
+    path: "/staff",
     element: (
-    // <RequireAuth>
-    <Layout/>
-    // </RequireAuth>
+      <RequireAuth allowedRoles={[2]}>
+        <LayoutStaff />
+      </RequireAuth>
     ),
-    children:[
-        ...dashboardRoutes,
-    ]
-  }
+    children: staffRoutes,
+    },
+    {
+    path: "/admin",
+    element: (
+      <RequireAuth allowedRoles={[1]}>
+        <LayoutAdmin />
+      </RequireAuth>
+    ),
+    children: adminRoutes,
+  },
+
+
+
+
+  //  Đây là 404 Not Found
+  {path: "*",element: <NotFound />},
 ])
 export default AppRouter

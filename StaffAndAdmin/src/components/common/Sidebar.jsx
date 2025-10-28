@@ -6,13 +6,13 @@ import { AlertCircle, Badge, BarChart3, BatteryCharging, Calendar, ChevronUp, Ho
 
 const Sidebar = ({isSidebarOpen}) => {
   return (
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-0'} bg-gradient-to-b from-emerald-600 to-emerald-700 ml-3.5  text-white transition-all duration-300 overflow-hidden flex flex-col shadow-xl`}>
+      <aside className={`${isSidebarOpen ? 'w-64' : 'w-0'} bg-gradient-to-b from-emerald-600 to-emerald-700  text-white transition-all duration-300 overflow-hidden flex flex-col shadow-xl`}>
         
         {/* Logo Section */}
         <div className="p-6 border-b border-emerald-500/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md">
-              <Zap className="w-6 h-6 text-emerald-600" />
+              <Zap className="w-6 h-6 text-emerald-600 " />
             </div>
             <div>
               <h1 className="text-xl font-bold">EV Charging</h1>
@@ -24,7 +24,7 @@ const Sidebar = ({isSidebarOpen}) => {
         {/* Location Info */}
         <div className="px-6 py-4 bg-emerald-700/50 border-b border-emerald-600/50">
           <div className="flex items-start gap-2">
-            <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
+            <MapPin className="w-4 h-4 mt-1 flex-shrink-0 " />
             <div>
               <p className="text-sm font-semibold">VinFast Landmark 81</p>
               <p className="text-xs text-emerald-200">720A Điện Biên Phủ, Quận 1</p>
