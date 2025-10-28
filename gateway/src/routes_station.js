@@ -2,7 +2,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import { config } from "./config.js";
 
 export function setupRoutes_station(app) {
-  // Booking Service Routes
+  // Station Service Routes
   app.use(
     "/gateway/api/v1/stations",
     createProxyMiddleware({

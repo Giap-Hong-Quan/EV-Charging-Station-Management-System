@@ -8,4 +8,10 @@ class StationRepositoryImpl implements StationRepository {
 
   @override
   Future<List<Station>> getStations() => remote.fetchStations();
+
+  @override
+  Future<List<Station>> searchStation(String keyword,String connectorType) => remote.searchStation(keyword,connectorType);
+
+  @override
+  Future<Station> getStationById(String stationId) => remote.getStationById(stationId);
 }

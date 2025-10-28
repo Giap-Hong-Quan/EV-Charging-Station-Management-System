@@ -1,6 +1,7 @@
-import 'package:ev_point/src/features/booking/presentations/booking_home_screen.dart';
+import 'package:ev_point/src/features/map/presentation/pages/map_screen.dart';
 import 'package:flutter/material.dart';
 
+import '../../booking/presentations/pages/booking_screen.dart';
 import '../widgets/on_boarding_data.dart';
 import '../widgets/on_boarding_page.dart';
 
@@ -44,7 +45,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const BookingHomeScreen()),
+        MaterialPageRoute(builder: (_) => const MapScreen()),
       );
     }
   }

@@ -1,6 +1,5 @@
 import 'package:ev_point/src/app.dart';
 import 'package:ev_point/src/core/di/injection_container.dart';
-import 'package:ev_point/src/features/map/presentation/pages/map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 

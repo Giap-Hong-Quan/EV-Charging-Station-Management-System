@@ -1,15 +1,15 @@
+import 'package:ev_point/src/features/map/presentation/cubit/station/station_cubit.dart';
 import 'package:flutter/material.dart';
 
 class SearchHeader extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onFilterTap;
-  final ValueChanged<String>? onChanged;
-
+  final StationCubit cubit;
   const SearchHeader({
     super.key,
     required this.controller,
     required this.onFilterTap,
-    this.onChanged,
+    required this.cubit,
   });
 
   @override
@@ -37,7 +37,9 @@ class SearchHeader extends StatelessWidget {
             Expanded(
               child: TextField(
                 controller: controller,
-                onChanged: onChanged,
+                onChanged: (value){
+                  cubit.search(value, '');
+                },
                 decoration: const InputDecoration(
                   hintText: "Search station",
                   border: InputBorder.none,

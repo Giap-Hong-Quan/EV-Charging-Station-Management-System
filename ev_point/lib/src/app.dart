@@ -13,9 +13,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) =>GetIt.I<StationCubit>()..load()),
+        BlocProvider(create: (_) => GetIt.I<StationCubit>()..load()),
       ],
-      child: MaterialApp(
+      child: const MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'EV Point',
         home: MapScreen(),
