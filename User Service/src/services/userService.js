@@ -166,6 +166,7 @@ let createNewUser = (data) => {
           role_id: roleId,
           social_provider: data.socialProvider,
           social_provider_id: data.socialProviderId,
+          avatar: data.avatar || null,
         });
 
         resolve({
@@ -214,33 +215,73 @@ let deleteUser = (userId) => {
 };
 
 // Xử lý cập nhật user
-let updateUserData = (data) => {
+// let updateUserData = (data) => {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       if (!data.id) {
+//         resolve({
+//           errCode: 2,
+//           errMessage: "Missing required parameters",
+//         });
+//       }
+//       let user = await db.User.findOne({
+//         where: { id: data.id },
+//         raw: false,
+//       });
+//       if (user) {
+//         user.full_name = data.fullName;
+//         user.address = data.address;
+//         user.avatar = data.avatar;
+
+//         await user.save();
+
+//         resolve({
+//           errCode: 0,
+//           message: `Update the user succeeds!`,
+//         });
+//       } else {
+//         resolve({
+//           errCode: 1,
+//           errMessage: `User's not found`,
+//         });
+//       }
+//     } catch (e) {
+//       reject(e);
+//     }
+//   });
+// };
+
+let updateUserData = (data, file) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (!data.id) {
-        resolve({
+        return resolve({
           errCode: 2,
           errMessage: "Missing required parameters",
         });
       }
+
       let user = await db.User.findOne({
         where: { id: data.id },
         raw: false,
       });
+
       if (user) {
-        user.full_name = data.fullName;
-        user.address = data.address;
+        if (data.fullName) user.full_name = data.fullName;
+        if (data.address) user.address = data.address;
+        if (file) user.avatar = file.path; // Cloudinary trả về URL tại file.path
 
         await user.save();
 
         resolve({
           errCode: 0,
-          message: `Update the user succeeds!`,
+          message: `Update user profile successfully!`,
+          avatar: user.avatar,
         });
       } else {
         resolve({
           errCode: 1,
-          errMessage: `User's not found`,
+          errMessage: `User not found`,
         });
       }
     } catch (e) {

@@ -3,12 +3,17 @@ const userController = require("../controllers/userController");
 const { verifyToken } = require("../middleware/authmiddleware");
 const { adminMiddleware } = require("../middleware/adminMiddleware");
 const db = require("../models/index");
+const upload = require("../middleware/upload");
 let router = express.Router();
 
 let initWebRoutes = (app) => {
   // Authentication APIs
   router.post("/api/v1/auth/login", userController.handleLogin);
-  router.post("/api/v1/auth/register", userController.handleCreateNewUser);
+  router.post(
+    "/api/v1/auth/register",
+    upload.single("avatar"),
+    userController.handleCreateNewUser
+  );
   router.post("/api/v1/auth/social/google", userController.handleGoogleLogin);
   router.post("/api/v1/auth/logout", userController.handleLogout);
   router.post(
@@ -23,9 +28,15 @@ let initWebRoutes = (app) => {
 
   // User Profile APIs
   router.get("/api/v1/profile", verifyToken, userController.handleGetProfile);
+  // router.put(
+  //   "/api/v1/profile",
+  //   verifyToken,
+  //   userController.handleUpdateProfile
+  // );
   router.put(
     "/api/v1/profile",
     verifyToken,
+    upload.single("avatar"),
     userController.handleUpdateProfile
   );
 

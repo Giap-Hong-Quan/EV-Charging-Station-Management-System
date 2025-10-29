@@ -20,9 +20,29 @@ let handleLogin = async (req, res) => {
   });
 };
 
+// let handleCreateNewUser = async (req, res) => {
+//   let message = await userService.createNewUser(req.body);
+//   return res.status(200).json(message);
+// };
+
 let handleCreateNewUser = async (req, res) => {
-  let message = await userService.createNewUser(req.body);
-  return res.status(200).json(message);
+  try {
+    // nếu có file được upload => Cloudinary trả về URL
+    const avatarUrl = req.file ? req.file.path : null;
+
+    const message = await userService.createNewUser({
+      ...req.body,
+      avatar: avatarUrl, // 👈 truyền thêm avatar
+    });
+
+    return res.status(200).json(message);
+  } catch (error) {
+    console.error("Create user error:", error);
+    return res.status(500).json({
+      errCode: 1,
+      errMessage: "Error from server",
+    });
+  }
 };
 
 let handleDeleteUser = async (req, res) => {
@@ -116,16 +136,59 @@ let handleGetProfile = async (req, res) => {
   }
 };
 
+// let handleUpdateProfile = async (req, res) => {
+//   try {
+//     let data = req.body;
+//     data.id = req.user.id;
+
+//     // Validate: chỉ cho phép fullName và address
+//     const allowedFields = ["fullName", "address", "avatar"];
+//     const receivedFields = Object.keys(data);
+
+//     // Kiểm tra nếu có field không được phép
+//     const invalidFields = receivedFields.filter(
+//       (field) => !allowedFields.includes(field) && field !== "id"
+//     );
+
+//     if (invalidFields.length > 0) {
+//       return res.status(400).json({
+//         errCode: 1,
+//         errMessage: `Only fullName and address can be updated. Invalid fields: ${invalidFields.join(
+//           ", "
+//         )}`,
+//       });
+//     }
+
+//     // Kiểm tra required fields
+//     if (!data.fullName && !data.address) {
+//       return res.status(400).json({
+//         errCode: 1,
+//         errMessage:
+//           "At least one field (fullName or address) is required to update",
+//       });
+//     }
+
+//     let message = await userService.updateUserData(data);
+//     return res.status(200).json(message);
+//   } catch (error) {
+//     console.error("Update profile error:", error);
+//     return res.status(500).json({
+//       errCode: 1,
+//       errMessage: "Error from server",
+//     });
+//   }
+// };
+
 let handleUpdateProfile = async (req, res) => {
   try {
     let data = req.body;
     data.id = req.user.id;
+    const file = req.file;
 
-    // Validate: chỉ cho phép fullName và address
-    const allowedFields = ["fullName", "address"];
+    // Cho phép fullName, address, avatar
+    const allowedFields = ["fullName", "address", "avatar"];
     const receivedFields = Object.keys(data);
 
-    // Kiểm tra nếu có field không được phép
     const invalidFields = receivedFields.filter(
       (field) => !allowedFields.includes(field) && field !== "id"
     );
@@ -133,22 +196,23 @@ let handleUpdateProfile = async (req, res) => {
     if (invalidFields.length > 0) {
       return res.status(400).json({
         errCode: 1,
-        errMessage: `Only fullName and address can be updated. Invalid fields: ${invalidFields.join(
+        errMessage: `Only fullName, address, and avatar can be updated. Invalid fields: ${invalidFields.join(
           ", "
         )}`,
       });
     }
 
-    // Kiểm tra required fields
-    if (!data.fullName && !data.address) {
+    // Kiểm tra ít nhất có một field được gửi
+    if (!data.fullName && !data.address && !file) {
       return res.status(400).json({
         errCode: 1,
         errMessage:
-          "At least one field (fullName or address) is required to update",
+          "At least one field (fullName, address, or avatar) is required to update",
       });
     }
 
-    let message = await userService.updateUserData(data);
+    // Gửi cả file xuống service
+    let message = await userService.updateUserData(data, file);
     return res.status(200).json(message);
   } catch (error) {
     console.error("Update profile error:", error);

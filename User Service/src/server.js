@@ -3,46 +3,37 @@ import bodyParser from "body-parser";
 import initWebRoutes from "./route/web.js";
 import db from "./models/index.js";
 import dotenv from "dotenv";
+import cors from "cors";
 
 dotenv.config();
 
 let app = express();
-
-// CORS middleware
-app.use(function (req, res, next) {
-  // Cho phép domain React truy cập API
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    process.env.URL_REACT || "http://localhost:3000"
-  );
-
-  // Cho phép các phương thức HTTP
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
-
-  // Cho phép các header
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-Requested-With,content-type,Authorization"
-  );
-
-  // Cho phép gửi cookie
-  res.setHeader("Access-Control-Allow-Credentials", true);
-
-  // Xử lý preflight request
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
 
 // Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+
+// CORS middleware
+app.use(
+  cors({
+    origin: process.env.URL_REACT || "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["X-Requested-With", "content-type", "Authorization"],
+    credentials: true,
+  })
+);
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    database: "Connected", // Sẽ cập nhật sau khi kết nối DB
+    environment: process.env.NODE_ENV || "development",
+  });
+});
 
 // Hàm seed user roles
 const seedUserRoles = async () => {
@@ -109,7 +100,7 @@ const connectDB = async () => {
     await db.sequelize.authenticate();
     console.log(" Database connection has been established successfully.");
 
-    // Sync database (trong development)
+    // Sync database
     const syncOptions =
       process.env.NODE_ENV === "production"
         ? { alter: false }
@@ -122,45 +113,12 @@ const connectDB = async () => {
     await seedUserRoles();
   } catch (error) {
     console.error(" Unable to connect to the database:", error);
-    process.exit(1);
+    throw error; // Ném lỗi để xử lý ở catch bên ngoài
   }
 };
 
 // Khởi tạo routes
 initWebRoutes(app);
-
-let port = process.env.PORT || 8082;
-
-// Khởi động máy chủ với database connection
-const startServer = async () => {
-  try {
-    // Kết nối database và seed data
-    await connectDB();
-
-    // Khởi động server
-    app.listen(port, () => {
-      console.log(` Server is running on port ${port}`);
-      console.log(` Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(` JWT Secret: ${process.env.JWT_SECRET ? "Set" : "Not set"}`);
-    });
-  } catch (error) {
-    console.error(" Failed to start server:", error);
-    process.exit(1);
-  }
-};
-
-// Khởi động server
-startServer();
-
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    database: db.sequelize.authenticate ? "Connected" : "Disconnected",
-    environment: process.env.NODE_ENV || "development",
-  });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -181,5 +139,31 @@ app.use((req, res) => {
     method: req.method,
   });
 });
+
+let port = process.env.PORT || 8082;
+
+// Khởi động máy chủ với database connection
+const startServer = async () => {
+  try {
+    // Kết nối database và seed data
+    await connectDB();
+
+    // Khởi động server
+    app.listen(port, () => {
+      console.log(` Server is running on port ${port}`);
+      console.log(` Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(` JWT Secret: ${process.env.JWT_SECRET ? "Set" : "Not set"}`);
+      console.log(
+        ` Frontend URL: ${process.env.URL_REACT || "http://localhost:3000"}`
+      );
+    });
+  } catch (error) {
+    console.error(" Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+// Khởi động server
+startServer();
 
 export default app;
