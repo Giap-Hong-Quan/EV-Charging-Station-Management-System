@@ -1,3 +1,4 @@
+import 'package:ev_point/src/features/charging_point/presentations/cubit/charging_point_cubit.dart';
 import 'package:ev_point/src/features/map/presentation/pages/map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,6 +15,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => GetIt.I<StationCubit>()..load()),
+        BlocProvider(create: (_) => GetIt.I<ChargingPointCubit>()),
       ],
       child: const MaterialApp(
         debugShowCheckedModeBanner: false,

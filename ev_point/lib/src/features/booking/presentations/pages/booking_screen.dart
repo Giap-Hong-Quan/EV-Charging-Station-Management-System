@@ -1,4 +1,5 @@
 // lib/src/features/booking/presentation/screens/booking_detail_screen.dart
+import 'package:ev_point/src/features/booking/presentations/widgets/charging_point_selection.dart';
 import 'package:flutter/material.dart';
 import '../../../map/domain/entities/station.dart';
 
@@ -161,6 +162,8 @@ class _BookingScreenState extends State<BookingScreen> {
             _buildDateTimeSection(),
             const SizedBox(height: 24),
             _buildWarningBanner(),
+            const SizedBox(height: 24),
+            ChargingPointSelection(stationId: '68e882d1a60ddbfc183ea7b6',),
             const SizedBox(height: 100), // Space for bottom button
           ],
         ),
