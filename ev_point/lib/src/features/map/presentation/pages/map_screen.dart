@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:ev_point/src/features/booking/presentations/widgets/charging_point_data.dart';
 import 'package:ev_point/src/features/map/domain/entities/station.dart';
 import 'package:ev_point/src/features/map/presentation/cubit/station/station_cubit.dart';
 import 'package:ev_point/src/features/map/presentation/cubit/station/station_state.dart';
@@ -610,7 +611,7 @@ class _MapScreenState extends State<MapScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => BookingScreen(stationId: st.id, station: st,),
+                          builder: (_) => BookingScreen(station: st),
                         ),
                       );
                     },

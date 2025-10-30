@@ -1,13 +1,13 @@
 // lib/src/features/booking/presentation/screens/booking_detail_screen.dart
 import 'package:ev_point/src/features/booking/presentations/widgets/charging_point_selection.dart';
 import 'package:flutter/material.dart';
+import '../../../charging_point/domain/entities/charging_point.dart';
 import '../../../map/domain/entities/station.dart';
 
 class BookingScreen extends StatefulWidget {
   final Station station;
-  final String stationId;
 
-  const BookingScreen({super.key, required this.station, required this.stationId});
+  const BookingScreen({super.key, required this.station});
 
   @override
   State<BookingScreen> createState() => _BookingScreenState();
@@ -18,6 +18,7 @@ class _BookingScreenState extends State<BookingScreen> {
   TimeOfDay selectedTime = const TimeOfDay(hour: 10, minute: 0);
   String selectedVehicle = 'Tesla Model 3';
   String selectedCharger = 'Tesla (Plug)';
+  ChargingPoint? _selectedPoint;
 
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
@@ -129,6 +130,9 @@ class _BookingScreenState extends State<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final String stationId = widget.station.id;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -163,7 +167,12 @@ class _BookingScreenState extends State<BookingScreen> {
             const SizedBox(height: 24),
             _buildWarningBanner(),
             const SizedBox(height: 24),
-            ChargingPointSelection(stationId: '68e882d1a60ddbfc183ea7b6',),
+            ChargingPointSelection(
+              stationId: stationId,
+              onChanged: (point) {
+                setState(() => _selectedPoint = point);
+              },
+            ),
             const SizedBox(height: 100), // Space for bottom button
           ],
         ),

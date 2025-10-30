@@ -7,11 +7,7 @@ import '../../../charging_point/presentations/cubit/charging_point_cubit.dart';
 import '../../../charging_point/presentations/cubit/charging_point_state.dart';
 
 class ChargingPointSelection extends StatefulWidget {
-  /// Nếu truyền stationId, widget sẽ tự gọi load theo station
-  /// Nếu bỏ trống, widget sẽ gọi loadAll
   final String? stationId;
-
-  /// Callback khi người dùng đã chọn 1 ChargingPoint
   final void Function(ChargingPoint?)? onChanged;
 
   const ChargingPointSelection({
@@ -30,8 +26,27 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
   @override
   void initState() {
     super.initState();
-    // Tự động load dữ liệu khi widget mount
+    _loadChargingPoints();
+  }
+
+  @override
+  void didUpdateWidget(ChargingPointSelection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload nếu stationId thay đổi
+    if (oldWidget.stationId != widget.stationId) {
+      setState(() {
+        _selectedIndex = null; // Reset selection
+      });
+      _loadChargingPoints();
+    }
+  }
+
+  void _loadChargingPoints() {
+    // Load ngay trong initState, không cần PostFrameCallback
     final cubit = context.read<ChargingPointCubit>();
+    
+    print('🔍 Loading charging points for stationId: ${widget.stationId}');
+    
     if (widget.stationId != null && widget.stationId!.isNotEmpty) {
       cubit.loadChargingPointByStationId(widget.stationId!);
     } else {
@@ -40,7 +55,16 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
   }
 
   void _showChargingPointSelector(List<ChargingPoint> chargingPoints) async {
-    if (chargingPoints.isEmpty) return;
+    if (chargingPoints.isEmpty) {
+      // Hiển thị thông báo không có charging point
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không có điểm sạc nào khả dụng'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
     final pickedIndex = await showModalBottomSheet<int>(
       context: context,
@@ -78,7 +102,7 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
                     return ListTile(
                       onTap: () => Navigator.of(context).pop(index),
                       contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       leading: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
@@ -92,12 +116,13 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
                         ),
                       ),
                       title: Text(
-                        '${p.pointNumber}' ?? 'Unnamed',
+                        'Point ${p.pointNumber}',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      // subtitle: Text(
-                      //   '${p.type ?? 'Unknown'} • ${p.powerKw ?? '-'} kW',
-                      // ),
+                      subtitle: Text(
+                        'Status: ${p.pointStatus}',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      ),
                       trailing: selected
                           ? const Icon(Icons.check_circle, color: Color(0xFF00C853))
                           : const Icon(Icons.chevron_right),
@@ -155,25 +180,24 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
               const SizedBox(height: 12),
               _ErrorBox(
                 message: state.message,
-                onRetry: () {
-                  final cubit = context.read<ChargingPointCubit>();
-                  if (widget.stationId != null && widget.stationId!.isNotEmpty) {
-                    cubit.loadChargingPointByStationId(widget.stationId!);
-                  } else {
-                    cubit.loadAllChargingPoint();
-                  }
-                },
+                onRetry: _loadChargingPoints,
               ),
             ],
           );
         }
 
-        // Loaded or Initial (coi như chưa có data)
+        // Loaded or Initial
         final List<ChargingPoint> chargingPoints =
-        state is ChargingPointLoaded ? state.chargingPoints : const [];
+            state is ChargingPointLoaded ? state.chargingPoints : const [];
 
-        final hasSelection =
-            _selectedIndex != null && _selectedIndex! >= 0 && _selectedIndex! < chargingPoints.length;
+        print('✅ Charging points loaded: ${chargingPoints.length}');
+        if (chargingPoints.isNotEmpty) {
+          print('📍 Points: ${chargingPoints.map((p) => 'Point ${p.pointNumber}').join(', ')}');
+        }
+
+        final hasSelection = _selectedIndex != null &&
+            _selectedIndex! >= 0 &&
+            _selectedIndex! < chargingPoints.length;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,26 +239,26 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
                     Expanded(
                       child: hasSelection
                           ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '{$chargingPoints[_selectedIndex!].pointNumber}' ?? 'Unnamed',
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          // Text(
-                          //   '${chargingPoints[_selectedIndex!].type ?? 'Unknown'} • ${chargingPoints[_selectedIndex!].powerKw ?? '-'} kW',
-                          //   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                          // ),
-                        ],
-                      )
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Point ${chargingPoints[_selectedIndex!].pointNumber}',
+                                  style: const TextStyle(
+                                      fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Status: ${chargingPoints[_selectedIndex!].pointStatus}',
+                                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                                ),
+                              ],
+                            )
                           : Text(
-                        chargingPoints.isEmpty
-                            ? 'Không có điểm sạc'
-                            : 'Chọn điểm sạc',
-                        style: TextStyle(fontSize: 15, color: Colors.grey[600]),
-                      ),
+                              chargingPoints.isEmpty
+                                  ? 'Không có điểm sạc'
+                                  : 'Chọn điểm sạc (${chargingPoints.length} khả dụng)',
+                              style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+                            ),
                     ),
                     Icon(Icons.chevron_right, color: Colors.grey[400]),
                   ],
@@ -259,6 +283,12 @@ class _LoadingSkeleton extends StatelessWidget {
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(12),
       ),
+      child: Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Colors.grey[400],
+        ),
+      ),
     );
   }
 }
@@ -266,7 +296,7 @@ class _LoadingSkeleton extends StatelessWidget {
 class _ErrorBox extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  const _ErrorBox({required this.message, required this.onRetry, super.key});
+  const _ErrorBox({required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +320,10 @@ class _ErrorBox extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          TextButton(onPressed: onRetry, child: const Text('Thử lại')),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('Thử lại'),
+          ),
         ],
       ),
     );
