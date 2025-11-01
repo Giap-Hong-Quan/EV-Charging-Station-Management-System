@@ -2,9 +2,38 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@radix-ui/react-dropdown-menu"
+import { useNavigate } from "react-router-dom"
+import { authService } from "@/services/authService"
+import { useState } from "react"
 import { AlertCircle, Badge, BarChart3, BatteryCharging, Calendar, ChevronUp, Home, LogOut, MapPin, Plus, Settings, User, Zap } from "lucide-react"
 
 const Sidebar = ({isSidebarOpen}) => {
+  const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(false)
+  // Lấy thông tin user từ localStorage
+  const userData = JSON.parse(localStorage.getItem('user') || '{}')
+
+  // Hàm xử lý logout
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true)
+      
+      // Gọi API logout từ authService
+      await authService.logout()
+      
+      // Chuyển hướng về trang login
+      navigate('/login')
+      
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Trong trường hợp có lỗi, vẫn xóa local storage và chuyển hướng
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
+      navigate('/login')
+    } finally {
+      setLoggingOut(false)
+    }
+  }
   return (
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-0'} bg-gradient-to-b from-emerald-600 to-emerald-700  text-white transition-all duration-300 overflow-hidden flex flex-col shadow-xl`}>
         
@@ -111,9 +140,13 @@ const Sidebar = ({isSidebarOpen}) => {
                 <span>Cài đặt</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem 
+                className="text-red-600" 
+                onClick={handleLogout}
+                disabled={loggingOut}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Đăng xuất</span>
+                <span>{loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
