@@ -1,0 +1,40 @@
+
+services:
+  # Station Management Service
+  station_management_service:
+    build: ./Station_Management_Service
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./Station_Management_Service/.env
+    depends_on:
+      - station_mongo
+
+  station_mongo:
+    image: mongo:6
+    container_name: station_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - station_data:/data/db
+  #  Analytics Reporting Service
+  analytics_reporting_service:
+    build: ./Analytics_Reporting_Service
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./Analytics_Reporting_Service/.env
+    depends_on:
+      - analytics_mongo
+
+  analytics_mongo:
+    image: mongo:6
+    container_name: analytics_mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - analytics_data:/data/db
+
+volumes:
+  station_data:
+  analytics_data:
