@@ -212,8 +212,13 @@ let handleUpdateProfile = async (req, res) => {
     }
 
     // Gửi cả file xuống service
-    let message = await userService.updateUserData(data, file);
-    return res.status(200).json(message);
+    let result = await userService.updateUserData(data, file);
+
+    return res.status(200).json({
+      errCode: result.errCode,
+      message: result.message,
+      user: result.user,
+    });
   } catch (error) {
     console.error("Update profile error:", error);
     return res.status(500).json({

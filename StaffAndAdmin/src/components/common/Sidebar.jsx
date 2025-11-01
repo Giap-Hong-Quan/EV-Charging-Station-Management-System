@@ -4,14 +4,44 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Separator } from "@radix-ui/react-dropdown-menu"
 import { useNavigate } from "react-router-dom"
 import { authService } from "@/services/authService"
-import { useState } from "react"
+import { userService } from "@/services/userService"
+import { useState, useEffect } from "react"
 import { AlertCircle, Badge, BarChart3, BatteryCharging, Calendar, ChevronUp, Home, LogOut, MapPin, Plus, Settings, User, Zap } from "lucide-react"
 
 const Sidebar = ({isSidebarOpen}) => {
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false)
-  // Lấy thông tin user từ localStorage
-  const userData = JSON.parse(localStorage.getItem('user') || '{}')
+  const [userData, setUserData] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}')
+    } catch {
+      return {}
+    }
+  })
+
+  // Thêm useEffect để theo dõi thay đổi localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      try {
+        const updatedUserData = JSON.parse(localStorage.getItem('user') || '{}')
+        setUserData(updatedUserData)
+      } catch (error) {
+        console.error('Error parsing user data:', error)
+      }
+    }
+
+    // Lắng nghe sự kiện storage
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Kiểm tra định kỳ (fallback)
+    const interval = setInterval(handleStorageChange, 1000)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
+
 
   // Hàm xử lý logout
   const handleLogout = async () => {
@@ -118,11 +148,16 @@ const Sidebar = ({isSidebarOpen}) => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-3 p-3 h-auto bg-emerald-800 hover:bg-emerald-700 rounded-lg text-white">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback className="bg-emerald-600">NA</AvatarFallback>
-                </Avatar>
+  <AvatarImage 
+    src={userData.avatar || userData.avatarUrl || "https://github.com/shadcn.png"} 
+    alt={userData.fullName}
+  />
+  <AvatarFallback className="bg-emerald-600">
+    {userData.fullName ? userData.fullName.charAt(0).toUpperCase() : 'NA'}
+  </AvatarFallback>
+</Avatar>
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-sm font-semibold truncate">Nguyễn Văn A</p>
+                  <p className="text-sm font-semibold truncate">{userData.fullName}</p>
                   <p className="text-xs text-emerald-200">Nhân viên trạm sạc</p>
                 </div>
                 <ChevronUp className="w-4 h-4" />
@@ -131,7 +166,9 @@ const Sidebar = ({isSidebarOpen}) => {
             <DropdownMenuContent className="w-56 mb-2 ml-4">
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={()=> navigate('/profile')}
+              >
                 <User className="mr-2 h-4 w-4" />
                 <span>Hồ sơ</span>
               </DropdownMenuItem>

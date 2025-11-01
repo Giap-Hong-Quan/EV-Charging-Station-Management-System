@@ -61,6 +61,7 @@ let handleUserLogin = (email, password) => {
             "password",
             "full_name",
             "address",
+            "avatar",
             "role_id",
           ],
           where: { email: email },
@@ -98,6 +99,7 @@ let handleUserLogin = (email, password) => {
               email: user.email,
               fullName: user.full_name,
               address: user.address,
+              avatar: user.avatar,
               role: role,
               role_id: user.role_id,
               permissions: user.role ? user.role.permissions : {},
@@ -261,22 +263,70 @@ let updateUserData = (data, file) => {
         });
       }
 
+      console.log(" Updating user data:", data);
+      console.log(
+        " File info:",
+        file
+          ? {
+              originalname: file.originalname,
+              mimetype: file.mimetype,
+              size: file.size,
+              path: file.path,
+              filename: file.filename,
+            }
+          : "No file"
+      );
+
       let user = await db.User.findOne({
         where: { id: data.id },
         raw: false,
+        include: [
+          {
+            model: db.UserRole,
+            as: "role",
+            attributes: ["role_name", "permissions"],
+          },
+        ],
       });
 
       if (user) {
+        // Lưu giá trị cũ để so sánh
+        const oldFullName = user.full_name;
+        const oldAddress = user.address;
+        const oldAvatar = user.avatar;
+
         if (data.fullName) user.full_name = data.fullName;
         if (data.address) user.address = data.address;
-        if (file) user.avatar = file.path; // Cloudinary trả về URL tại file.path
+
+        // Xử lý file từ Cloudinary
+        if (file) {
+          console.log(" Cloudinary file path:", file.path);
+          user.avatar = file.path; // Đây là URL từ Cloudinary
+        }
 
         await user.save();
+
+        // Log kết quả
+        console.log(" User updated successfully");
+        console.log(" Changes:", {
+          fullName: { from: oldFullName, to: user.full_name },
+          address: { from: oldAddress, to: user.address },
+          avatar: { from: oldAvatar, to: user.avatar },
+        });
 
         resolve({
           errCode: 0,
           message: `Update user profile successfully!`,
-          avatar: user.avatar,
+          user: {
+            id: user.id,
+            email: user.email,
+            fullName: user.full_name,
+            address: user.address,
+            avatar: user.avatar, // URL từ Cloudinary
+            role: user.role ? user.role.role_name : "staff",
+            role_id: user.role_id,
+            permissions: user.role ? user.role.permissions : {},
+          },
         });
       } else {
         resolve({
@@ -285,6 +335,7 @@ let updateUserData = (data, file) => {
         });
       }
     } catch (e) {
+      console.error(" Update user error:", e);
       reject(e);
     }
   });

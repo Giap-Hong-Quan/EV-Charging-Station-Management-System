@@ -24,4 +24,28 @@ export const userService = {
     const response = await api.delete(`/api/users/${id}`);
     return response.data;
   },
+
+  // Cập nhật profile
+  updateProfile: async (formData) => {
+    try {
+      const response = await api.put("/api/v1/profile", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Lấy thông tin profile
+  getProfile: async () => {
+    try {
+      const response = await api.get("/api/v1/profile");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
