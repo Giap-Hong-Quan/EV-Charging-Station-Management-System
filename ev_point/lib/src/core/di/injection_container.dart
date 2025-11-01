@@ -1,3 +1,8 @@
+import 'package:ev_point/src/features/booking/data/datasources/booking_datasource.dart';
+import 'package:ev_point/src/features/booking/data/repositories/booking_repository_impl.dart';
+import 'package:ev_point/src/features/booking/domain/repositories/ibooking_repository.dart';
+import 'package:ev_point/src/features/booking/domain/usecase/create_booking.dart';
+import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
 import 'package:ev_point/src/features/charging_point/data/datasources/charging_point_datasoruce.dart';
 import 'package:ev_point/src/features/charging_point/domain/repositories/charging_point_repository.dart';
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point.dart';
@@ -21,7 +26,8 @@ final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
   final baseUrl = dotenv.env['API_STATION_BASE_URL'];
-  final baseUrlChargingPoint = dotenv.env['API_CHARGING_POINT_BASE_URL'];
+  final baseUrlChargingPoint = dotenv.env['API_EV_POINT_BASE_URL'];
+  final baseUrlBooking = dotenv.env['API_BOOKING_BASE_URL'];
 
   sl.registerLazySingleton(() => http.Client());
 
@@ -35,16 +41,23 @@ Future<void> initDependencies() async {
       baseChargingPointUrl: baseUrlChargingPoint!,
     ),
   );
+  sl.registerLazySingleton<IBookingDatasource>(
+    () => BookingDatasourceImpl(
+      client: sl<http.Client>(),
+      baseBookingUrl: baseUrlBooking!,
+    ),
+  );
 
   //Repo
   sl.registerLazySingleton<StationRepository>(
     () => StationRepositoryImpl(sl()),
   );
-  //charging point
   sl.registerLazySingleton<IChargingPointRepository>(
     () => ChargingPointRepositoryImpl(sl()),
   );
-
+  sl.registerLazySingleton<IBookingRepository>(
+    () => BookingRepositoryImpl(sl()),
+  );
 
   //usecase
   sl.registerLazySingleton(() => GetStations(sl()));
@@ -54,6 +67,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetChargingPoint(sl()));
   sl.registerLazySingleton(() => GetChargingPointByStationId(sl()));
 
+  sl.registerLazySingleton(() => CreateBooking(sl()));
 
 
   //cubit
@@ -65,6 +79,10 @@ Future<void> initDependencies() async {
       getChargingPoint: sl<GetChargingPoint>(),
           getChargingPointByStationId: sl<GetChargingPointByStationId>(),
     ),
+  );
+
+  sl.registerFactory<BookingCubit>(
+    () => BookingCubit(createBookingUseCase: sl<CreateBooking>()),
   );
 
   //mapbox

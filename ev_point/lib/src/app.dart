@@ -1,3 +1,4 @@
+import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
 import 'package:ev_point/src/features/charging_point/presentations/cubit/charging_point_cubit.dart';
 import 'package:ev_point/src/features/map/presentation/pages/map_screen.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => GetIt.I<StationCubit>()..load()),
         BlocProvider(create: (_) => GetIt.I<ChargingPointCubit>()),
+      BlocProvider(create: (_) => GetIt.I<BookingCubit>()),
       ],
       child: const MaterialApp(
         debugShowCheckedModeBanner: false,

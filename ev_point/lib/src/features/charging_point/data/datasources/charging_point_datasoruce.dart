@@ -40,7 +40,7 @@ class ChargingPointRemoteDataSourceImpl
  @override
   Future<List<ChargingPointModel>> getChargingPointByStationId(String stationId,) async {
     // Try query param pattern first: /points?station_id=...
-    final url = Uri.parse('$baseChargingPointUrl/points?station_id=$stationId');
+    final url = Uri.parse('$baseChargingPointUrl/points/$stationId/points');
     final response = await client.get(url);
 
     if (response.statusCode == 200) {

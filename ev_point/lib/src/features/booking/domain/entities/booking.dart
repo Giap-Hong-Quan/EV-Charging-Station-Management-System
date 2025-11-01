@@ -1,7 +1,9 @@
 class Booking {
   final int id;
-  final int userId;
-  final int pointId;
+  final String userId;
+  final String stationId;
+
+  final String pointId;
   final DateTime scheduleStartTime;
   final DateTime scheduleEndTime;
   final String holdExpireAt;
@@ -11,6 +13,7 @@ class Booking {
   Booking({
     required this.id,
     required this.userId,
+    required this.stationId,
     required this.pointId,
     required this.scheduleStartTime,
     required this.scheduleEndTime,

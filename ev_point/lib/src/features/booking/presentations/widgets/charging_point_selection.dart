@@ -44,9 +44,7 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
   void _loadChargingPoints() {
     // Load ngay trong initState, không cần PostFrameCallback
     final cubit = context.read<ChargingPointCubit>();
-    
-    print('🔍 Loading charging points for stationId: ${widget.stationId}');
-    
+      
     if (widget.stationId != null && widget.stationId!.isNotEmpty) {
       cubit.loadChargingPointByStationId(widget.stationId!);
     } else {
@@ -116,11 +114,11 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
                         ),
                       ),
                       title: Text(
-                        'Point ${p.pointNumber}',
+                        'Điểm ${p.pointNumber}',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       subtitle: Text(
-                        'Status: ${p.pointStatus}',
+                        'Trạng thái: ${p.pointStatus}',
                         style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       ),
                       trailing: selected
@@ -157,7 +155,7 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
               Text(
-                'Charging Point',
+                'Chọn điểm sạc',
                 style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
@@ -173,7 +171,7 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Charging Point',
+                'Chọn điểm sạc',
                 style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
@@ -203,7 +201,7 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Charging Point',
+              'Chọn điểm sạc',
               style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
             ),

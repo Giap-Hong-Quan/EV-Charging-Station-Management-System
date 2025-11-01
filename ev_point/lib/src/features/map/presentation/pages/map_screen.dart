@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:ev_point/src/features/booking/presentations/widgets/charging_point_data.dart';
 import 'package:ev_point/src/features/map/domain/entities/station.dart';
 import 'package:ev_point/src/features/map/presentation/cubit/station/station_cubit.dart';
 import 'package:ev_point/src/features/map/presentation/cubit/station/station_state.dart';
@@ -592,21 +591,6 @@ class _MapScreenState extends State<MapScreen> {
                   elevation: 8,
                   clipBehavior: Clip.antiAlias,
                   child: SearchResult(
-                    // onStationTap: (st) async {
-                    //   await _map?.flyTo(
-                    //     CameraOptions(
-                    //       center: Point(
-                    //         coordinates: Position(st.longitude, st.latitude),
-                    //       ),
-                    //       zoom: 16.5,
-                    //       pitch: 0,
-                    //     ),
-                    //     MapAnimationOptions(duration: 600),
-                    //   );
-                    //   _showStationBottomSheet(st);
-                    //   _searchCtrl.clear();
-                    //   setState(() {});
-                    // },
                     onStationTap: (st){
                       Navigator.push(
                         context,

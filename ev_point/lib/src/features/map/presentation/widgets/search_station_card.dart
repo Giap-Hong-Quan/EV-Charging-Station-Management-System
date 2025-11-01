@@ -77,24 +77,6 @@ class StationCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-
-                // Distance & Available ports
-                // Row(
-                //   children: [
-                //     _buildInfoChip(
-                //       icon: Icons.near_me,
-                //       label: '${station.distance.toStringAsFixed(1)} km',
-                //     ),
-                //     const SizedBox(width: 8),
-                //     _buildInfoChip(
-                //       icon: Icons.ev_station,
-                //       label: '${station.availablePorts}/${station.totalPorts} available',
-                //       color: station.availablePorts > 0
-                //           ? const Color(0xFF00C853)
-                //           : Colors.red,
-                //     ),
-                //   ],
-                // ),
               ],
             ),
           ),
@@ -126,7 +108,7 @@ class StationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoChip({
+  Widget buildInfoChip({
     required IconData icon,
     required String label,
     Color? color,
