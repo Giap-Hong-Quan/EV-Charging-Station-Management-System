@@ -8,4 +8,7 @@ abstract class IBookingRepository {
     required DateTime scheduleStartTime,
     required DateTime scheduleEndTime,
   });
+  Future<List<Booking>> getUserBookings({
+    required String userId,
+  });
 }

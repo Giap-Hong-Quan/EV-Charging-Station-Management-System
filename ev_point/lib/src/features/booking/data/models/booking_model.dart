@@ -8,36 +8,38 @@ class BookingModel extends Booking {
     required super.pointId,
     required super.scheduleStartTime,
     required super.scheduleEndTime,
-    required super.holdExpireAt,
+    super.holdExpireAt,
     required super.status,
-    required super.cancelledAt,
+    super.cancelledAt,
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
     return BookingModel(
       id: json['id'],
-      userId: json['userId'],
-      stationId: json['stationId'],
-      pointId: json['pointId'],
-      scheduleStartTime: DateTime.parse(json['scheduleStartTime']),
-      scheduleEndTime: DateTime.parse(json['scheduleEndTime']),
-      holdExpireAt: json['holdExpireAt'],
+      userId: json['user_id'],  
+      stationId: json['station_id'],
+      pointId: json['point_id'],
+      scheduleStartTime: DateTime.parse(json['schedule_start_time']),
+      scheduleEndTime: DateTime.parse(json['schedule_end_time']),
+      holdExpireAt: json['hold_expires_at'],
       status: json['status'],
-      cancelledAt: DateTime.parse(json['cancelledAt']),
+      cancelledAt: json['cancelled_at'] != null 
+          ? DateTime.parse(json['cancelled_at']) 
+          : null,  
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'userId': userId,
-      'stationId': stationId,
-      'pointId': pointId,
-      'scheduleStartTime': scheduleStartTime.toIso8601String(),
-      'scheduleEndTime': scheduleEndTime.toIso8601String(),
-      'holdExpireAt': holdExpireAt,
+      'user_id': userId,  
+      'station_id': stationId,
+      'point_id': pointId,
+      'schedule_start_time': scheduleStartTime.toIso8601String(),
+      'schedule_end_time': scheduleEndTime.toIso8601String(),
+      'hold_expires_at': holdExpireAt,
       'status': status,
-      'cancelledAt': cancelledAt.toIso8601String(),
+      'cancelled_at': cancelledAt?.toIso8601String(),  
     };
   }
 }

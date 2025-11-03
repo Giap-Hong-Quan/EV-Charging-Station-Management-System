@@ -1,3 +1,4 @@
+import { get } from "mongoose";
 import Booking from "../models/booking.model.js";
 
 export const BookingService = {
@@ -97,5 +98,18 @@ export const BookingService = {
             return { status: 500, message: "Internal server error" };
         }
 
-    }
+    },
+
+    async getBookingsByUserId(user_id) {
+        try {
+            const bookings = await Booking.findAll({ where: { user_id } });
+            if (!bookings || bookings.length === 0) {
+                return { status: 404, message: "No bookings found for this user", data: [] };
+            }
+            return { status: 200, message: "Bookings fetched successfully", data: bookings };
+        } catch (error) {
+            console.error("Error fetching bookings by user ID:", error);
+            return { status: 500, message: "Internal server error" };
+        }
+    },
 };

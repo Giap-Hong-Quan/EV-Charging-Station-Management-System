@@ -19,3 +19,11 @@ export async function getBookingById(req, res) {
     const result = await BookingService.getBookingById(id);
     return res.status(result.status).json(result);
 }
+
+// Get bookings by User ID
+export async function getBookingsByUserId(req, res) {
+    const { user_id } = req.params;
+    const result = await BookingService.getBookingsByUserId(user_id);
+    return res.status(result.status).json(result);
+}   
+

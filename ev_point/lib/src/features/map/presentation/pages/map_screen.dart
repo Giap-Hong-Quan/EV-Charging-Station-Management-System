@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:ev_point/src/core/routes/app_routers.dart';
+import 'package:ev_point/src/core/routes/routers_path.dart';
 import 'package:ev_point/src/features/map/domain/entities/station.dart';
 import 'package:ev_point/src/features/map/presentation/cubit/station/station_cubit.dart';
 import 'package:ev_point/src/features/map/presentation/cubit/station/station_state.dart';
@@ -9,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:go_router/go_router.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../../../booking/presentations/pages/booking_screen.dart';
@@ -148,7 +151,7 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     final path =
-    isOnline ? 'assets/logo/pin_green.png' : 'assets/logo/pin_red.png';
+        isOnline ? 'assets/logo/pin_green.png' : 'assets/logo/pin_red.png';
     final byteData = await rootBundle.load(path);
     final bytes = byteData.buffer.asUint8List();
     _markerImageCache[key] = bytes;
@@ -237,95 +240,95 @@ class _MapScreenState extends State<MapScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       builder:
           (context) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _statusDot(station.status),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    station.name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${station.availablePoints}/${station.totalPoints} chỗ',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    station.address,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _chip('Chuẩn: ${station.connectorType}'),
-                _chip('Công suất: ${station.powerKw} kW'),
-                _chip('Giá: ${_formatVND(station.pricePerKwh)} / kWh'),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () async {
-                      await _map?.flyTo(
-                        CameraOptions(
-                          center: Point(
-                            coordinates: Position(
-                              station.longitude,
-                              station.latitude,
-                            ),
-                          ),
-                          zoom: 16.5,
-                          pitch: 0,
-                          bearing: 0,
+                Row(
+                  children: [
+                    _statusDot(station.status),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        station.name,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
                         ),
-                        MapAnimationOptions(duration: 600),
-                      );
-                      if (mounted) Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.map),
-                    label: const Text('Đi tới'),
-                  ),
+                      ),
+                    ),
+                    Text(
+                      '${station.availablePoints}/${station.totalPoints} chỗ',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.charging_station),
-                    label: const Text('Chi tiết / Đặt chỗ'),
-                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        station.address,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chip('Chuẩn: ${station.connectorType}'),
+                    _chip('Công suất: ${station.powerKw} kW'),
+                    _chip('Giá: ${_formatVND(station.pricePerKwh)} / kWh'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () async {
+                          await _map?.flyTo(
+                            CameraOptions(
+                              center: Point(
+                                coordinates: Position(
+                                  station.longitude,
+                                  station.latitude,
+                                ),
+                              ),
+                              zoom: 16.5,
+                              pitch: 0,
+                              bearing: 0,
+                            ),
+                            MapAnimationOptions(duration: 600),
+                          );
+                          if (mounted) Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.map),
+                        label: const Text('Đi tới'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.charging_station),
+                        label: const Text('Chi tiết / Đặt chỗ'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
               ],
             ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -367,7 +370,7 @@ class _MapScreenState extends State<MapScreen> {
     _debounce?.cancel();
     _debounce = Timer(
       const Duration(milliseconds: 300),
-          () => _filterStations(q),
+      () => _filterStations(q),
     );
   }
 
@@ -378,11 +381,11 @@ class _MapScreenState extends State<MapScreen> {
       return;
     }
     final filtered =
-    _allStations.where((s) {
-      final q = query.toLowerCase();
-      return s.name.toLowerCase().contains(q) ||
-          s.address.toLowerCase().contains(q);
-    }).toList();
+        _allStations.where((s) {
+          final q = query.toLowerCase();
+          return s.name.toLowerCase().contains(q) ||
+              s.address.toLowerCase().contains(q);
+        }).toList();
 
     setState(() => _filteredStations = filtered);
     _renderStations(filtered);
@@ -390,107 +393,107 @@ class _MapScreenState extends State<MapScreen> {
 
   void _showFilterBottomSheet() {
     final connectorTypes =
-    _allStations.map((s) => s.connectorType).toSet().toList();
+        _allStations.map((s) => s.connectorType).toSet().toList();
 
     showModalBottomSheet(
       context: context,
       builder:
           (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Lọc trạm sạc',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Lọc trạm sạc',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _filteredStations = [];
+                          _searchCtrl.clear();
+                        });
+                        _renderStations(_allStations);
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Xóa bộ lọc'),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _filteredStations = [];
-                      _searchCtrl.clear();
-                    });
-                    _renderStations(_allStations);
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Xóa bộ lọc'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Loại sạc:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children:
+                      connectorTypes.map((type) {
+                        return FilterChip(
+                          label: Text(type),
+                          onSelected: (selected) {
+                            if (selected) {
+                              final filtered =
+                                  _allStations
+                                      .where((s) => s.connectorType == type)
+                                      .toList();
+                              setState(() => _filteredStations = filtered);
+                              _renderStations(filtered);
+                              Navigator.pop(context);
+                            }
+                          },
+                        );
+                      }).toList(),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Trạng thái:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children:
+                      ['online', 'offline'].map((status) {
+                        return FilterChip(
+                          label: Text(
+                            status == 'online'
+                                ? 'Đang hoạt động'
+                                : 'Không hoạt động',
+                          ),
+                          avatar: Icon(
+                            Icons.circle,
+                            size: 12,
+                            color:
+                                status == 'online' ? Colors.green : Colors.red,
+                          ),
+                          onSelected: (selected) {
+                            if (selected) {
+                              final filtered =
+                                  _allStations
+                                      .where(
+                                        (s) => s.status.toLowerCase() == status,
+                                      )
+                                      .toList();
+                              setState(() => _filteredStations = filtered);
+                              _renderStations(filtered);
+                              Navigator.pop(context);
+                            }
+                          },
+                        );
+                      }).toList(),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Loại sạc:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children:
-              connectorTypes.map((type) {
-                return FilterChip(
-                  label: Text(type),
-                  onSelected: (selected) {
-                    if (selected) {
-                      final filtered =
-                      _allStations
-                          .where((s) => s.connectorType == type)
-                          .toList();
-                      setState(() => _filteredStations = filtered);
-                      _renderStations(filtered);
-                      Navigator.pop(context);
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Trạng thái:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children:
-              ['online', 'offline'].map((status) {
-                return FilterChip(
-                  label: Text(
-                    status == 'online'
-                        ? 'Đang hoạt động'
-                        : 'Không hoạt động',
-                  ),
-                  avatar: Icon(
-                    Icons.circle,
-                    size: 12,
-                    color:
-                    status == 'online' ? Colors.green : Colors.red,
-                  ),
-                  onSelected: (selected) {
-                    if (selected) {
-                      final filtered =
-                      _allStations
-                          .where(
-                            (s) => s.status.toLowerCase() == status,
-                      )
-                          .toList();
-                      setState(() => _filteredStations = filtered);
-                      _renderStations(filtered);
-                      Navigator.pop(context);
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -519,12 +522,12 @@ class _MapScreenState extends State<MapScreen> {
           BlocConsumer<StationCubit, StationState>(
             listenWhen:
                 (prev, curr) =>
-            prev.error != curr.error ||
-                (prev.loading == true && curr.loading == false),
+                    prev.error != curr.error ||
+                    (prev.loading == true && curr.loading == false),
             buildWhen:
                 (prev, curr) =>
-            prev.loading != curr.loading ||
-                prev.stations != curr.stations,
+                    prev.loading != curr.loading ||
+                    prev.stations != curr.stations,
             listener: (context, state) {
               if (state.error != null) {
                 ScaffoldMessenger.of(
@@ -591,7 +594,7 @@ class _MapScreenState extends State<MapScreen> {
                   elevation: 8,
                   clipBehavior: Clip.antiAlias,
                   child: SearchResult(
-                    onStationTap: (st){
+                    onStationTap: (st) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -610,9 +613,9 @@ class _MapScreenState extends State<MapScreen> {
               builder: (context, state) {
                 if (state.stations.isEmpty) return const SizedBox.shrink();
                 final count =
-                _filteredStations.isEmpty
-                    ? state.stations.length
-                    : _filteredStations.length;
+                    _filteredStations.isEmpty
+                        ? state.stations.length
+                        : _filteredStations.length;
                 return Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -660,9 +663,33 @@ class _MapScreenState extends State<MapScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: NavigatorBar(
-              currentIndex: _tab,
-              onTap: (i) => setState(() => _tab = i),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: NavigatorBar(
+                currentIndex: _tab,
+                onTap: (i) {
+                  setState(() {
+                    _tab = i;
+                  });
+                  switch (i) {
+                    case 0:
+                      context.go(RouterPaths.mapScreen);
+                      break;
+                    case 2:
+                      context.go(RouterPaths.myBookingScreen);
+                      break;
+                    case 3:
+                      context.go(RouterPaths.mapScreen);
+                      break;
+                    case 4:
+                      context.go(RouterPaths.mapScreen);
+                      break;
+                    default:
+                      context.go(RouterPaths.mapScreen);
+
+                  }
+                },
+              ),
             ),
           ),
         ],

@@ -21,4 +21,9 @@ class BookingRepositoryImpl implements IBookingRepository {
       scheduleEndTime: scheduleEndTime,
     );
   }
+  
+  @override
+  Future<List<Booking>> getUserBookings({required String userId}) {
+    return bookingDatasource.getUserBookings(userId: userId);
+  } 
 }

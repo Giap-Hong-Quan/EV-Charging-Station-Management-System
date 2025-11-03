@@ -2,30 +2,29 @@ import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/mysql.js';
 import { BOOKING_STATUS_LIST, BOOKING_STATUS } from '../constants/booking.constant.js';
 
-class Booking extends Model {}
+class Booking extends Model { }
 
 Booking.init(
   {
     id: {
-      type: DataTypes.STRING,
-      autoIncrement: true,
+      type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
       allowNull: false,
     },
+
+
     user_id: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: { isInt: true, min: 1 },
     },
     station_id: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: { isInt: true, min: 1 },
     },
     point_id: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: { isInt: true, min: 1 },
     },
 
     schedule_start_time: {
@@ -56,7 +55,6 @@ Booking.init(
       },
     },
 
-    // TTL giữ chỗ (nếu dùng luồng HELD → CONFIRMED)
     hold_expires_at: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -64,10 +62,9 @@ Booking.init(
     },
 
     status: {
-      // Trạng thái booking (chuẩn hóa theo flow microservice)
       type: DataTypes.ENUM(...BOOKING_STATUS_LIST),
       allowNull: false,
-      defaultValue: BOOKING_STATUS.COMPLETE,
+      defaultValue: BOOKING_STATUS.UPCOMING,
     },
 
     cancelled_at: {
@@ -87,8 +84,8 @@ Booking.init(
     sequelize,
     modelName: 'Booking',
     tableName: 'bookings',
-    underscored: true, // dùng user_id, created_at, updated_at thay vì camelCase
-    timestamps: true,  // tự tạo created_at, updated_at
+    underscored: true,
+    timestamps: true,
     indexes: [
       { fields: ['user_id'] },
       { fields: ['station_id'] },
@@ -96,12 +93,10 @@ Booking.init(
       { fields: ['status'] },
       { fields: ['schedule_start_time'] },
       { fields: ['schedule_end_time'] },
-      // Composite index hỗ trợ query theo điểm sạc + thời gian
       { fields: ['point_id', 'status', 'schedule_start_time', 'schedule_end_time'] },
     ],
     hooks: {
       beforeValidate(instance) {
-        // Nếu không có end time → mặc định 30 phút sau start
         if (!instance.schedule_end_time && instance.schedule_start_time) {
           const end = new Date(instance.schedule_start_time);
           end.setMinutes(end.getMinutes() + 30);
@@ -112,6 +107,6 @@ Booking.init(
   }
 );
 
-await sequelize.sync({ alter: true }); 
+await sequelize.sync({ alter: true });
 
 export default Booking;

@@ -2,6 +2,7 @@ import 'package:ev_point/src/features/booking/data/datasources/booking_datasourc
 import 'package:ev_point/src/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:ev_point/src/features/booking/domain/repositories/ibooking_repository.dart';
 import 'package:ev_point/src/features/booking/domain/usecase/create_booking.dart';
+import 'package:ev_point/src/features/booking/domain/usecase/get_booking_by_user_id.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
 import 'package:ev_point/src/features/charging_point/data/datasources/charging_point_datasoruce.dart';
 import 'package:ev_point/src/features/charging_point/domain/repositories/charging_point_repository.dart';
@@ -68,6 +69,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetChargingPointByStationId(sl()));
 
   sl.registerLazySingleton(() => CreateBooking(sl()));
+  sl.registerLazySingleton(() => GetBookingByUserId(sl()));
 
 
   //cubit
@@ -82,7 +84,7 @@ Future<void> initDependencies() async {
   );
 
   sl.registerFactory<BookingCubit>(
-    () => BookingCubit(createBookingUseCase: sl<CreateBooking>()),
+    () => BookingCubit(createBookingUseCase: sl<CreateBooking>(), getBookingByUserIdUseCase: sl<GetBookingByUserId>()),
   );
 
   //mapbox

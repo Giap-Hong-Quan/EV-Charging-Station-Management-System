@@ -1,7 +1,9 @@
+import 'package:ev_point/src/core/routes/routers_path.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_state.dart';
+import 'package:go_router/go_router.dart';
 
 class BottomButton extends StatelessWidget {
   final String userId;
@@ -31,6 +33,7 @@ class BottomButton extends StatelessWidget {
               backgroundColor: Color(0xFF00C853),
             ),
           );
+          context.go(RouterPaths.myBookingScreen);
         } else if (state is BookingError) {
           Navigator.pop(context); // Close dialog if open
           ScaffoldMessenger.of(context).showSnackBar(

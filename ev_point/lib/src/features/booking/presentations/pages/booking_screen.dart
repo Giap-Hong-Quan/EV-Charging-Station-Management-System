@@ -41,8 +41,8 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
               FilledButton(
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Go back
+                  Navigator.pop(context); 
+                  Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Đã hủy đặt chỗ'),
@@ -114,12 +114,12 @@ class _BookingScreenState extends State<BookingScreen> {
             const SizedBox(height: 24),
             WarningBanner(),
 
-            const SizedBox(height: 100), // Space for bottom button
+            const SizedBox(height: 100), 
           ],
         ),
       ),
       bottomSheet: BottomButton(
-        userId: 'user123',
+        userId: 'user123456',
         stationId: stationId,
         pointId: selectedPoint?.id ?? '',
         scheduleStartTime: selectedStartTime ?? DateTime.now(),

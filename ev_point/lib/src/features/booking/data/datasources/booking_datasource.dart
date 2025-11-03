@@ -12,6 +12,10 @@ abstract class IBookingDatasource {
     required DateTime scheduleStartTime,
     required DateTime scheduleEndTime,
   });
+
+  Future<List<BookingModel>> getUserBookings({
+    required String userId,
+  });
 }
 
 class BookingDatasourceImpl implements IBookingDatasource {
@@ -19,38 +23,58 @@ class BookingDatasourceImpl implements IBookingDatasource {
   final String baseBookingUrl;
   BookingDatasourceImpl({required this.client, required this.baseBookingUrl});
   @override
-  Future<BookingModel> createBooking({
-    required String userId,
-    required String stationId,
-    required String pointId,
-    required DateTime scheduleStartTime,
-    required DateTime scheduleEndTime,
-  }) async {
-    print('POST URL: $baseBookingUrl/bookings');
-    final response = await client.post(
-      Uri.parse('$baseBookingUrl/bookings'),
-      headers: {HttpHeaders.contentTypeHeader: 'application/json'},
-      body: jsonEncode({
-        'userId': userId,
-        'stationId': stationId,
-        'pointId': pointId,
-        'scheduleStartTime': scheduleStartTime.toIso8601String(),
-        'scheduleEndTime': scheduleEndTime.toIso8601String(),
-      }),
-    );
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final decoded = jsonDecode(response.body);
-      final data = decoded['data'];
+Future<BookingModel> createBooking({
+  required String userId,
+  required String stationId,
+  required String pointId,
+  required DateTime scheduleStartTime,
+  required DateTime scheduleEndTime,
+}) async {
+  final response = await client.post(
+    Uri.parse('$baseBookingUrl/bookings'),
+    headers: {HttpHeaders.contentTypeHeader: 'application/json'},
+    body: jsonEncode({
+      'user_id': userId,          
+      'station_id': stationId,
+      'point_id': pointId,
+      'schedule_start_time': scheduleStartTime.toIso8601String(),
+      'schedule_end_time': scheduleEndTime.toIso8601String(),
+    }),
+  );
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    final decoded = jsonDecode(response.body);
+    final data = decoded['data'];
 
-      final bookingJson = data is List ? data.first : data;
-      return BookingModel.fromJson(bookingJson as Map<String, dynamic>);
+    final bookingJson = data is List ? data.first : data;
+    return BookingModel.fromJson(bookingJson as Map<String, dynamic>);
+  } else if (response.statusCode == 400) {
+    final decoded = jsonDecode(response.body);
+    throw Exception('Bad request: ${decoded['message'] ?? 'Invalid data'}');
+  } else if (response.statusCode == 401) {
+    throw Exception('Unauthorized');
+  } else {
+    throw Exception('Failed to create booking: ${response.statusCode}');
+  }
+}
+
+  @override
+  Future<List<BookingModel>> getUserBookings({required String userId}) async {
+    final response = await client.get(
+      Uri.parse('$baseBookingUrl/bookings/user/$userId'),
+      headers: {HttpHeaders.contentTypeHeader: 'application/json'},
+    );
+    print("Base URL: $baseBookingUrl/bookings/user/$userId");
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final data = decoded['data'] as List;
+      return data.map((bookingJson) => BookingModel.fromJson(bookingJson)).toList();
     } else if (response.statusCode == 400) {
       final decoded = jsonDecode(response.body);
       throw Exception('Bad request: ${decoded['message'] ?? 'Invalid data'}');
     } else if (response.statusCode == 401) {
       throw Exception('Unauthorized');
     } else {
-      throw Exception('Failed to create booking: ${response.statusCode}');
+      throw Exception('Failed to fetch user bookings: ${response.statusCode}');
     }
   }
 }
