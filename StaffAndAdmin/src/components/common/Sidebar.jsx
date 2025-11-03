@@ -1,10 +1,40 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { mainMenu, quickActions } from "@/lib/Contands"
 import { Separator } from "@radix-ui/react-dropdown-menu"
 import { AlertCircle, Badge, BarChart3, BatteryCharging, Calendar, ChevronUp, Home, LogOut, MapPin, Plus, Settings, User, Zap } from "lucide-react"
+import { useLocation, useNavigate } from "react-router-dom"
 
 const Sidebar = ({isSidebarOpen}) => {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const renderMenu = (items) => {
+  return items.map((item) => {
+    const Icon = item.icon;
+    const active = pathname === item.path;
+
+    return (
+      <Button
+        key={item.label}
+        variant="ghost"
+        onClick={() => navigate(item.path)}
+        className={`w-full justify-start gap-3 px-6 py-3 h-auto rounded-none text-white relative ${
+          active ? "bg-emerald-800 border-l-4 border-white" : "hover:bg-emerald-600"
+        }`}
+      >
+        <Icon className="w-5 h-5" />
+        <span>{item.label}</span>
+        {item.badge && (
+          <Badge className="absolute right-4 bg-red-500 text-white px-2">
+            {item.badge}
+          </Badge>
+        )}
+      </Button>
+    );
+  });
+};
+
   return (
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-0'} bg-gradient-to-b from-emerald-600 to-emerald-700  text-white transition-all duration-300 overflow-hidden flex flex-col shadow-xl`}>
         
@@ -39,26 +69,7 @@ const Sidebar = ({isSidebarOpen}) => {
             <p className="text-xs font-semibold text-emerald-200 uppercase tracking-wider px-3">Chính</p>
           </div>
           
-          <Button variant="ghost" className="w-full justify-start gap-3 px-6 py-3 h-auto bg-emerald-800 hover:bg-emerald-800 border-l-4 border-white rounded-none text-white">
-            <BarChart3 className="w-5 h-5" />
-            <span className="font-medium">Tổng quan</span>
-          </Button>
-
-          <Button variant="ghost" className="w-full justify-start gap-3 px-6 py-3 h-auto hover:bg-emerald-600 rounded-none text-white relative">
-            <BatteryCharging className="w-5 h-5" />
-            <span>Phiên sạc</span>
-            <Badge className="absolute right-4 bg-red-500 hover:bg-red-500 text-white px-2">9</Badge>
-          </Button>
-
-          <Button variant="ghost" className="w-full justify-start gap-3 px-6 py-3 h-auto hover:bg-emerald-600 rounded-none text-white">
-            <Zap className="w-5 h-5" />
-            <span>Điểm sạc</span>
-          </Button>
-
-          <Button variant="ghost" className="w-full justify-start gap-3 px-6 py-3 h-auto hover:bg-emerald-600 rounded-none text-white">
-            <Calendar className="w-5 h-5" />
-            <span>Lịch sử</span>
-          </Button>
+          {renderMenu(mainMenu)}
 
           <Separator className="my-4 bg-emerald-600/50" />
 
@@ -67,20 +78,7 @@ const Sidebar = ({isSidebarOpen}) => {
             <p className="text-xs font-semibold text-emerald-200 uppercase tracking-wider px-3">Thao tác nhanh</p>
           </div>
 
-          <Button variant="ghost" className="w-full justify-start gap-3 px-6 py-3 h-auto hover:bg-emerald-600 rounded-none text-white">
-            <Plus className="w-5 h-5" />
-            <span>Tạo phiên sạc</span>
-          </Button>
-
-          <Button variant="ghost" className="w-full justify-start gap-3 px-6 py-3 h-auto hover:bg-emerald-600 rounded-none text-white">
-            <Home className="w-5 h-5" />
-            <span>Thu tiền mặt</span>
-          </Button>
-
-          <Button variant="ghost" className="w-full justify-start gap-3 px-6 py-3 h-auto hover:bg-emerald-600 rounded-none text-white">
-            <AlertCircle className="w-5 h-5" />
-            <span>Báo cáo sự cố</span>
-          </Button>
+          {renderMenu(quickActions)}
         </nav>
 
         {/* Footer - User Profile */}

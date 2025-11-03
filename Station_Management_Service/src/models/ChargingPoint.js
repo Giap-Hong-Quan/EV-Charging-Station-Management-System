@@ -6,8 +6,8 @@ const chargingPointSchema=new mongoose.Schema(
         point_number:{type:Number,required:true,min:1},
         point_status: {
         type: String,
-        enum: ["available", "busy", "maintenance"],
-        default: "available",
+        enum: ["Empty", "Charging", "Maintenance","Reservation"],
+        default: "Empty",
     },
     },
     { timestamps: true }

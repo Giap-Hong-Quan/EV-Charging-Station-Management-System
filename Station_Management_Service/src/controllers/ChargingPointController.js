@@ -74,7 +74,7 @@ export const deleteChargingPoint =async (req,res) =>{
     try {
         const {id} =req.params;
         const { point_status } = req.body;
-        const validStatus=["available", "busy", "maintenance"];
+        const validStatus=["Empty", "Charging", "Maintenance","Reservation"];
         if(!point_status || !validStatus.includes(point_status)){
             return res.status(400).json({message:"Trạng thái không hợp lệ."})
         }
