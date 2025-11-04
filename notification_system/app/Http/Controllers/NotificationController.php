@@ -125,7 +125,7 @@ class NotificationController extends Controller
             // Thay thế variables trong content
             $content = $template->content;
             foreach ($validated['variables'] as $key => $value) {
-                $content = str_replace("{{{$key}}}", $value, $content);
+                $content = str_replace("{{$key}}", $value, $content);
             }
 
             // Gửi email
@@ -138,7 +138,9 @@ class NotificationController extends Controller
             $log->template_id = $template->id;
             $log->receiver = $validated['to'];
             $log->status = 'sent';
-            $log->message = $content;
+            $log->message = $content; // Content đã được thay thế
+            $log->subject = $template->name; // Lưu subject
+            $log->template_variables = json_encode($validated['variables']); // Lưu biến đã dùng
             $log->type = 'email_template';
             $log->save();
 
