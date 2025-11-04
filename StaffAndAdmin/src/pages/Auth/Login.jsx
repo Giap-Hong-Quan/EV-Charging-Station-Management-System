@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { authService } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner"
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -59,6 +60,7 @@ export default function Login() {
         setError(""); // Xóa lỗi nếu có
         const targetRoute = getRoleBasedRoute(response.user);
         console.log(`User role_id: ${response.user.role_id}, redirecting to: ${targetRoute}`);
+        toast.success("Đăng nhập thành công");
         setTimeout(()=>{
           navigate(targetRoute);
         },1000)

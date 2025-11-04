@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { userService } from "@/services/userService"
 import { ArrowLeft, Save, User, Mail, MapPin, Shield, Camera } from "lucide-react"
+import { toast } from "sonner"
+
 
 const ProfileUser = () => {
   const navigate = useNavigate()
@@ -69,12 +71,12 @@ const ProfileUser = () => {
     const file = e.target.files[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert("Kích thước ảnh không được vượt quá 5MB")
+        toast.error("Kích thước ảnh không được vượt quá 5MB")
         return
       }
       
       if (!file.type.startsWith('image/')) {
-        alert("Chỉ chấp nhận file ảnh!")
+        toast.error("Chỉ chấp nhận file ảnh!")
         return
       }
 
@@ -123,13 +125,13 @@ const ProfileUser = () => {
         setAvatarFile(null)
         
         setIsEditing(false)
-        alert("Cập nhật thông tin thành công!")
+        toast.success("Cập nhật thông tin thành công!")
       } else {
         throw new Error(response.message || "Update failed")
       }
     } catch (error) {
       console.error('Update profile error:', error)
-      alert(error.response?.data?.message || "Có lỗi xảy ra khi cập nhật thông tin!")
+      toast.error("Có lỗi xảy ra khi cập nhật thông tin!")
     } finally {
       setSaving(false)
     }
