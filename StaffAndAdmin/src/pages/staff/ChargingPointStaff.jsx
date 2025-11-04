@@ -282,9 +282,6 @@ const ChargingPointStaff = () => {
             <DialogTitle className="text-xl font-bold">
               Chi tiết Điểm sạc {selectedCharger?.id}
             </DialogTitle>
-            {/* <DialogDescription className="text-gray-600">
-              {myStation.name} - {myStation.code}
-            </DialogDescription> */}
           </DialogHeader>
           
           {selectedCharger && (

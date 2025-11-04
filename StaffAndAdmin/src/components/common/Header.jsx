@@ -2,11 +2,13 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { Badge, Bell, Eye, Link2, Maximize2, Menu, MessageSquare, Plus, Settings, X } from 'lucide-react';
-import React from 'react'
+import React, { useState } from 'react'
+import CreateSessionModal from '../staff/CreateSessionModal';
 
 const Header = ({isSidebarOpen,setIsSidebarOpen}) => {
-   
+     const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
   return (
+     <>
     <header className="bg-white border-b border-gray-200 shadow-sm">
           <div className="flex items-center justify-between px-6 py-4">
             {/* Left Section */}
@@ -54,7 +56,7 @@ const Header = ({isSidebarOpen,setIsSidebarOpen}) => {
                 Làm mới
               </Button>
 
-              <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+              <Button onClick={() => setShowCreateSessionModal(true)} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
                 <Plus className="w-4 h-4" />
                 Tạo phiên sạc
               </Button>
@@ -103,7 +105,10 @@ const Header = ({isSidebarOpen,setIsSidebarOpen}) => {
               </Button>
             </div>
           </div>
+          
         </header>
+          <CreateSessionModal open={showCreateSessionModal} onOpenChange={setShowCreateSessionModal} />
+         </>
   )
 }
 

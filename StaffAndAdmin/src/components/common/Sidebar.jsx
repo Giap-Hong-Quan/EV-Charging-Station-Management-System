@@ -1,41 +1,48 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { mainMenu, quickActions } from "@/lib/Contands"
+import { mainMenu } from "@/lib/Contands"
 import { Separator } from "@radix-ui/react-dropdown-menu"
-import { AlertCircle, Badge, BarChart3, BatteryCharging, Calendar, ChevronUp, Home, LogOut, MapPin, Plus, Settings, User, Zap } from "lucide-react"
+import { AlertCircle, ChevronUp, LogOut, MapPin, Plus, Settings, User, Zap, DollarSign } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
+import { useState } from "react"
+import CreateSessionModal from "../staff/CreateSessionModal"
+import CashPaymentModal from "../staff/CashPaymentModal"
+import ReportIssueModal from "../staff/ReportIssueModal"
+
 
 const Sidebar = ({isSidebarOpen}) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const renderMenu = (items) => {
-  return items.map((item) => {
-    const Icon = item.icon;
-    const active = pathname === item.path;
+  
+  // Modal states
+  const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
+  const [showCashPaymentModal, setShowCashPaymentModal] = useState(false);
+  const [showReportIssueModal, setShowReportIssueModal] = useState(false);
 
-    return (
-      <Button
-        key={item.label}
-        variant="ghost"
-        onClick={() => navigate(item.path)}
-        className={`w-full justify-start gap-3 px-6 py-3 h-auto rounded-none text-white relative ${
-          active ? "bg-emerald-800 border-l-4 border-white" : "hover:bg-emerald-600"
-        }`}
-      >
-        <Icon className="w-5 h-5" />
-        <span>{item.label}</span>
-        {item.badge && (
-          <Badge className="absolute right-4 bg-red-500 text-white px-2">
-            {item.badge}
-          </Badge>
-        )}
-      </Button>
-    );
-  });
-};
+  const renderMenu = (items) => {
+    return items.map((item) => {
+      const Icon = item.icon;
+      const active = pathname === item.path;
+
+      return (
+        <Button
+          key={item.label}
+          variant="ghost"
+          onClick={() => navigate(item.path)}
+          className={`w-full justify-start gap-3 px-6 py-3 h-auto rounded-none text-white relative ${
+            active ? "bg-emerald-800 border-l-4 border-white" : "hover:bg-emerald-600"
+          }`}
+        >
+          <Icon className="w-5 h-5" />
+          <span>{item.label}</span>
+        </Button>
+      );
+    });
+  };
 
   return (
+    <>
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-0'} bg-gradient-to-b from-emerald-600 to-emerald-700  text-white transition-all duration-300 overflow-hidden flex flex-col shadow-xl`}>
         
         {/* Logo Section */}
@@ -78,7 +85,34 @@ const Sidebar = ({isSidebarOpen}) => {
             <p className="text-xs font-semibold text-emerald-200 uppercase tracking-wider px-3">Thao tác nhanh</p>
           </div>
 
-          {renderMenu(quickActions)}
+          <div className="space-y-1">
+            <Button
+              variant="ghost"
+              onClick={() => setShowCreateSessionModal(true)}
+              className="w-full justify-start gap-3 px-6 py-3 h-auto rounded-none text-white hover:bg-emerald-600"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Tạo phiên sạc</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={() => setShowCashPaymentModal(true)}
+              className="w-full justify-start gap-3 px-6 py-3 h-auto rounded-none text-white hover:bg-emerald-600"
+            >
+              <DollarSign className="w-5 h-5" />
+              <span>Thu tiền mặt</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={() => setShowReportIssueModal(true)}
+              className="w-full justify-start gap-3 px-6 py-3 h-auto rounded-none text-white hover:bg-emerald-600"
+            >
+              <AlertCircle className="w-5 h-5" />
+              <span>Báo cáo sự cố</span>
+            </Button>
+          </div>
         </nav>
 
         {/* Footer - User Profile */}
@@ -117,6 +151,12 @@ const Sidebar = ({isSidebarOpen}) => {
           </DropdownMenu>
         </div>
       </aside>
+
+      {/* Modals */}
+      <CreateSessionModal open={showCreateSessionModal} onOpenChange={setShowCreateSessionModal} />
+      <CashPaymentModal open={showCashPaymentModal} onOpenChange={setShowCashPaymentModal} />
+      <ReportIssueModal open={showReportIssueModal} onOpenChange={setShowReportIssueModal} />
+    </>
   )
 }
 

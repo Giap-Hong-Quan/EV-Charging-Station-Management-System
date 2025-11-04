@@ -1,4 +1,4 @@
-import { AlertCircle, BarChart3, BatteryCharging, Calendar, Home, Plus, Zap } from "lucide-react";
+import { AlertCircle, BarChart3, BatteryCharging, Calendar, DollarSign, Home, Plus, Zap } from "lucide-react";
 
 export const mainMenu= [
   { label: "Tổng quan", icon: BarChart3, path: "/staff/dashboard" },
@@ -7,8 +7,9 @@ export const mainMenu= [
   { label: "Lịch sử", icon: Calendar, path: "/staff/history" },
 ];
 
+// Bỏ path vì dùng modal
 export const quickActions = [
-  { label: "Tạo phiên sạc", icon: Plus, path: "/staff/create-session" },
-  { label: "Thu tiền mặt", icon: Home, path: "/staff/cash" },
-  { label: "Báo cáo sự cố", icon: AlertCircle, path: "/staff/issues" },
+  { label: "Tạo phiên sạc", icon: Plus },
+  { label: "Thu tiền mặt", icon: DollarSign },
+  { label: "Báo cáo sự cố", icon: AlertCircle },
 ];

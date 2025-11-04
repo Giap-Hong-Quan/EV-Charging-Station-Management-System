@@ -8,5 +8,5 @@ export const staffRoutes = [
   { path: "dashboard", element: <DashboardStaff /> },       
   { path: "sessions", element: <SessionsStaff /> },          
   { path: "chargingPoint", element: <ChargingPointStaff /> },          
-  { path: "issues", element: <IssuesStaff /> },              
+  { path: "history", element: <IssuesStaff /> },              
 ];
