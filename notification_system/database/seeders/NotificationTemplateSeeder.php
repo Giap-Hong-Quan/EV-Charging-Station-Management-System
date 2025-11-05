@@ -10,8 +10,8 @@ class NotificationTemplateSeeder extends Seeder
     public function run(): void
     {
         DB::table('notification_templates')->insert([
-            'name' => 'charging_complete',  // SỬA 'type' -> 'name'
-            'content' => '<p>Xin chào {{user_name}},<br>Phiên sạc tại <b>{{station_name}}</b> đã hoàn tất.<br>Tổng điện tiêu thụ: {{kwh}} kWh.</p>',  // SỬA 'body' -> 'content'
+            'name' => 'charging_complete',
+            'content' => '<p>Xin chào {{user_name}},<br>Phiên sạc tại <b>{{station_name}}</b> đã hoàn tất.<br>Tổng điện tiêu thụ: {{kwh}} kWh.</p>',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

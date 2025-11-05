@@ -9,10 +9,6 @@ Route::middleware('api')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/send', [NotificationController::class, 'send']);
     Route::post('/notifications/templates', [NotificationController::class, 'createTemplate']);
-    
-    // THÊM ROUTE MỚI NÀY
     Route::post('/notifications/send-template-email', [NotificationController::class, 'sendTemplateEmail']);
-
-    // routes/api.php trong notification_service
     Route::post('/notifications/payment', [NotificationController::class, 'sendPaymentNotification']);
 });

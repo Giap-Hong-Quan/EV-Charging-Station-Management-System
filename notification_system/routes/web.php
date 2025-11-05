@@ -7,7 +7,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// THÊM CÁC ROUTES API VÀO NHÓM KHÔNG CÓ CSRF PROTECTION
 Route::withoutMiddleware(['web'])->group(function () {
     Route::post('/send-mail', [NotificationController::class, 'sendEmail']);
     Route::get('/notifications', [NotificationController::class, 'index']);

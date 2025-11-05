@@ -41,10 +41,10 @@ class NotificationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.notification', // Tên view của bạn
+            view: 'emails.notification',
             with: [
                 'subject' => $this->subject,
-                'messageText' => $this->messageText, // Khớp với biến trong view
+                'messageText' => $this->messageText,
             ],
         );
     }

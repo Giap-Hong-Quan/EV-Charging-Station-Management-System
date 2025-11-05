@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('notification_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('template_id')->nullable()->constrained('notification_templates')->onDelete('cascade');
-            $table->string('receiver'); // Thay email bằng receiver
+            $table->string('receiver');
             $table->string('status');
-            $table->text('message'); // Thay content bằng message
+            $table->text('message');
             $table->string('type');
             $table->timestamps();
         });

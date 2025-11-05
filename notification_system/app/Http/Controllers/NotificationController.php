@@ -138,7 +138,7 @@ class NotificationController extends Controller
             $log->template_id = $template->id;
             $log->receiver = $validated['to'];
             $log->status = 'sent';
-            $log->message = $content; // Content đã được thay thế
+            $log->message = $content;
             $log->subject = $template->name; // Lưu subject
             $log->template_variables = json_encode($validated['variables']); // Lưu biến đã dùng
             $log->type = 'email_template';

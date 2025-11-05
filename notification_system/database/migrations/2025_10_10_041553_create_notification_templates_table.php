@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('notification_templates', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Thay type bằng name
-            $table->text('content'); // Thay body bằng content
+            $table->string('name')->unique();
+            $table->text('content');
             $table->timestamps();
         });
     }
