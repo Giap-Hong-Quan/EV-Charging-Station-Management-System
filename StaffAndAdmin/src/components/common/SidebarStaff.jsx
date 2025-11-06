@@ -11,7 +11,7 @@ import CashPaymentModal from "../staff/CashPaymentModal"
 import ReportIssueModal from "../staff/ReportIssueModal"
 
 
-const Sidebar = ({isSidebarOpen}) => {
+const SidebarAdmin = ({isSidebarOpen}) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   
@@ -53,7 +53,7 @@ const Sidebar = ({isSidebarOpen}) => {
             </div>
             <div>
               <h1 className="text-xl font-bold">EV Charging</h1>
-              <p className="text-xs text-emerald-200">Staff Dashboard</p>
+              <p className="text-xs text-emerald-200">Admin Dashboard</p>
             </div>
           </div>
         </div>
@@ -160,4 +160,4 @@ const Sidebar = ({isSidebarOpen}) => {
   )
 }
 
-export default Sidebar
+export default SidebarAdmin

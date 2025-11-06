@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Header from "../components/common/Header";
-import Sidebar from "../components/common/Sidebar";
+import HeaderStaff from "../components/common/HeaderStaff";
+import SidebarStaff from "../components/common/SidebarStaff";
 
 import { Outlet } from "react-router-dom";
 
@@ -10,10 +10,10 @@ const LayoutStaff = () => {
   return (
     <div className="h-screen flex bg-gray-50">
       {/* Sidebar cố định */}
-      <Sidebar isSidebarOpen={isSidebarOpen} />
+      <SidebarStaff isSidebarOpen={isSidebarOpen} />
       {/* Phần nội dung chính */}
       <div className={'flex flex-col flex-1 transition-all duration-300 '}>
-        <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}/>
+        <HeaderStaff isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}/>
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
         <Outlet />
         </main>

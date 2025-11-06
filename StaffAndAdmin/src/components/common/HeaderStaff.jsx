@@ -5,7 +5,7 @@ import { Badge, Bell, Eye, Link2, Maximize2, Menu, MessageSquare, Plus, Settings
 import React, { useState } from 'react'
 import CreateSessionModal from '../staff/CreateSessionModal';
 
-const Header = ({isSidebarOpen,setIsSidebarOpen}) => {
+const HeaderStaff = ({isSidebarOpen,setIsSidebarOpen}) => {
      const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
   return (
      <>
@@ -112,4 +112,4 @@ const Header = ({isSidebarOpen,setIsSidebarOpen}) => {
   )
 }
 
-export default Header
+export default HeaderStaff
