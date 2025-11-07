@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 abstract class IBookingDatasource {
   Future<BookingModel> createBooking({
     required String userId,
+    required String vehicleName,
+    required String vehicleNumber,
     required String stationId,
     required String pointId,
     required DateTime scheduleStartTime,
@@ -25,6 +27,8 @@ class BookingDatasourceImpl implements IBookingDatasource {
   @override
 Future<BookingModel> createBooking({
   required String userId,
+  required String vehicleName,
+  required String vehicleNumber,
   required String stationId,
   required String pointId,
   required DateTime scheduleStartTime,
@@ -34,7 +38,9 @@ Future<BookingModel> createBooking({
     Uri.parse('$baseBookingUrl/bookings'),
     headers: {HttpHeaders.contentTypeHeader: 'application/json'},
     body: jsonEncode({
-      'user_id': userId,          
+      'user_id': userId,
+      'vehicle_name': vehicleName,
+      'vehicle_number': vehicleNumber,
       'station_id': stationId,
       'point_id': pointId,
       'schedule_start_time': scheduleStartTime.toIso8601String(),
@@ -63,7 +69,6 @@ Future<BookingModel> createBooking({
       Uri.parse('$baseBookingUrl/bookings/user/$userId'),
       headers: {HttpHeaders.contentTypeHeader: 'application/json'},
     );
-    print("Base URL: $baseBookingUrl/bookings/user/$userId");
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       final data = decoded['data'] as List;

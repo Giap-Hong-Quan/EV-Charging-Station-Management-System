@@ -11,4 +11,7 @@ class ChargingPointRepositoryImpl implements IChargingPointRepository{
   @override
   Future<List<ChargingPoint>> getChargingPointByStationId(String stationId) => chargingPointRemoteDataSource.getChargingPointByStationId(stationId);
   
+  @override
+  Future<ChargingPoint> getChargingPointById(String chargingPointId) => chargingPointRemoteDataSource.getChargingPointById(chargingPointId);
+  
 }

@@ -5,20 +5,22 @@ class UpComingBookingCard extends StatefulWidget {
   final String date;
   final String time;
   final String name;
+  final String bookingCode;
   final String address;
   final String power;
-  final String duration;
-  final String amount;
+  final String timeStart;
+  final int pointNumber;
   final bool hasReminder;
   const UpComingBookingCard({
     super.key,
     required this.date,
     required this.time,
     required this.name,
+    required this.bookingCode,
     required this.address,
     required this.power,
-    required this.duration,
-    required this.amount,
+    required this.timeStart,
+    required this.pointNumber,
     required this.hasReminder,
   });
 
@@ -36,15 +38,15 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
   }
 
   void _showQRCode() {
-    // Tạo chuỗi thông tin booking để mã hóa vào QR
     String bookingInfo = '''
       Date: ${widget.date}
       Time: ${widget.time}
       Location: ${widget.name}
       Address: ${widget.address}
+      BookingCode: ${widget.bookingCode}
       Power: ${widget.power}
-      Duration: ${widget.duration}
-      Amount: ${widget.amount}
+      TimeStart: ${widget.timeStart}
+      Point Number: ${widget.pointNumber}
       ''';
 
     showDialog(
@@ -63,7 +65,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Booking QR Code',
+                      'Mã QR đặt chỗ',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -92,7 +94,13 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                     backgroundColor: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 20),
+                Text(widget.bookingCode
+                  , style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Text(
                   widget.name,
                   style: const TextStyle(
@@ -109,7 +117,16 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                     color: Colors.grey.shade600,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 8),
+                Text(
+                  "Điểm sạc: ${widget.pointNumber.toString()}",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -125,7 +142,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Scan this QR code at the charging station',
+                          'Quét mã QR này tại trạm sạc để bắt đầu quá trình sạc.',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.teal.shade700,
@@ -184,7 +201,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                 ),
                 Row(
                   children: [
-                    const Text('Remind me', style: TextStyle(fontSize: 13)),
+                    const Text('Nhắc tôi', style: TextStyle(fontSize: 13)),
                     const SizedBox(width: 8),
                     Switch(
                       value: reminderEnabled,
@@ -245,30 +262,13 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                _buildDetail(Icons.ev_station, 'Max power', widget.power),
-                const SizedBox(width: 24),
-                _buildDetail(Icons.access_time, 'Duration', widget.duration),
+                _buildDetail(Icons.ev_station, 'Công suất', widget.power),
+                const SizedBox(width: 20),
+                _buildDetail(Icons.access_time, 'Thời gian', widget.timeStart),
+                const SizedBox(width: 20),
+                _buildDetail(Icons.point_of_sale, 'Điểm sạc', widget.pointNumber.toString()),
                 const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Amount',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.amount,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+              
               ],
             ),
           ),
@@ -290,7 +290,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     child: const Text(
-                      'Cancel Booking',
+                      'Hủy đặt chỗ',
                       style: TextStyle(
                         color: Colors.teal,
                         fontSize: 15,
@@ -312,7 +312,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                       elevation: 0,
                     ),
                     child: const Text(
-                      'View',
+                      'Xem mã QR',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 15,
@@ -339,7 +339,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Insert the charger connector into your car to start charging. If you do not charge after 15 minutes from the time, this booking will be automatically cancelled.',
+                    'Cắm đầu nối sạc vào xe của bạn để bắt đầu sạc. Nếu bạn không sạc sau 15 phút kể từ thời điểm đó, đặt chỗ này sẽ tự động bị hủy.',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.teal.shade700,

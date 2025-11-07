@@ -19,7 +19,7 @@ class StationRemoteDataSourceImpl implements StationRemoteDataSource {
   @override
   Future<List<StationModel>> fetchStations() async {
     final res = await client.get(
-      Uri.parse('http://192.168.1.2:3000/gateway/api/v1/stations'),
+      Uri.parse('$baseUrl/stations'),
     );
     if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
     final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -34,7 +34,7 @@ class StationRemoteDataSourceImpl implements StationRemoteDataSource {
     String connectorType,
   ) async {
     final uri = Uri.parse(
-      'http://192.168.1.2:5001/api/v1/stations/?keyword=$keyword&connectorType=$connectorType',
+      "$baseUrl/stations/?keyword=$keyword&connectorType=$connectorType",
     );
     final res = await client.get(uri);
     if (res.statusCode != 200) throw Exception('${res.statusCode}');
@@ -47,7 +47,7 @@ class StationRemoteDataSourceImpl implements StationRemoteDataSource {
   @override
   Future<StationModel> getStationById(String stationId) async {
     final res = await client.get(
-      Uri.parse('http://192.168.1.2:5001/api/v1/stations/$stationId'),
+      Uri.parse('$baseUrl/stations/$stationId'),
     );
     if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
     final data = jsonDecode(res.body) as Map<String, dynamic>;

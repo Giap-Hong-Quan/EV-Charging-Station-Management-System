@@ -3,6 +3,8 @@ import '../entities/booking.dart';
 abstract class IBookingRepository {
   Future<Booking> createBooking({
     required String userId,
+    required String vehicleName,
+    required String vehicleNumber,
     required String stationId,
     required String pointId,
     required DateTime scheduleStartTime,

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:ev_point/src/core/routes/app_routers.dart';
 import 'package:ev_point/src/core/routes/routers_path.dart';
 import 'package:ev_point/src/features/map/domain/entities/station.dart';
 import 'package:ev_point/src/features/map/presentation/cubit/station/station_cubit.dart';
@@ -228,7 +227,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   // ===== Click marker =====
-  void _onAnnotationTap(PointAnnotation annotation) {
+  void onAnnotationTap(PointAnnotation annotation) {
     final station = _annotationToStation[annotation.id];
     if (station != null) _showStationBottomSheet(station);
   }
@@ -366,7 +365,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   // ===== Search & Filter =====
-  void _onSearchChanged(String q) {
+  void onSearchChanged(String q) {
     _debounce?.cancel();
     _debounce = Timer(
       const Duration(milliseconds: 300),
@@ -535,7 +534,7 @@ class _MapScreenState extends State<MapScreen> {
                 ).showSnackBar(SnackBar(content: Text('Lỗi: ${state.error}')));
                 return;
               }
-
+              
               if (!state.loading && state.stations.isNotEmpty) {
                 setState(() {
                   _allStations = state.stations;

@@ -8,6 +8,8 @@ class BookingRepositoryImpl implements IBookingRepository {
   @override
   Future<Booking> createBooking({
     required String userId,
+    required String vehicleName,
+    required String vehicleNumber,
     required String stationId,
     required String pointId,
     required DateTime scheduleStartTime,
@@ -15,6 +17,8 @@ class BookingRepositoryImpl implements IBookingRepository {
   }) {
     return bookingDatasource.createBooking(
       userId: userId,
+      vehicleName: vehicleName,
+      vehicleNumber: vehicleNumber,
       stationId: stationId,
       pointId: pointId,
       scheduleStartTime: scheduleStartTime,

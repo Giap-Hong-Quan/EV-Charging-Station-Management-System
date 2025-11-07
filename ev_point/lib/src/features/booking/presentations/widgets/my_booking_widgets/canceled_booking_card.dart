@@ -10,7 +10,6 @@ class CanceledBookingCard extends StatelessWidget {
   final String amount;
 
   const CanceledBookingCard({
-    Key? key,
     required this.date,
     required this.time,
     required this.name,
@@ -18,7 +17,7 @@ class CanceledBookingCard extends StatelessWidget {
     required this.power,
     required this.duration,
     required this.amount,
-  }) : super(key: key);
+  }) ;
 
   @override
   Widget build(BuildContext context) {

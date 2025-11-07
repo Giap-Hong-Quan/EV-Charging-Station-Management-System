@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:ev_point/src/features/booking/domain/entities/booking.dart';
+import 'package:ev_point/src/features/booking/domain/entities/booking_detail.dart';
 
 abstract class BookingState extends Equatable {
   const BookingState();
@@ -37,4 +38,13 @@ class BookingError extends BookingState {
 
   @override
   List<Object?> get props => [message];
+}
+
+class MyBookingDetailLoaded extends BookingState {
+  final List<BookingDetail> bookingDetails;
+
+  const MyBookingDetailLoaded(this.bookingDetails);
+
+  @override
+  List<Object?> get props => [bookingDetails];
 }
