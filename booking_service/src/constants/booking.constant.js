@@ -1,0 +1,10 @@
+export const BOOKING_STATUS = {
+    UPCOMING: "UPCOMING",
+    HELP: "HELP",
+    CONFIRMED: "CONFIRMED",
+    CANCEL: "CANCEL",
+    COMPLETE: "COMPLETE",
+    FAILED: "FAILED",
+    EXPIRED: "EXPIRED",
+};
+export const BOOKING_STATUS_LIST = Object.values(BOOKING_STATUS);
