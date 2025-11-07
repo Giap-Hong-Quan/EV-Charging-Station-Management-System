@@ -1,40 +1,103 @@
+version: "3.9"
 
 services:
-  # Station Management Service
-  station_management_service:
-    build: ./Station_Management_Service
+  # 🗄️ MySQL Database
+  user_mysql:
+    image: mysql:8.0
+    container_name: user_mysql
+    restart: always
     ports:
-      - "5001:5001"
-    env_file:
-      - ./Station_Management_Service/.env
-    depends_on:
-      - station_mongo
-
-  station_mongo:
-    image: mongo:6
-    container_name: station_mongo
-    ports:
-      - "27017:27017"
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: "user_db"
     volumes:
-      - station_data:/data/db
-  #  Analytics Reporting Service
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # 👥 User Service
+  user_service:
+    build: ./User_Service
+    container_name: user_service
+    ports:
+      - "8082:8082"
+    environment:
+      PORT: "8082"
+      NODE_ENV: "development"
+      DB_HOST: "user_mysql"
+      DB_PORT: "3306"
+      DB_NAME: "user_db"
+      DB_USER: "root"
+      DB_PASS: "123456"
+      JWT_SECRET: "supersecret_12345"
+      URL_REACT: "http://localhost:5173"
+      CLOUDINARY_CLOUD_NAME: "dqggvzehq"
+      CLOUDINARY_API_KEY: "819234615681677"
+      CLOUDINARY_API_SECRET: "6m5_aZkgnnABQR85Rt4t910sFJw"
+    depends_on:
+      user_mysql:
+        condition: service_healthy
+    volumes:
+      - ./User_Service:/app
+      - /app/node_modules
+    command: npm start
+    restart: unless-stopped
+
+  # 📊 Analytics MongoDB
+  analytics_mongo:
+    image: mongo:6
+    container_name: analytics_mongo
+    restart: always
+    ports:
+      - "27018:27017"
+    volumes:
+      - analytics_data:/data/db
+
+  # 📊 Analytics Reporting Service
   analytics_reporting_service:
     build: ./Analytics_Reporting_Service
+    container_name: analytics_reporting_service
     ports:
       - "5002:5002"
     env_file:
       - ./Analytics_Reporting_Service/.env
     depends_on:
       - analytics_mongo
-
-  analytics_mongo:
-    image: mongo:6
-    container_name: analytics_mongo
-    ports:
-      - "27018:27017"
     volumes:
-      - analytics_data:/data/db
+      - ./Analytics_Reporting_Service:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  # ⚡ Station MongoDB
+  station_mongo:
+    image: mongo:6
+    container_name: station_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - station_data:/data/db
+
+  # ⚡ Station Management Service
+  station_management_service:
+    build: ./Station_Management_Service
+    container_name: station_management_service
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./Station_Management_Service/.env
+    depends_on:
+      - station_mongo
+    volumes:
+      - ./Station_Management_Service:/app
+      - /app/node_modules
+    restart: unless-stopped
 
 volumes:
-  station_data:
+  mysql_data:
   analytics_data:
+  station_data:

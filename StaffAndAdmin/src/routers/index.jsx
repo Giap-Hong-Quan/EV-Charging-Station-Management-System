@@ -8,9 +8,11 @@ import { adminRoutes } from "./AdminRoutes";
 import LayoutStaff from "@/layouts/LayoutStaff";
 import LayoutAdmin from "@/layouts/LayoutAdmin";
 import NotFound from "@/pages/NotFound";
+import ProfileUser from "../pages/staff/ProfileUser";
 
 const AppRouter = createBrowserRouter([
     {path: "/login",element: <Login />},
+    {path:"/profile", element:<ProfileUser />},
     { path: "/unauthorized", element: <Unauthorized /> },
     { path: "/", element: <RoleRedirect /> },
   

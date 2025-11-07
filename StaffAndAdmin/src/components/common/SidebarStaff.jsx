@@ -5,26 +5,78 @@ import { mainMenu } from "@/lib/Contands"
 import { Separator } from "@radix-ui/react-dropdown-menu"
 import { AlertCircle, ChevronUp, LogOut, MapPin, Plus, Settings, User, Zap, DollarSign } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { useState } from "react"
 import CreateSessionModal from "../staff/CreateSessionModal"
 import CashPaymentModal from "../staff/CashPaymentModal"
 import ReportIssueModal from "../staff/ReportIssueModal"
+import { authService } from "@/services/authService"
+import { useState, useEffect } from "react"
+import { Badge, BarChart3, BatteryCharging, Calendar,  Home,  } from "lucide-react"
 
-
-const SidebarAdmin = ({isSidebarOpen}) => {
+const SidebarStaff = ({isSidebarOpen}) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  
   // Modal states
   const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
   const [showCashPaymentModal, setShowCashPaymentModal] = useState(false);
   const [showReportIssueModal, setShowReportIssueModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [userData, setUserData] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}')
+    } catch {
+      return {}
+    }
+    })
+  // Thêm useEffect để theo dõi thay đổi localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      try {
+        const updatedUserData = JSON.parse(localStorage.getItem('user') || '{}')
+        setUserData(updatedUserData)
+      } catch (error) {
+        console.error('Error parsing user data:', error)
+      }
+    }
 
+    // Lắng nghe sự kiện storage
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Kiểm tra định kỳ (fallback)
+    const interval = setInterval(handleStorageChange, 1000)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
+
+
+  // Hàm xử lý logout
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true)
+      
+      // Gọi API logout từ authService
+      await authService.logout()
+      
+      // Chuyển hướng về trang login
+      navigate('/login')
+      
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Trong trường hợp có lỗi, vẫn xóa local storage và chuyển hướng
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
+      navigate('/login')
+    } finally {
+      setLoggingOut(false)
+    }
+  }
   const renderMenu = (items) => {
     return items.map((item) => {
       const Icon = item.icon;
       const active = pathname === item.path;
-
+  
       return (
         <Button
           key={item.label}
@@ -40,7 +92,6 @@ const SidebarAdmin = ({isSidebarOpen}) => {
       );
     });
   };
-
   return (
     <>
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-0'} bg-gradient-to-b from-emerald-600 to-emerald-700  text-white transition-all duration-300 overflow-hidden flex flex-col shadow-xl`}>
@@ -121,11 +172,16 @@ const SidebarAdmin = ({isSidebarOpen}) => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-3 p-3 h-auto bg-emerald-800 hover:bg-emerald-700 rounded-lg text-white">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback className="bg-emerald-600">NA</AvatarFallback>
-                </Avatar>
+  <AvatarImage 
+    src={userData.avatar || userData.avatarUrl || "https://github.com/shadcn.png"} 
+    alt={userData.fullName}
+  />
+  <AvatarFallback className="bg-emerald-600">
+    {userData.fullName ? userData.fullName.charAt(0).toUpperCase() : 'NA'}
+  </AvatarFallback>
+</Avatar>
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-sm font-semibold truncate">Nguyễn Văn A</p>
+                  <p className="text-sm font-semibold truncate">{userData.fullName}</p>
                   <p className="text-xs text-emerald-200">Nhân viên trạm sạc</p>
                 </div>
                 <ChevronUp className="w-4 h-4" />
@@ -134,7 +190,9 @@ const SidebarAdmin = ({isSidebarOpen}) => {
             <DropdownMenuContent className="w-56 mb-2 ml-4">
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={()=> navigate('/profile')}
+              >
                 <User className="mr-2 h-4 w-4" />
                 <span>Hồ sơ</span>
               </DropdownMenuItem>
@@ -143,9 +201,13 @@ const SidebarAdmin = ({isSidebarOpen}) => {
                 <span>Cài đặt</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem 
+                className="text-red-600" 
+                onClick={handleLogout}
+                disabled={loggingOut}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Đăng xuất</span>
+                <span>{loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -160,4 +222,4 @@ const SidebarAdmin = ({isSidebarOpen}) => {
   )
 }
 
-export default SidebarAdmin
+export default SidebarStaff
