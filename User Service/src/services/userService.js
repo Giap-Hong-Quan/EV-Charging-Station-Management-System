@@ -63,6 +63,7 @@ let handleUserLogin = (email, password) => {
             "address",
             "avatar",
             "role_id",
+            "station_id",
           ],
           where: { email: email },
           include: [
@@ -102,6 +103,7 @@ let handleUserLogin = (email, password) => {
               avatar: user.avatar,
               role: role,
               role_id: user.role_id,
+              station_id: user.station_id,
               permissions: user.role ? user.role.permissions : {},
             };
             userData.token = token;
@@ -166,6 +168,7 @@ let createNewUser = (data) => {
           full_name: data.fullName,
           address: data.address,
           role_id: roleId,
+          station_id: data.station_id,
           social_provider: data.socialProvider,
           social_provider_id: data.socialProviderId,
           avatar: data.avatar || null,
@@ -294,9 +297,11 @@ let updateUserData = (data, file) => {
         const oldFullName = user.full_name;
         const oldAddress = user.address;
         const oldAvatar = user.avatar;
+        const station_id = user.station_id;
 
         if (data.fullName) user.full_name = data.fullName;
         if (data.address) user.address = data.address;
+        if (data.station_id) user.station_id = data.station_id;
 
         // Xử lý file từ Cloudinary
         if (file) {
@@ -312,6 +317,7 @@ let updateUserData = (data, file) => {
           fullName: { from: oldFullName, to: user.full_name },
           address: { from: oldAddress, to: user.address },
           avatar: { from: oldAvatar, to: user.avatar },
+          station_id: { from: station_id, to: user.station_id },
         });
 
         resolve({
@@ -322,6 +328,7 @@ let updateUserData = (data, file) => {
             email: user.email,
             fullName: user.full_name,
             address: user.address,
+            station_id: user.station_id,
             avatar: user.avatar, // URL từ Cloudinary
             role: user.role ? user.role.role_name : "staff",
             role_id: user.role_id,
