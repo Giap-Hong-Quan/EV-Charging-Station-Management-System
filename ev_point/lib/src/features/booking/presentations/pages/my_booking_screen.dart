@@ -2,7 +2,7 @@ import 'package:ev_point/src/core/routes/routers_path.dart';
 import 'package:ev_point/src/core/utils/app_color.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_state.dart';
-import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/buil_tab.dart';
+import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/build/buil_tab.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/my_booking_canceled.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/my_booking_completed.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/my_booking_upcoming.dart';
@@ -20,7 +20,7 @@ class MyBookingScreen extends StatefulWidget {
 
 class _MyBookingScreenState extends State<MyBookingScreen> {
   int selectedIndex = 0;
-  int bottomNavIndex = 0;
+  int bottomNavIndex = 2;
   final String userId = 'user123456'; // Example user ID
 
   @override
@@ -39,7 +39,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       context.go(RouterPaths.mapScreen);
     }
     if (index == 1) {
-      // Navigate to Search Screen (to be implemented)
     }
     if (index == 2) {
       context.go(RouterPaths.myBookingScreen);
@@ -60,7 +59,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
         elevation: 0,
         leading: const Icon(Icons.location_on, color: Colors.teal),
         title: const Text(
-          'My Booking',
+          'Đặt chỗ của tôi',
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.w600,
@@ -82,17 +81,17 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 BuildTab(
-                  title: 'Upcoming',
+                  title: 'Sắp tới',
                   isSelected: selectedIndex == 0,
                   onTap: () => setState(() => selectedIndex = 0),
                 ),
                 BuildTab(
-                  title: 'Completed',
+                  title: 'Đã hoàn thành',
                   isSelected: selectedIndex == 1,
                   onTap: () => setState(() => selectedIndex = 1),
                 ),
                 BuildTab(
-                  title: 'Canceled',
+                  title: 'Đã hủy',
                   isSelected: selectedIndex == 2,
                   onTap: () => setState(() => selectedIndex = 2),
                 ),
@@ -129,13 +128,13 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
                   final completed =
                       allBookings.where((b) {
                         final s = (b.status).toUpperCase();
-                        return s == 'COMPLETE' || s == 'COMPLETED';
+                        return s == 'COMPLETED';
                       }).toList();
 
                   final canceled =
                       allBookings.where((b) {
                         final s = (b.status).toUpperCase();
-                        return s == 'CANCELED' || s == 'CANCELLED';
+                        return s == 'CANCELLED';
                       }).toList();
 
                   return RefreshIndicator(

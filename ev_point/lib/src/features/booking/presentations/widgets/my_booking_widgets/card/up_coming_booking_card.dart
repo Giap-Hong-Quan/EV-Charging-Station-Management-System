@@ -1,7 +1,11 @@
+import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
+import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/build/build_detail.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class UpComingBookingCard extends StatefulWidget {
+  final String bookingId;
   final String date;
   final String time;
   final String name;
@@ -13,6 +17,7 @@ class UpComingBookingCard extends StatefulWidget {
   final bool hasReminder;
   const UpComingBookingCard({
     super.key,
+    required this.bookingId,
     required this.date,
     required this.time,
     required this.name,
@@ -39,6 +44,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
 
   void _showQRCode() {
     String bookingInfo = '''
+      BookingId: ${widget.bookingId}
       Date: ${widget.date}
       Time: ${widget.time}
       Location: ${widget.name}
@@ -79,7 +85,6 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -90,43 +95,12 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                   child: QrImageView(
                     data: bookingInfo,
                     version: QrVersions.auto,
-                    size: 250.0,
+                    size: 200.0,
                     backgroundColor: Colors.white,
                   ),
                 ),
-                Text(widget.bookingCode
-                  , style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${widget.date} • ${widget.time}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Điểm sạc: ${widget.pointNumber.toString()}",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
+            
+                const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -157,6 +131,41 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
           ),
         );
       },
+    );
+  }
+
+
+  void _cancelBooking() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Xác nhận hủy đặt chỗ',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Bạn có chắc chắn muốn hủy đặt chỗ này không?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Không'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<BookingCubit>().cancelBooking(
+                    bookingId: widget.bookingId,
+                  );
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Hủy đặt chỗ'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -262,11 +271,11 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                _buildDetail(Icons.ev_station, 'Công suất', widget.power),
+                BuildDetail(icon: Icons.ev_station, label: 'Công suất', value: widget.power),
                 const SizedBox(width: 20),
-                _buildDetail(Icons.access_time, 'Thời gian', widget.timeStart),
+                BuildDetail(icon: Icons.access_time, label: 'Thời gian', value: widget.timeStart),
                 const SizedBox(width: 20),
-                _buildDetail(Icons.point_of_sale, 'Điểm sạc', widget.pointNumber.toString()),
+                BuildDetail(icon: Icons.point_of_sale, label: 'Điểm sạc', value: widget.pointNumber.toString()),
                 const Spacer(),
               
               ],
@@ -281,7 +290,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: _cancelBooking,
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.teal, width: 2),
                       shape: RoundedRectangleBorder(
@@ -355,26 +364,5 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
     );
   }
 
-  Widget _buildDetail(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.grey.shade600),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  
 }

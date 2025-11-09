@@ -1,6 +1,6 @@
 // lib/src/features/booking/presentations/widgets/my_booking_widgets/my_booking_completed.dart
 import 'package:flutter/material.dart';
-import 'completed_booking_card.dart';
+import 'card/completed_booking_card.dart';
 import '../../../domain/entities/booking.dart'; 
 
 class MyBookingCompleted extends StatelessWidget {

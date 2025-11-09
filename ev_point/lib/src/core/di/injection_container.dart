@@ -1,6 +1,7 @@
 import 'package:ev_point/src/features/booking/data/datasources/booking_datasource.dart';
 import 'package:ev_point/src/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:ev_point/src/features/booking/domain/repositories/ibooking_repository.dart';
+import 'package:ev_point/src/features/booking/domain/usecase/cancel_booking.dart';
 import 'package:ev_point/src/features/booking/domain/usecase/create_booking.dart';
 import 'package:ev_point/src/features/booking/domain/usecase/get_booking_by_user_id.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
@@ -73,6 +74,7 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton(() => CreateBooking(sl()));
   sl.registerLazySingleton(() => GetBookingByUserId(sl()));
+  sl.registerLazySingleton(() => CancelBooking(sl()));
 
   //cubit
   sl.registerFactory<StationCubit>(
@@ -92,6 +94,7 @@ Future<void> initDependencies() async {
       getBookingByUserIdUseCase: sl<GetBookingByUserId>(),
       getChargingPointByIdUseCase: sl<GetChargingPointById>(),
       getStationByIdUseCase: sl<GetStationById>(),
+      cancelBookingUseCase: sl<CancelBooking>(),
     ),
   );
 

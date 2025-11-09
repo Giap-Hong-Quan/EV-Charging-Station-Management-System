@@ -1,35 +1,33 @@
-import 'package:ev_point/src/core/utils/app_color.dart';
-import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/build_detail.dart';
+import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/build/build_detail.dart';
 import 'package:flutter/material.dart';
 
-class BookingCard extends StatelessWidget {
+class CanceledBookingCard extends StatelessWidget {
   final String date;
-  final String time;
-  final String stationName;
+  final String timeCancelled;
+  final String timeBooking;
+  final String name;
   final String address;
-  final String powerKw;
-  final String duration;
-  final String amount;
-  const BookingCard({
-    super.key,
+  final String power;
+  final String chargingPoint;
+  const CanceledBookingCard({
     required this.date,
-    required this.time,
-    required this.stationName,
+    required this.timeCancelled,
+    required this.timeBooking,
+    required this.name,
     required this.address,
-    required this.powerKw,
-    required this.duration,
-    required this.amount,
+    required this.power,
+    required this.chargingPoint,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.disabled.withOpacity(0.2),
+            color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, 2),
@@ -38,10 +36,12 @@ class BookingCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // Date and Status
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -54,7 +54,7 @@ class BookingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      time,
+                      timeCancelled,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -62,14 +62,14 @@ class BookingCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                 Container(
+                Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'Canceled',
+                    'Đã Hủy',
                     style: TextStyle(
                       color: Colors.red.shade400,
                       fontSize: 12,
@@ -81,6 +81,7 @@ class BookingCard extends StatelessWidget {
             ),
           ),
 
+          // Location Info
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -103,7 +104,7 @@ class BookingCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        stationName,
+                        name,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -123,43 +124,25 @@ class BookingCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
+
+          // Details Row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                BuildDetail(icon: Icons.ev_station, label: 'Max power', value: powerKw),
+                BuildDetail(icon: Icons.ev_station, label: 'Công suất', value: power),
                 const SizedBox(width: 24),
-                BuildDetail(icon: Icons.access_time, label: 'Duration', value: duration),
-                const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Amount',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      amount,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                BuildDetail(icon: Icons.access_time, label: 'Thời gian', value: timeBooking),
+                const SizedBox(width: 24),
+                BuildDetail(icon: Icons.electrical_services, label: 'Điểm sạc', value: chargingPoint),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
-          // View Button
+
           Padding(
             padding: const EdgeInsets.all(16),
             child: SizedBox(
@@ -174,7 +157,7 @@ class BookingCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: const Text(
-                  'View',
+                  'Xem chi tiết',
                   style: TextStyle(
                     color: Colors.teal,
                     fontSize: 16,
@@ -189,5 +172,4 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-    
 }

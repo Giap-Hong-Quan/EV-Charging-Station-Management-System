@@ -29,5 +29,10 @@ class BookingRepositoryImpl implements IBookingRepository {
   @override
   Future<List<Booking>> getUserBookings({required String userId}) {
     return bookingDatasource.getUserBookings(userId: userId);
+  }
+  
+  @override
+  Future<Booking> cancelBooking({required String bookingId}) {
+    return bookingDatasource.cancelBooking(bookingId: bookingId);
   } 
 }

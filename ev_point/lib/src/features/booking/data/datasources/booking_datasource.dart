@@ -18,6 +18,9 @@ abstract class IBookingDatasource {
   Future<List<BookingModel>> getUserBookings({
     required String userId,
   });
+  Future<BookingModel> cancelBooking({
+    required String bookingId,
+  });
 }
 
 class BookingDatasourceImpl implements IBookingDatasource {
@@ -80,6 +83,27 @@ Future<BookingModel> createBooking({
       throw Exception('Unauthorized');
     } else {
       throw Exception('Failed to fetch user bookings: ${response.statusCode}');
+    }
+  }
+  
+  @override
+  Future<BookingModel> cancelBooking({required String bookingId}) async {
+    final response = await client.post(
+      Uri.parse('$baseBookingUrl/bookings/cancel'),
+      headers: {HttpHeaders.contentTypeHeader: 'application/json'},
+      body: jsonEncode({'booking_id': bookingId}),
+    );
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final data = decoded['data'];
+      return BookingModel.fromJson(data);
+    } else if (response.statusCode == 400) {
+      final decoded = jsonDecode(response.body);
+      throw Exception('Bad request: ${decoded['message'] ?? 'Invalid data'}');
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized');
+    } else {
+      throw Exception('Failed to cancel booking: ${response.statusCode}');
     }
   }
 }

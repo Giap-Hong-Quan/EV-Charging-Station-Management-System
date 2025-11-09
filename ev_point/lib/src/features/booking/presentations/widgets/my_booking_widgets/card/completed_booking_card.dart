@@ -1,6 +1,7 @@
+import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/build/build_detail.dart';
 import 'package:flutter/material.dart';
 
-class CanceledBookingCard extends StatelessWidget {
+class CompletedBookingCard extends StatelessWidget {
   final String date;
   final String time;
   final String name;
@@ -9,7 +10,8 @@ class CanceledBookingCard extends StatelessWidget {
   final String duration;
   final String amount;
 
-  const CanceledBookingCard({
+  const CompletedBookingCard({
+    Key? key,
     required this.date,
     required this.time,
     required this.name,
@@ -17,7 +19,7 @@ class CanceledBookingCard extends StatelessWidget {
     required this.power,
     required this.duration,
     required this.amount,
-  }) ;
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -65,13 +67,13 @@ class CanceledBookingCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: Colors.teal,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    'Canceled',
+                  child: const Text(
+                    'Completed',
                     style: TextStyle(
-                      color: Colors.red.shade400,
+                      color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -132,9 +134,9 @@ class CanceledBookingCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                _buildDetail(Icons.ev_station, 'Max power', power),
+                BuildDetail(icon: Icons.ev_station, label: 'Max power', value: power),
                 const SizedBox(width: 24),
-                _buildDetail(Icons.access_time, 'Duration', duration),
+                BuildDetail(icon: Icons.access_time, label: 'Duration', value: duration),
                 const Spacer(),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -162,29 +164,54 @@ class CanceledBookingCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // View Button
+          // Buttons
           Padding(
             padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.teal, width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {},
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.teal, width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'View',
+                      style: TextStyle(
+                        color: Colors.teal,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text(
-                  'View',
-                  style: TextStyle(
-                    color: Colors.teal,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Book Again',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -192,32 +219,5 @@ class CanceledBookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDetail(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.grey.shade600),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+
 }

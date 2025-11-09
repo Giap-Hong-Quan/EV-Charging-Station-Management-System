@@ -13,4 +13,7 @@ abstract class IBookingRepository {
   Future<List<Booking>> getUserBookings({
     required String userId,
   });
+  Future<Booking> cancelBooking({
+    required String bookingId,
+  });
 }

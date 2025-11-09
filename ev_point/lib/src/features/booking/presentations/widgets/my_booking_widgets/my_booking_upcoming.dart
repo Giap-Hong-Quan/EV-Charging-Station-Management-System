@@ -1,4 +1,4 @@
-import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/up_coming_booking_card.dart';
+import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/card/up_coming_booking_card.dart';
 import 'package:ev_point/src/features/charging_point/domain/entities/charging_point.dart';
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point_by_id.dart';
 import 'package:ev_point/src/features/map/domain/entities/station.dart';
@@ -6,6 +6,7 @@ import 'package:ev_point/src/features/map/domain/usecase/get_station_by_id.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/booking.dart';
+import 'package:ev_point/src/core/utils/format_date_time.dart';
 
 class MyBookingUpcoming extends StatelessWidget {
   final List<Booking> bookings;
@@ -93,10 +94,11 @@ class MyBookingUpcoming extends StatelessWidget {
 
   Widget _buildBookingCard(Booking b, Station station, ChargingPoint? point) {
     final start = b.scheduleStartTime;
-    final date = '${_mm(start.month)} ${_dd(start.day)}, ${start.year}';
-    final time = '${_hh2(start.hour)}:${_hh2(start.minute)}';
+    final date = '${mm(start.month)} ${dd(start.day)}, ${start.year}';
+    final time = '${hh2(start.hour)}:${hh2(start.minute)}';
 
     return UpComingBookingCard(
+      bookingId: b.id.toString(),
       date: date,
       time: time,
       name: station.name,
@@ -111,36 +113,20 @@ class MyBookingUpcoming extends StatelessWidget {
 
   Widget _buildFallbackCard(Booking b) {
     final start = b.scheduleStartTime;
-    final date = '${_mm(start.month)} ${_dd(start.day)}, ${start.year}';
-    final time = '${_hh2(start.hour)}:${_hh2(start.minute)}';
+    final date = '${mm(start.month)} ${dd(start.day)}, ${start.year}';
+    final time = '${hh2(start.hour)}:${hh2(start.minute)}';
 
     return UpComingBookingCard(
+      bookingId: b.id.toString(),
       date: date,
       time: time,
       name: 'Unknown Station',
       bookingCode: b.bookingCode,
-      address: 'Station ID: ${b.stationId}',
+      address: '',
       power: 'N/A',
       timeStart: time,
       pointNumber: 1,
       hasReminder: false,
     );
   }
-
-  String _hh2(int n) => n.toString().padLeft(2, '0');
-  String _dd(int n) => n.toString().padLeft(2, '0');
-  String _mm(int m) => const [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ][m - 1];
 }
