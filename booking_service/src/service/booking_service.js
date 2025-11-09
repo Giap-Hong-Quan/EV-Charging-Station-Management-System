@@ -326,6 +326,20 @@ export const BookingService = {
                 error: error.message 
             };
         }
-    }
+    },
+
+    async getBookingByBookingCode(booking_code) {
+        try {
+            const booking = await Booking.findOne({ where: { booking_code } });
+            if (!booking) {
+                return { status: 404, message: "Booking not found" };
+            }
+            return { status: 200, message: "Booking fetched successfully", data: booking };
+        } catch (error) {
+            console.error("Error fetching booking by code:", error);
+            return { status: 500, message: "Internal server error" };
+        }
+    },
+
 };
 

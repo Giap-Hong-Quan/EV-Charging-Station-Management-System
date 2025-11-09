@@ -27,6 +27,14 @@ export async function getBookingsByUserId(req, res) {
     return res.status(result.status).json(result);
 }   
 
+// get booking by booking code
+export async function getBookingByCode(req, res) {
+    const { booking_code } = req.params;
+    const result = await BookingService.getBookingByBookingCode(booking_code);
+    return res.status(result.status).json(result);
+}
+
+
 // Validate booking for a user
 export const validateBookingForSession = async (req, res) => {
     await BookingService.validateBookingForSession(req, res);
@@ -37,7 +45,7 @@ export async function updateBookingStatus(req, res) {
     const { id, status } = req.body;
     const result = await BookingService.updateBookingStatus(id, status);
     return res.status(result.status).json(result);
-}
+};
 
 
 //cancel booking
@@ -46,3 +54,5 @@ export const cancelBooking = async (req, res) => {
     const result = await BookingService.cancelBooking(booking_id);
     return res.status(result.status).json(result);
 };
+
+

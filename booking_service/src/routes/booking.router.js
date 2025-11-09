@@ -1,15 +1,17 @@
 import express from "express";
-import { createBooking, getAllBookings, getBookingById, getBookingsByUserId, validateBookingForSession,updateBookingStatus,cancelBooking } from "../controllers/booking.controller.js";
+import * as BookingController from "../controllers/booking.controller.js";
 
 const router = express.Router();
 
-router.post("/", createBooking);
-router.get("/", getAllBookings);
-router.post("/validate", validateBookingForSession);
-router.get("/:id", getBookingById);
-router.get("/user/:user_id", getBookingsByUserId);
-router.put("/update_status/", updateBookingStatus);
-router.post("/cancel", cancelBooking);
+router.post("/", BookingController.createBooking);
+router.get("/", BookingController.getAllBookings);
+router.post("/validate", BookingController.validateBookingForSession);
+router.get("/:id", BookingController.getBookingById);
+router.get("/code/:booking_code", BookingController.getBookingByCode);
+router.get("/user/:user_id", BookingController.getBookingsByUserId);
+router.put("/update_status/", BookingController.updateBookingStatus);
+router.post("/cancel", BookingController.cancelBooking);
+
 
 export default router;
     

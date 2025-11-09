@@ -92,10 +92,9 @@ Booking.init(
     timestamps: true,
     indexes: [
       { fields: ['user_id'] },
-      { fields: ['station_id'] },
-      { fields: ['point_id'] },
       { fields: ['status'] },
       { fields: ['point_id', 'status',] },
+      { fields: ['booking_code'] ,unique: true},
     ],
     hooks: {
       beforeValidate(instance) {
