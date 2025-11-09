@@ -12,9 +12,20 @@ Booking.init(
       autoIncrement: true,
       allowNull: false,
     },
-
-
+    booking_code: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
     user_id: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    vehicle_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    vehicle_number: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -70,14 +81,7 @@ Booking.init(
     cancelled_at: {
       type: DataTypes.DATE,
       allowNull: true,
-      validate: {
-        isDate: true,
-        isAfterStartIfSet(value) {
-          if (value && new Date(value) <= new Date(this.schedule_start_time)) {
-            throw new Error('cancelled_at must be after schedule_start_time');
-          }
-        },
-      },
+
     },
   },
   {
@@ -91,9 +95,7 @@ Booking.init(
       { fields: ['station_id'] },
       { fields: ['point_id'] },
       { fields: ['status'] },
-      { fields: ['schedule_start_time'] },
-      { fields: ['schedule_end_time'] },
-      { fields: ['point_id', 'status', 'schedule_start_time', 'schedule_end_time'] },
+      { fields: ['point_id', 'status',] },
     ],
     hooks: {
       beforeValidate(instance) {
