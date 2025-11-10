@@ -1,0 +1,25 @@
+services:
+  booking_service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: charging_session_service
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      MONGO_URI: mongodb://evcs_mongo:27017/evcsms_db
+    depends_on:
+      - evcs_mongo
+
+  evcs_mongo:
+    image: mongo:6.0
+    container_name: evcs_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
