@@ -17,11 +17,32 @@ import {
   Zap,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-
+import { useState } from "react";
 const SidebarAdmin = ({ isSidebarOpen }) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const [loggingOut, setLoggingOut] = useState(false)
 
+  const handleLogout = async () => {
+      try {
+        setLoggingOut(true)
+        
+        // Gọi API logout từ authService
+        await authService.logout()
+        
+        // Chuyển hướng về trang login
+        navigate('/login')
+        
+      } catch (error) {
+        console.error('Logout error:', error)
+        // Trong trường hợp có lỗi, vẫn xóa local storage và chuyển hướng
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+        navigate('/login')
+      } finally {
+        setLoggingOut(false)
+      }
+    }
  
 
   const renderMenu = (section) => (
@@ -105,8 +126,13 @@ const SidebarAdmin = ({ isSidebarOpen }) => {
                 <Settings className="mr-2 h-4 w-4" /> Cài đặt
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
-                <LogOut className="mr-2 h-4 w-4" /> Đăng xuất
+              <DropdownMenuItem 
+                className="text-red-600" 
+                onClick={handleLogout}
+                disabled={loggingOut}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>{loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
