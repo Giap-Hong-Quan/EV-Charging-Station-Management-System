@@ -1,13 +1,13 @@
-import express from "express";
-import bodyParser from "body-parser";
-import initWebRoutes from "./route/web.js";
-import db from "./models/index.js";
-import dotenv from "dotenv";
-import cors from "cors";
+const express = require("express");
+const bodyParser = require("body-parser");
+const initWebRoutes = require("./route/web");
+const db = require("./models");
+const dotenv = require("dotenv");
+const cors = require("cors");
 
 dotenv.config();
 
-let app = express();
+const app = express();
 
 // Body parser middleware
 app.use(express.json());
@@ -30,7 +30,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
     timestamp: new Date().toISOString(),
-    database: "Connected", // Sẽ cập nhật sau khi kết nối DB
+    database: "Connected",
     environment: process.env.NODE_ENV || "development",
   });
 });
@@ -38,7 +38,7 @@ app.get("/health", (req, res) => {
 // Hàm seed user roles
 const seedUserRoles = async () => {
   try {
-    console.log(" Seeding user roles...");
+    console.log("🔹 Seeding user roles...");
 
     const roles = [
       {
@@ -81,15 +81,15 @@ const seedUserRoles = async () => {
       });
 
       if (created) {
-        console.log(` Created role: ${roleData.role_name}`);
+        console.log(`✅ Created role: ${roleData.role_name}`);
       } else {
-        console.log(` Role already exists: ${roleData.role_name}`);
+        console.log(`ℹ️ Role already exists: ${roleData.role_name}`);
       }
     }
 
-    console.log(" User roles seeding completed!");
+    console.log("✅ User roles seeding completed!");
   } catch (error) {
-    console.error(" Error seeding user roles:", error);
+    console.error("❌ Error seeding user roles:", error);
     throw error;
   }
 };
@@ -98,22 +98,18 @@ const seedUserRoles = async () => {
 const connectDB = async () => {
   try {
     await db.sequelize.authenticate();
-    console.log(" Database connection has been established successfully.");
+    console.log("✅ Database connection established successfully.");
 
-    // Sync database
     const syncOptions =
-      process.env.NODE_ENV === "production"
-        ? { alter: false }
-        : { alter: true };
+      process.env.NODE_ENV === "production" ? { alter: false } : { alter: true };
 
     await db.sequelize.sync(syncOptions);
-    console.log(" Database synced successfully.");
+    console.log("✅ Database synced successfully.");
 
-    // Seed user roles
     await seedUserRoles();
   } catch (error) {
-    console.error(" Unable to connect to the database:", error);
-    throw error; // Ném lỗi để xử lý ở catch bên ngoài
+    console.error("❌ Unable to connect to the database:", error);
+    throw error;
   }
 };
 
@@ -122,7 +118,7 @@ initWebRoutes(app);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(" Error stack:", err.stack);
+  console.error("❌ Error stack:", err.stack);
   res.status(500).json({
     errCode: 1,
     errMessage: "Something went wrong!",
@@ -140,25 +136,23 @@ app.use((req, res) => {
   });
 });
 
-let port = process.env.PORT || 8082;
+const port = process.env.PORT || 8082;
 
 // Khởi động máy chủ với database connection
 const startServer = async () => {
   try {
-    // Kết nối database và seed data
     await connectDB();
 
-    // Khởi động server
     app.listen(port, () => {
-      console.log(` Server is running on port ${port}`);
-      console.log(` Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(` JWT Secret: ${process.env.JWT_SECRET ? "Set" : "Not set"}`);
+      console.log(`🚀 Server is running on port ${port}`);
+      console.log(`🌱 Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`🔑 JWT Secret: ${process.env.JWT_SECRET ? "Set" : "Not set"}`);
       console.log(
-        ` Frontend URL: ${process.env.URL_REACT || "http://localhost:3000"}`
+        `🌐 Frontend URL: ${process.env.URL_REACT || "http://localhost:3000"}`
       );
     });
   } catch (error) {
-    console.error(" Failed to start server:", error);
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 };
@@ -166,4 +160,4 @@ const startServer = async () => {
 // Khởi động server
 startServer();
 
-export default app;
+module.exports = app;

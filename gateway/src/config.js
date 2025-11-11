@@ -1,20 +1,14 @@
-import "dotenv/config.js";
-
 export const config = {
-  port: process.env.GATEWAY_PORT || 3000,
-  bookingService: {
-    baseUrl: process.env.BOOKING_SERVICE_URL,
-  },
   stationService: {
-    baseUrl: process.env.STATION_SERVICE_URL,
+    baseUrl: "http://station_management_service:5001"
   },
-  cors: {
-    origin: process.env.CORS_ORIGIN || "*",
-    credentials: true
+  userService: {
+    baseUrl: "http://user_service:8082"
   },
-  rateLimit: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
+  bookingService: {
+    baseUrl: "http://booking_service:5000"
+  },
+  analyticsService: {
+    baseUrl: "http://analytics_reporting_service:5002"
   }
 };
-
