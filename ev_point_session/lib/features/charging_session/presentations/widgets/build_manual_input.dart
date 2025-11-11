@@ -1,4 +1,3 @@
-import 'package:ev_point_session/features/charging_session/presentations/widgets/build_drop_down_filed.dart';
 import 'package:ev_point_session/features/charging_session/presentations/widgets/build_selection_title.dart';
 import 'package:ev_point_session/features/charging_session/presentations/widgets/build_text_field.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +7,8 @@ class BuildManualInput extends StatelessWidget {
   final TextEditingController bookingCodeController;
   final TextEditingController vehicleNameController;
   final TextEditingController vehicleNumberController;
+  final TextEditingController durationController;
 
-  final List<String> durations;
-  final String? selectedDuration;
   final ValueChanged<String?> onDurationChanged;
 
   final VoidCallback? onSubmit;
@@ -21,8 +19,7 @@ class BuildManualInput extends StatelessWidget {
     required this.bookingCodeController,
     required this.vehicleNameController,
     required this.vehicleNumberController,
-    required this.durations,
-    required this.selectedDuration,
+    required this.durationController,
     required this.onDurationChanged,
     this.onSubmit,
   });
@@ -40,28 +37,22 @@ class BuildManualInput extends StatelessWidget {
             const SizedBox(height: 16),
 
 
-            BuildTextField(label: 'Mã đặt chỗ', icon: Icons.code, keyboardType: TextInputType.text),
+            BuildTextField(label: 'Mã đặt chỗ', icon: Icons.code, keyboardType: TextInputType.text, controller: bookingCodeController),
             const SizedBox(height: 16),
 
-            BuildTextField(label: 'Tên xe', icon: Icons.directions_car, keyboardType: TextInputType.text),
+            BuildTextField(label: 'Tên xe', icon: Icons.directions_car, keyboardType: TextInputType.text, controller: vehicleNameController),
             const SizedBox(height: 16),
 
-            BuildTextField(label: 'Biển số xe', icon: Icons.confirmation_number, keyboardType: TextInputType.text),
+            BuildTextField(label: 'Biển số xe', icon: Icons.confirmation_number, keyboardType: TextInputType.text, controller: vehicleNumberController),
 
             const SizedBox(height: 16),
-            BuildDropDownFiled(
-              label: 'Thời gian sạc',
-              icon: Icons.access_time,
-              value: selectedDuration,
-              durations: durations,
-              onDurationChanged: onDurationChanged,
-            ),
+            BuildTextField(label: 'Thời gian', icon: Icons.timer, keyboardType: TextInputType.number, controller: durationController),
 
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: onSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   foregroundColor: Colors.white,

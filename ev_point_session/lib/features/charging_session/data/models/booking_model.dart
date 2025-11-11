@@ -16,39 +16,52 @@ class BookingModel extends Booking {
     super.cancelledAt,
   });
 
+  
   factory BookingModel.fromJson(Map<String, dynamic> json) {
+    int parseId(dynamic value) {
+        if (value == null) return 0;
+        if (value is int) return value;
+        if (value is String) return int.tryParse(value) ?? 0;
+        return 0;
+      }
+      DateTime? parseDateTime(dynamic value) {
+        if (value == null || value.toString().isEmpty) return null;
+        try {
+          return DateTime.parse(value.toString());
+        } catch (e) {
+          return null;
+        }
+      }
     return BookingModel(
-      id: json['id'],
-      bookingCode: json['booking_code'],
-      userId: json['user_id'],  
-      stationId: json['station_id'],
-      pointId: json['point_id'],
-      vehicleName: json['vehicle_name'],
-      vehicleNumber: json['vehicle_number'],
-      scheduleStartTime: DateTime.parse(json['schedule_start_time']),
-      scheduleEndTime: DateTime.parse(json['schedule_end_time']),
-      holdExpireAt: json['hold_expires_at'],
-      status: json['status'],
-      cancelledAt: json['cancelled_at'] != null 
-          ? DateTime.parse(json['cancelled_at']) 
-          : null,  
-    );
+      id: parseId(json['id']),
+        bookingCode: json['booking_code']?.toString() ?? '',
+        userId: json['user_id']?.toString() ?? '',
+        stationId: json['station_id']?.toString() ?? '',
+        pointId: json['point_id']?.toString() ?? '',
+        vehicleName: json['vehicle_name']?.toString() ?? '',
+        vehicleNumber: json['vehicle_number']?.toString() ?? '',
+        scheduleStartTime: parseDateTime(json['schedule_start_time']),
+        scheduleEndTime: parseDateTime(json['schedule_end_time']),
+        holdExpireAt: json['hold_expires_at']?.toString(),
+        status: json['status']?.toString() ?? '',
+        cancelledAt: parseDateTime(json['cancelled_at']),
+      );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'booking_code': bookingCode,
-      'user_id': userId,  
+      'user_id': userId,
       'station_id': stationId,
       'point_id': pointId,
       'vehicle_name': vehicleName,
       'vehicle_number': vehicleNumber,
-      'schedule_start_time': scheduleStartTime.toIso8601String(),
-      'schedule_end_time': scheduleEndTime.toIso8601String(),
+      'schedule_start_time': scheduleStartTime?.toIso8601String(),
+      'schedule_end_time': scheduleEndTime?.toIso8601String(),
       'hold_expires_at': holdExpireAt,
       'status': status,
-      'cancelled_at': cancelledAt?.toIso8601String(),  
+      'cancelled_at': cancelledAt?.toIso8601String(),
     };
   }
 }

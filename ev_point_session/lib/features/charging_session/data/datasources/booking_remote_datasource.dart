@@ -15,6 +15,7 @@ class BookingRemoteDatasource implements IBookingRemoteDatasource {
   @override
   Future<BookingModel> getBookingByBookingCode(String bookingCode) {
     final url = Uri.parse('${baseUrl}bookings/code/$bookingCode');
+    print('Fetching booking from URL: $url');
     return client.get(url).then((response) {
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = 
