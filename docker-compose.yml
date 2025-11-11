@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # 🗄️ MySQL Database
   user_mysql:
@@ -15,39 +13,26 @@ services:
       - user_data:/var/lib/mysql
     networks:
       - evcs_network
-    healthcheck:  # ⬅️ THÊM HEALTHCHECK
+    healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
-      interval: 5s
-      timeout: 3s
+      interval: 3s
+      timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 10s
 
-  # 👥 User Service
   user_service:
     build: ./User_Service
     container_name: user_service
     ports:
       - "8082:8082"
-    environment:
-      NODE_ENV: development
-      PORT: 8082
-      DB_HOST: user_mysql
-      DB_PORT: 3306
-      DB_NAME: user_db
-      DB_USER: root
-      DB_PASSWORD: "123456"
-      JWT_SECRET: supersecret_12345
-      URL_REACT: http://localhost:5173
-      CLOUDINARY_CLOUD_NAME: dqggvzehq
-      CLOUDINARY_API_KEY: 819234615681677
-      CLOUDINARY_API_SECRET: 6m5_aZkgnnABQR85Rt4t910sFJw
+    env_file:
+      - ./User_Service/.env
     depends_on:
       user_mysql:
-        condition: service_healthy  # ⬅️ ĐÃ CÓ HEALTHCHECK Ở TRÊN
+        condition: service_healthy   # ← CHỜ MySQL HOÀN TOÀN SẴN SÀNG
     volumes:
       - ./User_Service:/app
-      - /app/node_modules
-    command: npm run dev 
+    command: npm run dev
     restart: unless-stopped
     networks:
       - evcs_network
