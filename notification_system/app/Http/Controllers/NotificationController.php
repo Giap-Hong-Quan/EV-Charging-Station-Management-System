@@ -157,4 +157,79 @@ class NotificationController extends Controller
             ], 500);
         }
     }
+    /**
+     * Xử lý payment notification từ payment service
+     */
+    public function sendPaymentNotification(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'type' => 'required|string',
+                'data' => 'required|array',
+                'template' => 'required|string'
+            ]);
+
+            Log::info('💰 Payment notification received', $data);
+
+            $notificationData = $data['data'];
+            $templateName = $data['template'];
+
+            // Gửi email template nếu có user_email
+            if (isset($notificationData['user_email'])) {
+                $this->sendPaymentTemplateEmail($notificationData, $templateName);
+            }
+
+            // Log payment notification
+            $log = new NotificationLog();
+            $log->template_id = null;
+            $log->receiver = $notificationData['user_email'] ?? 'system';
+            $log->status = 'sent';
+            $log->message = "Payment notification: {$templateName}";
+            $log->type = 'payment_notification';
+            $log->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment notification processed successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Payment notification error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process payment notification'
+            ], 500);
+        }
+    }
+
+    /**
+     * Gửi email template cho payment
+     */
+    protected function sendPaymentTemplateEmail(array $notificationData, string $templateName): void
+    {
+        try {
+            // Chuẩn bị variables cho template
+            $variables = [
+                'amount' => $notificationData['amount'] ?? 'N/A',
+                'transaction_id' => $notificationData['transaction_id'] ?? 'N/A',
+                'order_id' => $notificationData['order_id'] ?? 'N/A',
+                'reason' => $notificationData['reason'] ?? 'N/A'
+            ];
+
+            // Gửi email qua endpoint template có sẵn
+            Http::post("http://127.0.0.1:8000/api/notifications/send-template-email", [
+                'to' => $notificationData['user_email'],
+                'template_name' => $templateName,
+                'variables' => $variables
+            ]);
+
+            Log::info('Payment template email sent', [
+                'to' => $notificationData['user_email'],
+                'template' => $templateName
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send payment template email: ' . $e->getMessage());
+        }
+    }
 }

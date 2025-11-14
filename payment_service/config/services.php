@@ -37,7 +37,7 @@ return [
 
     // Thêm cấu hình cho notification service
     'notification' => [
-        'url' => env('NOTIFICATION_SERVICE_URL', 'http://localhost:3001'),
+        'url' => env('NOTIFICATION_SERVICE_URL', 'http://localhost:8000'),
         'timeout' => env('NOTIFICATION_SERVICE_TIMEOUT', 10),
         'retry_attempts' => env('NOTIFICATION_RETRY_ATTEMPTS', 3),
         'retry_delay' => env('NOTIFICATION_RETRY_DELAY', 100),
