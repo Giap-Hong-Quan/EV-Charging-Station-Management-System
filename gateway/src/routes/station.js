@@ -9,7 +9,7 @@ export function setupRoutes_station(app) {
     createProxyMiddleware({
       target: config.stationService.baseUrl,
       changeOrigin: true,
-      pathRewrite: { "^/gateway/api/v1/station-service": "/api/v1" },
+      pathRewrite: { "^/": "/api/v1/" },
       logLevel: "debug", // 👈 Thêm dòng này
       onProxyReq: (proxyReq, req) => {
         console.log(`➡️ [Station] ${req.method} ${req.originalUrl} → ${proxyReq.getHeader('host')}${proxyReq.path}`);

@@ -114,8 +114,7 @@ const connectDB = async () => {
 };
 
 // Khởi tạo routes
-initWebRoutes(app);
-
+app.use("/api/v1", initWebRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("❌ Error stack:", err.stack);

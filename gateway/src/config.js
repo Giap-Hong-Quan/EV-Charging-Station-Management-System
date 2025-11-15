@@ -1,4 +1,6 @@
 export const config = {
+  port: process.env.PORT || 8000, // <--- FIX QUAN TRỌNG
+
   stationService: {
     baseUrl: "http://station_management_service:5001"
   },

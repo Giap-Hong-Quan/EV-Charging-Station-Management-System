@@ -11,14 +11,20 @@ import { setupRoutes_analytics } from "./routes/analytics.js";
 
 const app = express();
 
-// Middleware cơ bản
+// ✅ Tăng timeout cho Express
+app.use((req, res, next) => {
+  req.setTimeout(60000); // 60 seconds
+  res.setTimeout(60000);
+  next();
+});
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
-// Health check TRƯỚC rate limit và proxy
+// Health check
 app.get("/health", (req, res) => {
   res.json({
     status: "OK",
@@ -27,39 +33,46 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Rate limiting CHỈ cho /gateway/*
-app.use("/gateway", rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200
-}));
+// Rate limit
+app.use(
+  "/gateway",
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200
+  })
+);
 
-// ⚠️ QUAN TRỌNG: Setup proxy routes NGAY SAU rate limit
+// Load proxy routes
 setupRoutes_station(app);
 setupRoutes_user(app);
 setupRoutes_booking(app);
 setupRoutes_analytics(app);
 
-// 404 handler - bắt tất cả routes không match
+// 404 handler
 app.use((req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     error: "Route not found",
-    path: req.path 
+    path: req.path
   });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error("Gateway Error:", err.message);
-  res.status(err.status || 500).json({ 
+  console.error("Gateway Error:", err);
+  res.status(err.status || 500).json({
     error: "Internal Server Error",
-    message: err.message 
+    message: err.message
   });
 });
 
-const PORT = config.port;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Gateway running on port ${PORT}`);
-  console.log(`📡 Health: http://localhost:${PORT}/health`);
+// ✅ Tạo server với timeout setting
+const server = app.listen(config.port, "0.0.0.0", () => {
+  console.log(`🚀 Gateway running on port ${config.port}`);
 });
+
+// ✅ Set timeout cho server
+server.timeout = 60000; // 60 seconds
+server.keepAliveTimeout = 60000;
+server.headersTimeout = 61000; // Slightly higher than keepAliveTimeout
 
 export default app;

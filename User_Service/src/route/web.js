@@ -2,76 +2,71 @@ const express = require("express");
 const userController = require("../controllers/userController");
 const { verifyToken } = require("../middleware/authmiddleware");
 const { adminMiddleware } = require("../middleware/adminMiddleware");
-const db = require("../models/index");
 const upload = require("../middleware/upload");
-let router = express.Router();
 
-let initWebRoutes = (app) => {
-  // Authentication APIs
-  router.post("/api/v1/auth/login", userController.handleLogin);
-  router.post(
-    "/api/v1/auth/register",
-    upload.single("avatar"),
-    userController.handleCreateNewUser
-  );
-  router.post("/api/v1/auth/social/google", userController.handleGoogleLogin);
-  router.post("/api/v1/auth/logout", userController.handleLogout);
-  router.post(
-    "/api/v1/auth/forgot-password",
-    userController.handleForgotPassword
-  );
-  router.post(
-    "/api/v1/auth/reset-password",
-    verifyToken,
-    userController.handleResetPassword
-  );
+const router = express.Router();
 
-  // User Profile APIs
-  router.get("/api/v1/profile", verifyToken, userController.handleGetProfile);
-  // router.put(
-  //   "/api/v1/profile",
-  //   verifyToken,
-  //   userController.handleUpdateProfile
-  // );
-  router.put(
-    "/api/v1/profile",
-    verifyToken,
-    upload.single("avatar"),
-    userController.handleUpdateProfile
-  );
+// Authentication APIs
+router.post("/auth/login", userController.handleLogin);
 
-  // User Management APIs (Admin)
-  router.get(
-    "/api/v1/users",
-    verifyToken,
-    adminMiddleware,
-    userController.handleGetAllUsers
-  );
-  router.get(
-    "/api/v1/users/:id",
-    verifyToken,
-    adminMiddleware,
-    userController.handleGetUserById
-  );
-  router.put(
-    "/api/v1/users/:id",
-    verifyToken,
-    adminMiddleware,
-    userController.handleEditUser
-  );
-  router.delete(
-    "/api/v1/users/:id",
-    verifyToken,
-    adminMiddleware,
-    userController.handleDeleteUser
-  );
+router.post(
+  "/auth/register",
+  upload.single("avatar"),
+  userController.handleCreateNewUser
+);
 
-  // Root endpoint
-  router.get("/", (req, res) => {
-    return res.send("Hello world");
-  });
+router.post("/auth/social/google", userController.handleGoogleLogin);
+router.post("/auth/logout", userController.handleLogout);
+router.post("/auth/forgot-password", userController.handleForgotPassword);
 
-  return app.use("/", router);
-};
+router.post(
+  "/auth/reset-password",
+  verifyToken,
+  userController.handleResetPassword
+);
 
-module.exports = initWebRoutes;
+// User Profile
+router.get("/profile", verifyToken, userController.handleGetProfile);
+
+router.put(
+  "/profile",
+  verifyToken,
+  upload.single("avatar"),
+  userController.handleUpdateProfile
+);
+
+// Admin - User Management
+router.get(
+  "/users",
+  verifyToken,
+  adminMiddleware,
+  userController.handleGetAllUsers
+);
+
+router.get(
+  "/users/:id",
+  verifyToken,
+  adminMiddleware,
+  userController.handleGetUserById
+);
+
+router.put(
+  "/users/:id",
+  verifyToken,
+  adminMiddleware,
+  userController.handleEditUser
+);
+
+router.delete(
+  "/users/:id",
+  verifyToken,
+  adminMiddleware,
+  userController.handleDeleteUser
+);
+
+// Default route
+router.get("/", (req, res) => {
+  res.send("Hello world");
+});
+
+module.exports = router;
