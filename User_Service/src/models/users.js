@@ -51,7 +51,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 3,
       },
       station_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING(255),
         allowNull: true,
       },
       social_provider: {

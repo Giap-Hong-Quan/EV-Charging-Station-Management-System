@@ -1,8 +1,10 @@
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { pointService } from '@/services/pointService';
+import { stationService } from '@/services/stationService';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
@@ -17,110 +19,142 @@ const ChargingPointStaff = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedCharger, setSelectedCharger] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  
+  const [chargers, setChargers] = useState([]);
+  const [station, setStation] = useState(null);
   // Dữ liệu các điểm sạc của trạm này
-  const chargers = [
-    {
-      id: 'A01',
-      type: 'CCS2',
-      status: 'charging',
-      statusText: 'Đang sạc',
-      power: '120 kW',
-      note: null,
-      customerName: 'Nguyễn Văn A',
-      vehiclePlate: '29A-12345',
-      startTime: '14:30',
-      phone: '0901234567'
-    },
-    {
-      id: 'A02',
-      type: 'CCS2',
-      status: 'offline',
-      statusText: 'Offline',
-      power: null,
-      note: 'Không hoạt động'
-    },
-    {
-      id: 'B01',
-      type: 'CHAdeMO',
-      status: 'available',
-      statusText: 'Trống',
-      power: null,
-      note: 'Sẵn sàng'
-    },
-    {
-      id: 'B02',
-      type: 'CHAdeMO',
-      status: 'reserved',
-      statusText: 'Đặt chỗ',
-      power: null,
-      note: 'Giữ chỗ đến 15:30',
-      customerName: 'Phạm Thị D',
-      phone: '0934567890',
-      reservedTime: '15:30'
-    },
-    {
-      id: 'C01',
-      type: 'AC',
-      status: 'charging',
-      statusText: 'Đang sạc',
-      power: '22 kW',
-      note: null,
-      customerName: 'Trần Thị B',
-      vehiclePlate: '30B-67890',
-      startTime: '15:00',
-      phone: '0912345678'
-    },
-    {
-      id: 'C02',
-      type: 'AC',
-      status: 'available',
-      statusText: 'Trống',
-      power: null,
-      note: 'Sẵn sàng'
-    },
-    {
-      id: 'C03',
-      type: 'AC',
-      status: 'available',
-      statusText: 'Trống',
-      power: null,
-      note: 'Sẵn sàng'
-    },
-    {
-      id: 'C04',
-      type: 'AC',
-      status: 'available',
-      statusText: 'Trống',
-      power: null,
-      note: 'Sẵn sàng'
-    }
-  ];
+  // const chargers = [
+  //   {
+  //     id: 'A01',
+  //     type: 'CCS2',
+  //     status: 'charging',
+  //     statusText: 'Đang sạc',
+  //     power: '120 kW',
+  //     note: null,
+  //     customerName: 'Nguyễn Văn A',
+  //     vehiclePlate: '29A-12345',
+  //     startTime: '14:30',
+  //     phone: '0901234567'
+  //   },
+  //   {
+  //     id: 'A02',
+  //     type: 'CCS2',
+  //     status: 'offline',
+  //     statusText: 'Offline',
+  //     power: null,
+  //     note: 'Không hoạt động'
+  //   },
+  //   {
+  //     id: 'B01',
+  //     type: 'CHAdeMO',
+  //     status: 'available',
+  //     statusText: 'Trống',
+  //     power: null,
+  //     note: 'Sẵn sàng'
+  //   },
+  //   {
+  //     id: 'B02',
+  //     type: 'CHAdeMO',
+  //     status: 'reserved',
+  //     statusText: 'Đặt chỗ',
+  //     power: null,
+  //     note: 'Giữ chỗ đến 15:30',
+  //     customerName: 'Phạm Thị D',
+  //     phone: '0934567890',
+  //     reservedTime: '15:30'
+  //   },
+  //   {
+  //     id: 'C01',
+  //     type: 'AC',
+  //     status: 'charging',
+  //     statusText: 'Đang sạc',
+  //     power: '22 kW',
+  //     note: null,
+  //     customerName: 'Trần Thị B',
+  //     vehiclePlate: '30B-67890',
+  //     startTime: '15:00',
+  //     phone: '0912345678'
+  //   },
+  //   {
+  //     id: 'C02',
+  //     type: 'AC',
+  //     status: 'available',
+  //     statusText: 'Trống',
+  //     power: null,
+  //     note: 'Sẵn sàng'
+  //   },
+  //   {
+  //     id: 'C03',
+  //     type: 'AC',
+  //     status: 'available',
+  //     statusText: 'Trống',
+  //     power: null,
+  //     note: 'Sẵn sàng'
+  //   },
+  //   {
+  //     id: 'C04',
+  //     type: 'AC',
+  //     status: 'available',
+  //     statusText: 'Trống',
+  //     power: null,
+  //     note: 'Sẵn sàng'
+  //   }
+  // ];
+// lấy station_id từ user đăng nhập
+const token = localStorage.getItem("token");
+let user = null;
+if (token) {
+  user = JSON.parse(atob(token.split(".")[1]));
+  console.log(user.station_id);
+}
 
+  useEffect(() => {
+    const fetchData = async ()=>{
+      try {
+        const res= await pointService.getPointsByStationId(user.station_id);
+        setChargers(res.points);
+      } catch (error) {
+         console.error("Lỗi load points:", error);
+      }
+    }
+    fetchData();
+  }, []);
+  //station
+useEffect(() => {
+  const fetchData = async ()=>{
+    try {
+      const res= await stationService.getStationById(user.station_id);
+      setStation(res);
+      console.log("dư lie" +res);
+    } catch (error) {
+      console.error("Lỗi load station:", error);
+    }
+  }
+  fetchData();
+}, []);
   const getChargerStatusStyle = (status) => {
     switch (status) {
-      case 'charging':
+      case 'Charging':
         return {
           bg: 'bg-blue-500/10',
           border: 'border-blue-400',
           text: 'text-blue-700',
           badge: 'bg-blue-500'
         };
-      case 'available':
+      case 'Empty':
         return {
           bg: 'bg-green-500/10',
           border: 'border-green-400',
           text: 'text-green-700',
           badge: 'bg-green-500'
         };
-      case 'reserved':
+      case 'Reservation':
         return {
           bg: 'bg-yellow-500/10',
           border: 'border-yellow-400',
           text: 'text-yellow-700',
           badge: 'bg-yellow-500'
         };
-      case 'offline':
+      case 'Maintenance':
         return {
           bg: 'bg-red-500/10',
           border: 'border-red-400',
@@ -139,9 +173,10 @@ const ChargingPointStaff = () => {
 
   const filteredChargers = chargers.filter(charger => {
     const matchesSearch = searchText === '' || 
-      charger.id.toLowerCase().includes(searchText.toLowerCase());
+      String(charger.point_number).toLowerCase()
+.includes(searchText.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || charger.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || charger.point_status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -150,7 +185,14 @@ const ChargingPointStaff = () => {
     setSelectedCharger(charger);
     setShowDetailDialog(true);
   };
+const mapStatus = {
+  Charging: "Đang sạc",
+  Empty: "Trống",
+  Reservation: "Đặt chỗ",
+  Maintenance: "Bảo trì",
+};
 
+const getStatusText = (s) => mapStatus[s] || "Không xác định";
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -174,10 +216,10 @@ const ChargingPointStaff = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="charging">Đang sạc</SelectItem>
-                  <SelectItem value="available">Trống</SelectItem>
-                  <SelectItem value="reserved">Đặt chỗ</SelectItem>
-                  <SelectItem value="offline">Offline</SelectItem>
+                  <SelectItem value="Charging">Đang sạc</SelectItem>
+                  <SelectItem value="Empty">Trống</SelectItem>
+                  <SelectItem value="Reservation">Đặt chỗ</SelectItem>
+                  <SelectItem value="Maintenance">Bảo trì</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -189,25 +231,25 @@ const ChargingPointStaff = () => {
           <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 shadow-sm">
             <p className="text-sm text-blue-600 mb-1 font-medium">Đang sạc</p>
             <p className="text-3xl font-bold text-blue-700">
-              {chargers.filter(c => c.status === 'charging').length}
+              {chargers.filter(c => c.point_status === 'Charging').length}
             </p>
           </div>
           <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200 shadow-sm">
-            <p className="text-sm text-green-600 mb-1 font-medium">Sẵn sàng</p>
+            <p className="text-sm text-green-600 mb-1 font-medium">Trống</p>
             <p className="text-3xl font-bold text-green-700">
-              {chargers.filter(c => c.status === 'available').length}
+              {chargers.filter(c => c.point_status === 'Empty').length}
             </p>
           </div>
           <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-200 shadow-sm">
             <p className="text-sm text-yellow-600 mb-1 font-medium">Đặt chỗ</p>
             <p className="text-3xl font-bold text-yellow-700">
-              {chargers.filter(c => c.status === 'reserved').length}
+              {chargers.filter(c => c.point_status === 'Reservation').length}
             </p>
           </div>
           <div className="bg-red-50 p-4 rounded-lg border-2 border-red-200 shadow-sm">
             <p className="text-sm text-red-600 mb-1 font-medium">Offline</p>
             <p className="text-3xl font-bold text-red-700">
-              {chargers.filter(c => c.status === 'offline').length}
+              {chargers.filter(c => c.point_status === 'Maintenance').length}
             </p>
           </div>
         </div>
@@ -215,7 +257,7 @@ const ChargingPointStaff = () => {
         {/* Chargers Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {filteredChargers.map((charger, index) => {
-            const style = getChargerStatusStyle(charger.status);
+            const style = getChargerStatusStyle(charger.point_status);
             return (
               <div
                 key={`${charger.id}-${index}`}
@@ -231,14 +273,14 @@ const ChargingPointStaff = () => {
 
                 {/* Charger ID */}
                 <div className="text-center mb-3">
-                  <h4 className="font-bold text-xl mb-1">{charger.id}</h4>
-                  <p className="text-xs font-semibold opacity-75">({charger.type})</p>
+                  <h4 className="font-bold text-xl mb-1">{charger.point_number}</h4>
+                  <p className="text-xs font-semibold opacity-75">({station?.connector_type})</p>
                 </div>
 
                 {/* Status Badge */}
                 <div className="flex justify-center mb-3">
                   <span className={`${style.badge} text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-sm`}>
-                    {charger.statusText}
+                    {getStatusText(charger.point_status)}
                   </span>
                 </div>
 

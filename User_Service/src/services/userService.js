@@ -87,6 +87,7 @@ let handleUserLogin = (email, password) => {
                 email: user.email,
                 role: role,
                 role_id: user.role_id,
+                station_id: user.station_id,
               },
               JWT_SECRET,
               { expiresIn: "1d" }

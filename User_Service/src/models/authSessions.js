@@ -14,11 +14,11 @@ module.exports = (sequelize, DataTypes) => {
 
   AuthSession.init(
     {
-      token: {
-        type: DataTypes.STRING(255),
-        primaryKey: true,
-        allowNull: false,
-      },
+    token: {
+      type: DataTypes.TEXT,
+      primaryKey: true,
+      allowNull: false,
+    },
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,

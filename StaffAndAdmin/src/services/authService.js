@@ -3,7 +3,7 @@ import api from "./api";
 export const authService = {
   // Đăng nhập
   login: async (email, password) => {
-    const response = await api.post("/api/v1/auth/login", {
+    const response = await api.post("/user-service/auth/login", {
       email,
       password,
     });
@@ -12,26 +12,26 @@ export const authService = {
 
   // Đăng ký
   register: async (userData) => {
-    const response = await api.post("/api/v1/auth/register", userData);
+    const response = await api.post("/user-service/auth/register", userData);
     return response.data;
   },
 
   // Lấy thông tin user profile
   getProfile: async () => {
-    const response = await api.get("/api/v1/profile");
+    const response = await api.get("/user-service/profile");
     return response.data;
   },
 
   // Quên mật khẩu
   forgotPassword: async (email) => {
-    const response = await api.post("/api/v1/auth/forgot-password", { email });
+    const response = await api.post("/user-service/auth/forgot-password", { email });
     return response.data;
   },
 
   // Reset mật khẩu
   resetPassword: async (token, newPassword) => {
     const response = await api.post(
-      "/api/v1/auth/reset-password",
+      "/user-service/auth/reset-password",
       { newPassword },
       {
         headers: {
@@ -49,7 +49,7 @@ export const authService = {
 
       // Chỉ gọi API logout nếu có token
       if (token) {
-        const response = await api.post("/api/v1/auth/logout");
+        const response = await api.post("/user-service/auth/logout");
 
         // Luôn xóa dữ liệu local storage
         localStorage.removeItem("token");
@@ -73,7 +73,7 @@ export const authService = {
 
   // Google login
   googleLogin: async (googleToken) => {
-    const response = await api.post("/api/v1/auth/social/google", {
+    const response = await api.post("/user-service/auth/social/google", {
       token: googleToken,
     });
     return response.data;

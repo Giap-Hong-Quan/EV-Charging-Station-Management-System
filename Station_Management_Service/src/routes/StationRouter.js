@@ -4,7 +4,7 @@ import { createStation,getAllStation,getStationById,deleteStation,updateStation,
 const router=express.Router();
 
 router.post('/', createStation);
-// router.get('/search', searchStations); // GET /api/stations/search?keyword=...
+router.get('/search', searchStations); // GET /api/stations/search?keyword=...
 router.get('/', getAllStation); // GET /api/stations -> Lấy tất cả + count
 router.get('/:id', getStationById);
 router.delete('/:id', deleteStation);

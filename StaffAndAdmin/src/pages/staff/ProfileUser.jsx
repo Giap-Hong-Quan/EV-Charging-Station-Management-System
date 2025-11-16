@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { userService } from "@/services/userService"
-import { ArrowLeft, Save, User, Mail, MapPin, Shield, Camera } from "lucide-react"
+import { ArrowLeft, Save, User, Mail, MapPin, Shield, Camera, Building2, Zap, DollarSign, Plug, MapPinned } from "lucide-react"
 import { toast } from "sonner"
-
+import { stationService } from "@/services/stationService"
 
 const ProfileUser = () => {
   const navigate = useNavigate()
@@ -24,6 +25,30 @@ const ProfileUser = () => {
   const [isEditing, setIsEditing] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState("")
   const [avatarFile, setAvatarFile] = useState(null)
+  const [station, setStation] = useState(null)
+  const [loadingStation, setLoadingStation] = useState(false)
+
+  // Lấy thông tin station
+  useEffect(() => {
+    const fetchStation = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        if (token) {
+          const user = JSON.parse(atob(token.split(".")[1]))
+          if (user.station_id) {
+            setLoadingStation(true)
+            const res = await stationService.getStationById(user.station_id)
+            setStation(res)
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi load station:", error)
+      } finally {
+        setLoadingStation(false)
+      }
+    }
+    fetchStation()
+  }, [])
 
   // Lấy thông tin user từ localStorage
   useEffect(() => {
@@ -172,6 +197,20 @@ const ProfileUser = () => {
     return roleNames[role] || "Nhân viên"
   }
 
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      online: { label: "Hoạt động", variant: "default", className: "bg-green-500 hover:bg-green-600" },
+      maintenance: { label: "Bảo trì", variant: "secondary", className: "bg-yellow-500 hover:bg-yellow-600 text-white" },
+      offline: { label: "Ngừng hoạt động", variant: "destructive", className: "bg-red-500 hover:bg-red-600" }
+    }
+    const config = statusConfig[status] || statusConfig.offline
+    return <Badge className={config.className}>{config.label}</Badge>
+  }
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
@@ -185,7 +224,7 @@ const ProfileUser = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button
@@ -202,9 +241,9 @@ const ProfileUser = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Profile Card */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
             <Card className="shadow-sm">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center space-y-4">
@@ -259,6 +298,71 @@ const ProfileUser = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Station Info Card */}
+            {station && (
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-emerald-600" />
+                    Trạm làm việc
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-gray-900">{station.name}</h3>
+                    <div className="flex items-start gap-2 text-sm text-gray-600">
+                      <MapPinned className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>{station.address}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-sm text-gray-600">Trạng thái:</span>
+                    {getStatusBadge(station.status)}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Plug className="w-4 h-4 text-gray-500" />
+                      <div>
+                        <p className="text-gray-600 text-xs">Sẵn có</p>
+                        <p className="font-semibold">{station.available_points}/{station.total_points}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Zap className="w-4 h-4 text-gray-500" />
+                      <div>
+                        <p className="text-gray-600 text-xs">Công suất</p>
+                        <p className="font-semibold">{station.power_rating} kW</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <span className="text-sm text-gray-600">Giá:</span>
+                    <span className="font-semibold text-emerald-600">
+                      {formatCurrency(station.price_per_kwh)}/kWh
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t text-xs text-gray-500">
+                    <span>Loại cổng: {station.connector_type}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {loadingStation && (
+              <Card className="shadow-sm">
+                <CardContent className="p-6 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+                    <p className="mt-2 text-sm text-gray-600">Đang tải thông tin trạm...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right Column - Edit Form */}
