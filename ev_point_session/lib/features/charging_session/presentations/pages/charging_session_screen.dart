@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'package:ev_point_session/features/charging_session/data/models/booking_model.dart';
+
 import 'package:ev_point_session/features/charging_session/domain/entities/booking.dart';
 import 'package:ev_point_session/features/charging_session/presentations/cubit/charging_sesion_cubit.dart';
 import 'package:ev_point_session/features/charging_session/presentations/cubit/charging_session_state.dart';
+import 'package:ev_point_session/features/charging_session/presentations/pages/charging_session_start.dart';
 import 'package:ev_point_session/features/charging_session/presentations/widgets/build_manual_input.dart';
 import 'package:ev_point_session/features/charging_session/presentations/widgets/build_qr_scanner_view.dart';
 import 'package:ev_point_session/features/charging_session/presentations/widgets/build_toggle_button.dart';
@@ -22,13 +23,14 @@ class _ChargingSessionScreenState extends State<ChargingSessionScreen> {
   final TextEditingController _vehicleNameController = TextEditingController();
   final TextEditingController _vehicleNumberController =
       TextEditingController();
-  final TextEditingController _durationController = TextEditingController();
+  final TextEditingController _timeStartController = TextEditingController();
 
   bool _isManualInput = true;
-
   String? _selectedDurations;
   String? _selectedPowerLevel;
+
   Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
@@ -37,16 +39,43 @@ class _ChargingSessionScreenState extends State<ChargingSessionScreen> {
 
   void _onBookingCodeChanged() {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
+
     _debounce = Timer(const Duration(milliseconds: 500), () {
       final bookingCode = _bookingCodeController.text.trim();
-      context.read<ChargingSessionCubit>().getBookingByBookingCode(bookingCode);
+      if (bookingCode.isNotEmpty) {
+        context.read<ChargingSessionCubit>().getBookingByBookingCode(
+          bookingCode,
+        );
+      }
     });
   }
 
   void _fillBookingData(Booking booking) {
     _vehicleNameController.text = booking.vehicleName ?? '';
     _vehicleNumberController.text = booking.vehicleNumber ?? '';
-    _durationController.text = booking.scheduleStartTime?.toString() ?? '';
+    _timeStartController.text = booking.scheduleStartTime?.toString() ?? '';
+  }
+
+  // === HÀM BẮT ĐẦU PHIÊN SẠC ===
+  void _startSession() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final bookingCode = _bookingCodeController.text.trim();
+    final vehicleName = _vehicleNameController.text.trim();
+    final vehicleNumber = _vehicleNumberController.text.trim();
+    final timeStart = _timeStartController.text.trim();
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (_) => ChargingSessionStartScreen(
+              bookingCode: bookingCode,
+              vehicleName: vehicleName,
+              vehicleNumber: vehicleNumber,
+              timeStart: timeStart,
+            ),
+      ),
+    );
   }
 
   @override
@@ -56,7 +85,7 @@ class _ChargingSessionScreenState extends State<ChargingSessionScreen> {
     _bookingCodeController.dispose();
     _vehicleNameController.dispose();
     _vehicleNumberController.dispose();
-    _durationController.dispose();
+    _timeStartController.dispose();
     super.dispose();
   }
 
@@ -64,7 +93,7 @@ class _ChargingSessionScreenState extends State<ChargingSessionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Phiên sạc'),
+        title: const Text('Điểm sạc EV'),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -87,37 +116,37 @@ class _ChargingSessionScreenState extends State<ChargingSessionScreen> {
                 }
 
                 if (state is ChargingSessionChecked) {
-                  final bookingModel = state.booking as BookingModel;
+                  final booking = state.booking;
 
-                  debugPrint('Booking found: $bookingModel');
-                  debugPrint(
-                    'Filling booking data into form fields: ${bookingModel.id}, ${bookingModel.vehicleName}, ${bookingModel.vehicleNumber}',
-                  );
-                  _fillBookingData(bookingModel);
+                  debugPrint('Booking found: $booking');
+                  
+                  _fillBookingData(booking);        
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChargingSessionStartScreen(
+                        bookingCode: booking.bookingCode,
+                        vehicleName: booking.vehicleName ?? '',
+                        vehicleNumber: booking.vehicleNumber ?? '',
+                        timeStart:
+                            booking.scheduleStartTime?.toString() ?? '',
+                      ),
+                    ),
+                  );  
+
                 }
               },
               builder: (context, state) {
-                // if (state is ChargingSessionLoading) {
-                //   return const Center(child: CircularProgressIndicator());
-                // }
                 if (_isManualInput) {
                   return BuildManualInput(
                     formKey: _formKey,
                     bookingCodeController: _bookingCodeController,
                     vehicleNameController: _vehicleNameController,
                     vehicleNumberController: _vehicleNumberController,
-                    durationController: _durationController,
-                    onDurationChanged: (value) {},
-                    onSubmit: () {
-                      // if(_formKey.currentState!.validate()){
-                      //   context.read<ChargingSessionCubit>().startChargingSessionManual(
-                      //     bookingCode: _bookingCodeController.text,
-                      //     vehicleName: _vehicleNameController.text,
-                      //     vehicleNumber: _vehicleNumberController.text,
-                      //     duration: int.tryParse(_durationController.text) ?? 0,
-                      //   );
-                      // }
+                    timeStartController: _timeStartController,
+                    onTimeStartChanged: (value) {
+                      _timeStartController.text = value ?? '';
                     },
+                    onSubmit: _startSession,
                   );
                 } else {
                   return BuildQrScannerView(
@@ -126,10 +155,21 @@ class _ChargingSessionScreenState extends State<ChargingSessionScreen> {
                     vehicleNumberController: _vehicleNumberController,
                     selectedDuration: _selectedDurations,
                     selectedPowerLevel: _selectedPowerLevel,
-                    onDurationChanged:
-                        (v) => setState(() => _selectedDurations = v),
-                    onPowerLevelChanged:
-                        (v) => setState(() => _selectedPowerLevel = v),
+                    timeStartController: _timeStartController,
+                    onTimeStartChanged: (value) {
+                      _timeStartController.text = value ?? '';
+                    },
+                    onPowerLevelChanged: (value) {
+                      setState(() {
+                        _selectedPowerLevel = value;
+                      });
+                    },
+                    // THÊM callback để chuyển về manual input sau khi scan
+                    // onScanComplete: () {
+                    //   setState(() {
+                    //     _isManualInput = true;
+                    //   });
+                    // },
                   );
                 }
               },

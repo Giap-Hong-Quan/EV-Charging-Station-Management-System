@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ev_point_session/features/charging_session/data/models/booking_model.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 abstract class IBookingRemoteDatasource {
@@ -13,18 +14,21 @@ class BookingRemoteDatasource implements IBookingRemoteDatasource {
   BookingRemoteDatasource(this.baseUrl, this.client);
 
   @override
-  Future<BookingModel> getBookingByBookingCode(String bookingCode) {
-    final url = Uri.parse('${baseUrl}bookings/code/$bookingCode');
-    print('Fetching booking from URL: $url');
-    return client.get(url).then((response) {
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> json = 
-            Map<String, dynamic>.from(jsonDecode(response.body));
-        return BookingModel.fromJson(json);
-      } else {
-        throw Exception('Failed to load booking');
+  Future<BookingModel> getBookingByBookingCode(String bookingCode) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/bookings/code/$bookingCode'),
+    );
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      debugPrint('Full API Response: $json');
+      final data = json['data'];
+      if (data == null) {
+        throw Exception('Booking not found');
       }
-    });
+      return BookingModel.fromJson(data);
+    } else {
+      debugPrint('API Error: ${response.statusCode} - ${response.body}');
+      throw Exception('Failed to load booking');
+    }
   }
-  
 }

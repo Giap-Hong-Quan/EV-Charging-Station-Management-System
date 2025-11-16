@@ -7,9 +7,9 @@ class BuildManualInput extends StatelessWidget {
   final TextEditingController bookingCodeController;
   final TextEditingController vehicleNameController;
   final TextEditingController vehicleNumberController;
-  final TextEditingController durationController;
+  final TextEditingController timeStartController;
 
-  final ValueChanged<String?> onDurationChanged;
+  final ValueChanged<String?> onTimeStartChanged;
 
   final VoidCallback? onSubmit;
 
@@ -19,8 +19,8 @@ class BuildManualInput extends StatelessWidget {
     required this.bookingCodeController,
     required this.vehicleNameController,
     required this.vehicleNumberController,
-    required this.durationController,
-    required this.onDurationChanged,
+    required this.timeStartController,
+    required this.onTimeStartChanged,
     this.onSubmit,
   });
 
@@ -46,7 +46,7 @@ class BuildManualInput extends StatelessWidget {
             BuildTextField(label: 'Biển số xe', icon: Icons.confirmation_number, keyboardType: TextInputType.text, controller: vehicleNumberController),
 
             const SizedBox(height: 16),
-            BuildTextField(label: 'Thời gian', icon: Icons.timer, keyboardType: TextInputType.number, controller: durationController),
+            BuildTextField(label: 'Thời gian', icon: Icons.timer, keyboardType: TextInputType.number, controller: timeStartController),
 
             const SizedBox(height: 32),
             SizedBox(
