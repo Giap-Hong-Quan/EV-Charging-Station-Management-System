@@ -28,14 +28,14 @@ export const menuAdmin = [
       items: [
         { label: "Trạm sạc", icon: Building2, path: "/admin/stations" },
        { label: "Điểm sạc", icon: BatteryCharging, path: "/admin/points" },
-        { label: "Người dùng", icon: Users, path: "/admin/users" },
+        { label: "Người dùng", icon: Users, path: "/admin/driver" },
         { label: "Nhân viên", icon: Briefcase, path: "/admin/staff" },
       ],
     },
     {
       title: "DỊCH VỤ",
       items: [
-        { label: "Gói dịch vụ", icon: Package, path: "/admin/packages" },
+        { label: "Gói dịch vụ", icon: Package, path: "/admin/service" },
         { label: "Doanh thu", icon: DollarSign, path: "/admin/revenue" },
       ],
     },
