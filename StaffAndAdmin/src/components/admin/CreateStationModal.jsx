@@ -169,19 +169,6 @@ const CreateStationModal = ({ open, onOpenChange }) => {
                 }
               />
             </div>
-
-            <div>
-              <Label htmlFor="available_points">Số điểm trống</Label>
-              <Input
-                id="available_points"
-                type="number"
-                placeholder="VD: 2"
-                value={formData.available_points}
-                onChange={(e) =>
-                  setFormData({ ...formData, available_points: e.target.value })
-                }
-              />
-            </div>
           </div>
 
           {/* Price + Status */}

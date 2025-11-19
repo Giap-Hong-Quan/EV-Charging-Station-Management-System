@@ -35,7 +35,15 @@ import StationListView from '@/components/admin/StationListView';
     fetchStations();
   }, []);
 
-
+//xOa
+  const deleteStation = async (id) => {
+    try {
+      await stationService.deleteStation(id);
+      setStations(prev => prev.filter(st => st._id !== id));
+    } catch (err) {
+      console.error("Lỗi xóa:", err);
+    }
+  };
     return (
       <div>
         {/* Stats */}
@@ -115,7 +123,7 @@ import StationListView from '@/components/admin/StationListView';
         {viewMode === "map" ? (
           <StationMapView stations={stations} />
         ) : (
-          <StationListView stations={stations} />
+          <StationListView stations={stations} deleteStation={deleteStation} />
         )}
       </div>
       </div>

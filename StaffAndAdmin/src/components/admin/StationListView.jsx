@@ -56,33 +56,33 @@ const getStatusColors = (status) => {
 // =====================================================================
 // 📌 COMPONENT CHÍNH
 // =====================================================================
-const StationListView = ({ stations }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+const StationListView = ({ stations, searchTerm, setSearchTerm, deleteStation }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
 
   // =====================================================================
   // 🔍 SEARCH + FILTER LOGIC
   // =====================================================================
-  const filteredStations = stations.filter((s) => {
-    const keyword = removeVietnameseTones(searchTerm);
+const filteredStations = stations.filter((s) => {
+  const keyword = removeVietnameseTones(searchTerm);
 
-    const name = removeVietnameseTones(s?.name);
-    const address = removeVietnameseTones(s?.address);
-    const connector = removeVietnameseTones(s?.connector_type);
-    const status = removeVietnameseTones(getStatusText(s?.status));
+  const name = removeVietnameseTones(s?.name);
+  const address = removeVietnameseTones(s?.address);
+  const connector = removeVietnameseTones(s?.connector_type);
+  const status = removeVietnameseTones(getStatusText(s?.status));
 
-    const matchText =
-      name.includes(keyword) ||
-      address.includes(keyword) ||
-      connector.includes(keyword) ||
-      status.includes(keyword);
+  const matchText =
+    name.includes(keyword) ||
+    address.includes(keyword) ||
+    connector.includes(keyword) ||
+    status.includes(keyword);
 
-    const matchFilter =
-      filterStatus === "all" ? true : s.status === filterStatus;
+  const matchFilter =
+    filterStatus === "all" ? true : s.status === filterStatus;
 
-    return matchText && matchFilter;
-  });
+  return matchText && matchFilter;
+});
+
 
   // =====================================================================
   // 📌 RENDER
@@ -240,7 +240,7 @@ const StationListView = ({ stations }) => {
                   <div className="flex justify-center gap-3">
                     <Eye className="w-5 h-5 text-slate-400 hover:text-violet-600 cursor-pointer" />
                     <Edit className="w-5 h-5 text-slate-400 hover:text-blue-600 cursor-pointer" />
-                    <Trash2 className="w-5 h-5 text-slate-400 hover:text-rose-600 cursor-pointer" />
+                    <Trash2 onClick={()=>deleteStation(s._id)} className="w-5 h-5 text-slate-400 hover:text-rose-600 cursor-pointer" />
                   </div>
                 </td>
               </tr>
