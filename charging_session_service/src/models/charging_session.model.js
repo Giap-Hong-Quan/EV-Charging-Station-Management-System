@@ -10,12 +10,11 @@ const ChargingSessionSchema = new Schema({
         required: true,
         unique: true,
     },
-    booking_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'Booking',
+    booking_code: {
+        type: String,
         required: true,
     },
-     session_code: {
+    session_code: {
         type: String,
         required: true,
         unique: true,
