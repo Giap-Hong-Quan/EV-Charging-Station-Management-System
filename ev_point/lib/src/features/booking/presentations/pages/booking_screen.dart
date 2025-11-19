@@ -26,6 +26,8 @@ class _BookingScreenState extends State<BookingScreen> {
   ChargingPoint? selectedPoint;
   DateTime? selectedStartTime;
   DateTime? selectedEndTime;
+  String selectedVehicleName = '';
+  String selectedLicensePlate = '';
 
   void cancelBooking() {
     showDialog(
@@ -41,7 +43,7 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
               FilledButton(
                 onPressed: () {
-                  Navigator.pop(context); 
+                  Navigator.pop(context);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -86,7 +88,14 @@ class _BookingScreenState extends State<BookingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            VehicleSelection(),
+            VehicleSelection(
+              onVehicleChanged: (vehicleData) {
+                setState(() {
+                  selectedVehicleName = vehicleData['vehicleName']!;
+                  selectedLicensePlate = vehicleData['licensePlate']!;
+                });
+              },
+            ),
             const SizedBox(height: 24),
             StationSelection(station: widget.station),
             const SizedBox(height: 24),
@@ -100,9 +109,9 @@ class _BookingScreenState extends State<BookingScreen> {
                 setState(() => selectedPoint = point);
               },
             ),
-             if (selectedPoint != null) ...[
+            if (selectedPoint != null) ...[
               const SizedBox(height: 24),
-               TimeSelectionSection(
+              TimeSelectionSection(
                 onStartTimeChanged: (time) {
                   setState(() => selectedStartTime = time);
                 },
@@ -114,16 +123,19 @@ class _BookingScreenState extends State<BookingScreen> {
             const SizedBox(height: 24),
             WarningBanner(),
 
-            const SizedBox(height: 100), 
+            const SizedBox(height: 100),
           ],
         ),
       ),
       bottomSheet: BottomButton(
         userId: 'user123456',
+        vehicleName: selectedVehicleName,
+        vehicleNumber: selectedLicensePlate,
         stationId: stationId,
         pointId: selectedPoint?.id ?? '',
         scheduleStartTime: selectedStartTime ?? DateTime.now(),
-        scheduleEndTime: selectedEndTime ?? DateTime.now().add(Duration(hours: 1)),
+        scheduleEndTime:
+            selectedEndTime ?? DateTime.now().add(Duration(hours: 1)),
       ),
     );
   }

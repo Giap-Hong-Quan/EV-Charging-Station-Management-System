@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 abstract class IBookingDatasource {
   Future<BookingModel> createBooking({
     required String userId,
+    required String vehicleName,
+    required String vehicleNumber,
     required String stationId,
     required String pointId,
     required DateTime scheduleStartTime,
@@ -15,6 +17,9 @@ abstract class IBookingDatasource {
 
   Future<List<BookingModel>> getUserBookings({
     required String userId,
+  });
+  Future<BookingModel> cancelBooking({
+    required String bookingId,
   });
 }
 
@@ -25,6 +30,8 @@ class BookingDatasourceImpl implements IBookingDatasource {
   @override
 Future<BookingModel> createBooking({
   required String userId,
+  required String vehicleName,
+  required String vehicleNumber,
   required String stationId,
   required String pointId,
   required DateTime scheduleStartTime,
@@ -34,7 +41,9 @@ Future<BookingModel> createBooking({
     Uri.parse('$baseBookingUrl/bookings'),
     headers: {HttpHeaders.contentTypeHeader: 'application/json'},
     body: jsonEncode({
-      'user_id': userId,          
+      'user_id': userId,
+      'vehicle_name': vehicleName,
+      'vehicle_number': vehicleNumber,
       'station_id': stationId,
       'point_id': pointId,
       'schedule_start_time': scheduleStartTime.toIso8601String(),
@@ -63,7 +72,6 @@ Future<BookingModel> createBooking({
       Uri.parse('$baseBookingUrl/bookings/user/$userId'),
       headers: {HttpHeaders.contentTypeHeader: 'application/json'},
     );
-    print("Base URL: $baseBookingUrl/bookings/user/$userId");
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       final data = decoded['data'] as List;
@@ -75,6 +83,27 @@ Future<BookingModel> createBooking({
       throw Exception('Unauthorized');
     } else {
       throw Exception('Failed to fetch user bookings: ${response.statusCode}');
+    }
+  }
+  
+  @override
+  Future<BookingModel> cancelBooking({required String bookingId}) async {
+    final response = await client.post(
+      Uri.parse('$baseBookingUrl/bookings/cancel'),
+      headers: {HttpHeaders.contentTypeHeader: 'application/json'},
+      body: jsonEncode({'booking_id': bookingId}),
+    );
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final data = decoded['data'];
+      return BookingModel.fromJson(data);
+    } else if (response.statusCode == 400) {
+      final decoded = jsonDecode(response.body);
+      throw Exception('Bad request: ${decoded['message'] ?? 'Invalid data'}');
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized');
+    } else {
+      throw Exception('Failed to cancel booking: ${response.statusCode}');
     }
   }
 }

@@ -188,10 +188,6 @@ class _ChargingPointSelectionState extends State<ChargingPointSelection> {
         final List<ChargingPoint> chargingPoints =
             state is ChargingPointLoaded ? state.chargingPoints : const [];
 
-        print('✅ Charging points loaded: ${chargingPoints.length}');
-        if (chargingPoints.isNotEmpty) {
-          print('📍 Points: ${chargingPoints.map((p) => 'Point ${p.pointNumber}').join(', ')}');
-        }
 
         final hasSelection = _selectedIndex != null &&
             _selectedIndex! >= 0 &&

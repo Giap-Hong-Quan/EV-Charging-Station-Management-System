@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 class BottomButton extends StatelessWidget {
   final String userId;
   final String stationId;
+  final String vehicleName;
+  final String vehicleNumber;
   final String pointId;
   final DateTime scheduleStartTime;
   final DateTime scheduleEndTime;
@@ -16,6 +18,8 @@ class BottomButton extends StatelessWidget {
     super.key,
     required this.userId,
     required this.stationId,
+    required this.vehicleName,
+    required this.vehicleNumber,
     required this.pointId,
     required this.scheduleStartTime,
     required this.scheduleEndTime,
@@ -26,20 +30,34 @@ class BottomButton extends StatelessWidget {
     return BlocListener<BookingCubit, BookingState>(
       listener: (context, state) {
         if (state is BookingCreated) {
-          Navigator.pop(context); // Go back
+          // Close dialog if open
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+          
+          // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Đặt chỗ thành công!'),
               backgroundColor: Color(0xFF00C853),
+              duration: Duration(seconds: 2),
             ),
           );
+          
+          // Navigate to My Booking screen (keeps bottom navigation)
           context.go(RouterPaths.myBookingScreen);
         } else if (state is BookingError) {
-          Navigator.pop(context); // Close dialog if open
+          // Close dialog if open
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+          
+          // Show error message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Lỗi: ${state.message}'),
               backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -84,20 +102,29 @@ class BottomButton extends StatelessWidget {
   void _confirmBooking(BuildContext context) {
     showDialog(
       context: context,
+      barrierDismissible: false, // Prevent dismiss by tapping outside while loading
       builder: (dialogContext) => BlocBuilder<BookingCubit, BookingState>(
         builder: (context, state) {
           return AlertDialog(
-            title: const Text('Xác nhận đặt chỗ'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text(
+              'Xác nhận đặt chỗ',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             content: state is BookingLoading
                 ? const Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(),
+                      CircularProgressIndicator(
+                        color: Color(0xFF00C853),
+                      ),
                       SizedBox(height: 16),
                       Text('Đang xử lý...'),
                     ],
                   )
-                : const Text('Xác nhận đặt chỗ sạc?'),
+                : const Text('Bạn có chắc chắn muốn đặt chỗ sạc này?'),
             actions: state is BookingLoading
                 ? []
                 : [
@@ -109,6 +136,8 @@ class BottomButton extends StatelessWidget {
                       onPressed: () {
                         context.read<BookingCubit>().createBooking(
                               userId: userId,
+                              vehicleName: vehicleName,
+                              vehicleNumber: vehicleNumber,
                               stationId: stationId,
                               pointId: pointId,
                               scheduleStartTime: scheduleStartTime,

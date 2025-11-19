@@ -1,3 +1,4 @@
+import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point_by_id.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ev_point/src/features/charging_point/domain/entities/charging_point.dart';
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point.dart';
@@ -5,18 +6,20 @@ import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging
 import 'charging_point_state.dart';
 
 class ChargingPointCubit extends Cubit<ChargingPointState> {
-  final GetChargingPointByStationId getChargingPointByStationId;
-  final GetChargingPoint getChargingPoint;
+  final GetChargingPointByStationId getChargingPointByStationIdUseCase;
+  final GetChargingPoint getChargingPointUseCase;
+  final GetChargingPointById getChargingPointByIdUseCase;
 
   ChargingPointCubit({
-    required this.getChargingPointByStationId,
-    required this.getChargingPoint,
+    required this.getChargingPointByStationIdUseCase,
+    required this.getChargingPointUseCase,
+    required this.getChargingPointByIdUseCase,
   }) : super(ChargingPointInitial());
 
   Future<List<ChargingPoint>> loadAllChargingPoint() async {
     emit(ChargingPointLoading());
     try {
-      final List<ChargingPoint> result = await getChargingPoint();
+      final List<ChargingPoint> result = await getChargingPointUseCase();
       emit(ChargingPointLoaded(result));
       return result;
     } catch (e) {
@@ -28,12 +31,24 @@ class ChargingPointCubit extends Cubit<ChargingPointState> {
   Future<List<ChargingPoint>> loadChargingPointByStationId(String stationId) async {
     emit(ChargingPointLoading());
     try {
-      final List<ChargingPoint> result = await getChargingPointByStationId(stationId);
+      final List<ChargingPoint> result = await getChargingPointByStationIdUseCase(stationId);
       emit(ChargingPointLoaded(result));
       return result;
     } catch (e) {
       emit(ChargingPointError(e.toString()));
       return const <ChargingPoint>[];
+    }
+  }
+
+  Future<ChargingPoint?> loadChargingPointById(String chargingPointId) async {
+    emit(ChargingPointLoading());
+    try {
+      final ChargingPoint result = await getChargingPointByIdUseCase(chargingPointId);
+      emit(ChargingPointLoaded([result]));
+      return result;
+    } catch (e) {
+      emit(ChargingPointError(e.toString()));
+      return null;
     }
   }
 }

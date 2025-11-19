@@ -8,6 +8,9 @@ abstract class ChargingPointRemoteDataSource {
   Future<List<ChargingPointModel>> getChargingPointByStationId(
     String stationId,
   );
+  Future<ChargingPointModel> getChargingPointById(
+    String chargingPointId,
+  );
 }
 
 class ChargingPointRemoteDataSourceImpl
@@ -65,5 +68,18 @@ class ChargingPointRemoteDataSourceImpl
       final all = await fetchAllChargingPoint();
       return all.where((p) => p.stationId == stationId).toList();
     }
+  }
+  
+  @override
+  Future<ChargingPointModel> getChargingPointById(String chargingPointId) {
+    final url = Uri.parse('$baseChargingPointUrl/points/$chargingPointId');
+    return client.get(url).then((response) {
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return ChargingPointModel.fromJson(data);
+      } else {
+        throw Exception('Failed to load charging point');
+      }
+    });
   }
 }

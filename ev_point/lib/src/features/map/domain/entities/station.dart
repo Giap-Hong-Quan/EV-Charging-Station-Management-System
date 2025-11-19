@@ -27,4 +27,5 @@ class Station {
     required this.pricePerKwh,
     required this.status,
   });
+
 }
