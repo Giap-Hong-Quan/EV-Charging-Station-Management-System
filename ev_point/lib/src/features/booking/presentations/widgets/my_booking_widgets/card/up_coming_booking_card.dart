@@ -10,6 +10,8 @@ class UpComingBookingCard extends StatefulWidget {
   final String time;
   final String name;
   final String bookingCode;
+  final String vehicalName;
+  final String vehialNumber;
   final String address;
   final String power;
   final String timeStart;
@@ -22,6 +24,8 @@ class UpComingBookingCard extends StatefulWidget {
     required this.time,
     required this.name,
     required this.bookingCode,
+    required this.vehicalName,
+    required this.vehialNumber,
     required this.address,
     required this.power,
     required this.timeStart,
@@ -53,6 +57,8 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
       Power: ${widget.power}
       TimeStart: ${widget.timeStart}
       Point Number: ${widget.pointNumber}
+      Vehical Name: ${widget.vehicalName}
+      Vehical Number: ${widget.vehialNumber}
       ''';
 
     showDialog(
