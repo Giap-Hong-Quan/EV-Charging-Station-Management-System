@@ -44,6 +44,16 @@ import StationListView from '@/components/admin/StationListView';
       console.error("Lỗi xóa:", err);
     }
   };
+  // thêm 
+  const addStation = async (stationData) => {
+    try {
+      const newStation = await stationService.createStation(stationData);
+      setStations(prev => [...prev, newStation]);
+    } catch (err) {
+      console.error("Lỗi thêm trạm:", err);
+    }
+  };
+  
     return (
       <div>
         {/* Stats */}

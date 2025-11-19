@@ -2,16 +2,39 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge, Bell, Menu, Maximize2, Plus, Settings, X } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import CreateStationModal from "../admin/CreateStationModal";
+import { menuAdmin } from "@/lib/Contands";
 
 const HeaderAdmin = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const [showCreateStationModal, setShowCreateStationModal] = useState(false);
+  const location = useLocation();
+
+  // =============================
+  // 🔥 Lấy title tự động theo URL
+  // =============================
+  const getPageTitle = () => {
+    const path = location.pathname;
+
+    for (const group of menuAdmin) {
+      for (const item of group.items) {
+        if (item.path === path) {
+          return item.label;
+        }
+      }
+    }
+
+    return "Dashboard Tổng quan"; // fallback
+  };
+
+  const pageTitle = getPageTitle();
 
   return (
     <>
       <header className="bg-gradient-to-r from-indigo-50 via-white to-purple-50 border-b border-indigo-100 shadow-md">
         <div className="flex items-center justify-between px-6 py-4">
-          {/* Left */}
+          
+          {/* LEFT */}
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -23,14 +46,14 @@ const HeaderAdmin = ({ isSidebarOpen, setIsSidebarOpen }) => {
             </Button>
 
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Dashboard Tổng quan</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{pageTitle}</h2>
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 mt-1">
                 ✓ Hệ thống ổn định
               </Badge>
             </div>
           </div>
 
-          {/* Right */}
+          {/* RIGHT */}
           <div className="flex items-center gap-3">
             <Button
               onClick={() => setShowCreateStationModal(true)}
@@ -63,6 +86,7 @@ const HeaderAdmin = ({ isSidebarOpen, setIsSidebarOpen }) => {
         </div>
       </header>
 
+      {/* Modal tạo trạm */}
       <CreateStationModal open={showCreateStationModal} onOpenChange={setShowCreateStationModal} />
     </>
   );

@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Outlet } from 'react-router-dom';
 
 const LayoutAdmin = () => {
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   return (
     <div className="h-screen flex bg-gray-50">
