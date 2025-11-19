@@ -1,54 +1,45 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import morgan from "morgan";
+
+import { setupRoutes_user } from "./routes/user.js";
+import { setupRoutes_station } from "./routes/station.js";
+import { setupRoutes_booking } from "./routes/booking.js";
+import { setupRoutes_analytics } from "./routes/analytics.js";
 import { config } from "./config.js";
-import { setupRoutes_bookings } from "./routes_bookings.js";
-import { setupRoutes_station } from "./routes_station.js";
-import { requestLogger, errorHandler } from "./middleware/index.js";
 
 const app = express();
 
-// Security middleware
+// Không parse body trước khi vào proxy
+app.use("/gateway", (req, res, next) => {
+  next();  // chuyển thẳng vào proxy
+});
+
+// Các middleware không đụng body
 app.use(helmet());
+app.use(cors());
+app.use(morgan("dev"));
 
-// CORS configuration
-app.use(cors(config.cors));
+// ==== PROXY ROUTES (phải đặt TRƯỚC express.json) ====
+setupRoutes_user(app);
+setupRoutes_station(app);
+setupRoutes_booking(app);
+setupRoutes_analytics(app);
 
-// Body parsing
+// ==== Parse body cho các route KHÁC gateway ====
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
-const limiter = rateLimit(config.rateLimit);
-app.use("/api/", limiter);
-
-// Request logging
-app.use(requestLogger);
-
-// Health check
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "OK",
-    service: "API Gateway",
-    timestamp: new Date().toISOString()
+// 404
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Route not found",
   });
 });
 
-// Setup API routes
-setupRoutes_bookings(app);
-setupRoutes_station(app);
-
-// Error handling middleware
-app.use(errorHandler);
-
-// Start server
-const PORT = config.port;
-app.listen(PORT, () => {
-  console.log(`🚀 API Gateway is running on port ${PORT}`);
-  console.log(`📡 Health check: http://localhost:${PORT}/health`);
-  console.log(`📡 API routes: http://localhost:${PORT}/gateway/api/v1/*`);
+const server = app.listen(config.port, () => {
+  console.log(`🚀 Gateway running on port ${config.port}`);
 });
 
 export default app;
-
