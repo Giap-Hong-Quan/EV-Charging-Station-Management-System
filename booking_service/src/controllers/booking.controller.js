@@ -37,7 +37,15 @@ export async function getBookingByCode(req, res) {
 
 // Validate booking for a user
 export const validateBookingForSession = async (req, res) => {
-    await BookingService.validateBookingForSession(req, res);
+    try {
+        await BookingService.validateBookingForSession(req, res);
+    } catch (error) {
+        console.error("Controller error:", error);
+        return res.status(500).json({
+            valid: false,
+            message: "Internal server error"
+        });
+    }
 };
 
 // Update a booking status by ID

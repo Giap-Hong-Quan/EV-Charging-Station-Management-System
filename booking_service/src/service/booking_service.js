@@ -144,37 +144,43 @@ export const BookingService = {
 
     async validateBookingForSession(req, res) {
         try {
-            const { booking_code, user_id, station_id, point_id } = req.body;
+            const {
+                booking_code,
+                vehicle_name,
+                vehicle_number,
+                schedule_start_time
+            } = req.body;
 
-            // Validation required fields
-            if (!booking_code || booking_code.trim() === '') {
+            // Validate input
+            if (!booking_code?.trim()) {
                 return res.status(400).json({
                     valid: false,
                     message: "Booking code is required"
                 });
             }
 
-            if (!user_id) {
+            if (!vehicle_name?.trim()) {
                 return res.status(400).json({
                     valid: false,
-                    message: "User ID is required"
-                });
-            }
-            if (!station_id) {
-                return res.status(400).json({
-                    valid: false,
-                    message: "Station ID is required"
+                    message: "Vehicle name is required"
                 });
             }
 
-            if (!point_id) {
+            if (!vehicle_number?.trim()) {
                 return res.status(400).json({
                     valid: false,
-                    message: "Point ID is required"
+                    message: "Vehicle number is required"
                 });
             }
 
-            // Tìm booking theo booking_code
+            if (!schedule_start_time?.trim()) {
+                return res.status(400).json({
+                    valid: false,
+                    message: "Schedule start time is required"
+                });
+            }
+
+            // Query booking
             const booking = await Booking.findOne({
                 where: { booking_code }
             });
@@ -182,40 +188,41 @@ export const BookingService = {
             if (!booking) {
                 return res.status(404).json({
                     valid: false,
-                    message: "Booking not found with this booking code"
+                    message: "Booking not found"
                 });
             }
 
-            // Kiểm tra user_id có khớp không
-            if (booking.user_id !== user_id) {
+            // Validate vehicle name
+            if (booking.vehicle_name !== vehicle_name) {
                 return res.status(403).json({
                     valid: false,
-                    message: "Booking does not belong to this user"
+                    message: "Vehicle name does not match the booking"
                 });
             }
 
-            // Kiểm tra station_id có khớp không
-            if (booking.station_id !== station_id) {
-                return res.status(400).json({
+            // Validate vehicle number
+            if (booking.vehicle_number !== vehicle_number) {
+                return res.status(403).json({
                     valid: false,
-                    message: "Booking is for a different charging station",
-                    booking_station_id: booking.station_id,
-                    requested_station_id: station_id
+                    message: "Vehicle number does not match the booking",
+                    booking_vehicle_number: booking.vehicle_number
                 });
             }
 
+            // Validate schedule start time
+            const clientStart = new Date(schedule_start_time);
+            const bookingStart = new Date(booking.schedule_start_time);
 
-            // Kiểm tra point_id có khớp không
-            if (booking.point_id !== point_id) {
-                return res.status(400).json({
+            if (clientStart.getTime() !== bookingStart.getTime()) {
+                return res.status(403).json({
                     valid: false,
-                    message: "Booking is for a different charging point",
-                    booking_point_id: booking.point_id,
-                    requested_point_id: point_id
+                    message: "Schedule start time does not match the booking",
+                    expected: bookingStart,
+                    received: clientStart
                 });
             }
 
-            // Kiểm tra trạng thái booking
+            // Check booking status
             if (booking.status === 'CANCELLED') {
                 return res.status(400).json({
                     valid: false,
@@ -226,39 +233,33 @@ export const BookingService = {
             if (booking.status === 'COMPLETE') {
                 return res.status(400).json({
                     valid: false,
-                    message: "Booking has already been completed"
+                    message: "Booking already completed"
                 });
             }
 
-            // Kiểm tra thời gian (±15 phút buffer)
+            // Time validation (± 15 mins)
             const now = new Date();
-            const startTime = new Date(booking.schedule_start_time);
             const endTime = new Date(booking.schedule_end_time);
-            const bufferMinutes = 15;
+            const bufferMin = 15;
 
-            const earliestStart = new Date(startTime.getTime() - bufferMinutes * 60000);
-            const latestEnd = new Date(endTime.getTime() + bufferMinutes * 60000);
-
-            if (now < earliestStart) {
-                const minutesUntilStart = Math.floor((startTime - now) / 60000);
+            if (now < new Date(bookingStart.getTime() - bufferMin * 60000)) {
                 return res.status(400).json({
                     valid: false,
-                    message: `Too early to start charging. Booking starts in ${minutesUntilStart} minutes`,
-                    scheduled_start_time: startTime,
+                    message: `Too early. Booking starts at ${bookingStart.toISOString()}`,
                     current_time: now
                 });
             }
 
-            if (now > latestEnd) {
+            if (now > new Date(endTime.getTime() + bufferMin * 60000)) {
                 return res.status(400).json({
                     valid: false,
-                    message: "Booking time has expired",
+                    message: "Booking time expired",
                     scheduled_end_time: endTime,
                     current_time: now
                 });
             }
 
-            // Booking hợp lệ - trả về thông tin đầy đủ
+            // Success
             return res.status(200).json({
                 valid: true,
                 message: "Booking is valid. You can start charging.",
@@ -278,7 +279,7 @@ export const BookingService = {
             });
 
         } catch (error) {
-            console.error("Error validating booking for session:", error);
+            console.error("Error validating booking:", error);
             return res.status(500).json({
                 valid: false,
                 message: "Internal server error",
@@ -287,12 +288,13 @@ export const BookingService = {
         }
     },
 
+
     async cancelBooking(booking_id) {
         try {
             console.log("Cancel booking ID:", booking_id);  // Debug log
-            
+
             const booking = await Booking.findByPk(booking_id);
-            
+
             if (!booking) {
                 return { status: 404, message: "Booking not found" };
             }
@@ -313,17 +315,17 @@ export const BookingService = {
             booking.cancelled_at = new Date();
             await booking.save();
 
-            return { 
-                status: 200, 
+            return {
+                status: 200,
                 message: "Booking cancelled successfully",
                 data: booking
             };
         } catch (error) {
             console.error("Error cancelling booking:", error);
-            return { 
-                status: 500, 
-                message: "Internal server error", 
-                error: error.message 
+            return {
+                status: 500,
+                message: "Internal server error",
+                error: error.message
             };
         }
     },

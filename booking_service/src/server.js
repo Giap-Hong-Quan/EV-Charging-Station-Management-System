@@ -8,7 +8,7 @@ async function startServer() {
     await sequelize.authenticate();
     console.log("MySQL connected successfully.");
 
-    await sequelize.sync(); // Ensure all models are synced
+    await sequelize.sync(); 
     console.log("MySQL tables synced.");
 
     const app = express();
