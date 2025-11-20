@@ -1,5 +1,6 @@
+import 'package:ev_point/src/core/routes/routers_path.dart';
 import 'package:flutter/material.dart';
-import 'on_boarding_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,10 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
+      context.go(RouterPaths.onboardingScreen);
     });
   }
 
@@ -37,11 +35,11 @@ class _SplashScreenState extends State<SplashScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(60),
               ),
-              child: Image.asset('assets/logo/ev_point_logo.png'),
+              child: Image.asset('assets/logo/image.png'),
             ),
             const SizedBox(height: 30),
             const Text(
-              'EVPoint',
+              'EV Point',
               style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,

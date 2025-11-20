@@ -1,5 +1,6 @@
-import 'package:ev_point/src/features/map/presentation/pages/map_screen.dart';
+import 'package:ev_point/src/core/routes/routers_path.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../widgets/on_boarding_data.dart';
 import '../widgets/on_boarding_page.dart';
@@ -19,19 +20,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Easily find EV charging\nstations around you',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.',
-      imagePath: 'assets/logo/ev_point_logo.png',
+      imagePath: 'assets/logo/image.png',
     ),
     OnboardingData(
       title: 'Fast and simple to make\nreservation & check in',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.',
-      imagePath: 'assets/logo/ev_point_logo.png',
+      imagePath: 'assets/logo/image.png',
     ),
     OnboardingData(
       title: 'Make payments safely &\nquickly with EVPoint',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.',
-      imagePath: 'assets/logo/ev_point_logo.png',
+      imagePath: 'assets/logo/image.png',
     ),
   ];
 
@@ -42,10 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MapScreen()),
-      );
+      context.go(RouterPaths.homeScreen);
     }
   }
 

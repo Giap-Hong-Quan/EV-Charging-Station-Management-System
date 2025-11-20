@@ -21,7 +21,7 @@ class MyBookingScreen extends StatefulWidget {
 class _MyBookingScreenState extends State<MyBookingScreen> {
   int selectedIndex = 0;
   int bottomNavIndex = 2;
-  final String userId = 'user123456'; // Example user ID
+  final String userId = 'user123'; // Example user ID
 
   @override
   void initState() {

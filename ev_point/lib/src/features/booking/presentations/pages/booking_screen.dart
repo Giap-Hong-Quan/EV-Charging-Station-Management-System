@@ -128,7 +128,7 @@ class _BookingScreenState extends State<BookingScreen> {
         ),
       ),
       bottomSheet: BottomButton(
-        userId: 'user123456',
+        userId: 'user123',
         vehicleName: selectedVehicleName,
         vehicleNumber: selectedLicensePlate,
         stationId: stationId,

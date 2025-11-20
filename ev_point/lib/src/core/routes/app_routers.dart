@@ -2,7 +2,10 @@ import 'package:ev_point/src/core/routes/routers_path.dart';
 import 'package:ev_point/src/features/booking/presentations/pages/booking_screen.dart';
 import 'package:ev_point/src/features/booking/presentations/pages/my_booking_screen.dart';
 import 'package:ev_point/src/features/map/domain/entities/station.dart';
+import 'package:ev_point/src/features/map/presentation/pages/home_screen.dart';
 import 'package:ev_point/src/features/map/presentation/pages/map_screen.dart';
+import 'package:ev_point/src/features/splash_screen/presentations/on_boarding_screen.dart';
+import 'package:ev_point/src/features/splash_screen/presentations/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,8 +23,20 @@ class AppRouter {
 
     _router = GoRouter(
       navigatorKey: navigatorKey,
-      initialLocation: RouterPaths.mapScreen,
+      initialLocation: RouterPaths.splashScreen,
       routes: [
+        GoRoute(
+          path: RouterPaths.onboardingScreen,
+          builder: (_, __) => const OnboardingScreen(),
+        ),
+        GoRoute(
+          path: RouterPaths.splashScreen,
+          builder: (_, __) => const SplashScreen(),
+        ),
+        GoRoute(
+          path: RouterPaths.homeScreen,
+          builder: (_, __) => const HomeScreen(),
+        ),
         GoRoute(
           path: RouterPaths.bookingScreen,
           builder: (_, state) => BookingScreen(

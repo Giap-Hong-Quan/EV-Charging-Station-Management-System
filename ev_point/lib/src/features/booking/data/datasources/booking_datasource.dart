@@ -50,6 +50,7 @@ Future<BookingModel> createBooking({
       'schedule_end_time': scheduleEndTime.toIso8601String(),
     }),
   );
+  print('Create Booking Response: ${response.body}'); 
   if (response.statusCode == 200 || response.statusCode == 201) {
     final decoded = jsonDecode(response.body);
     final data = decoded['data'];
