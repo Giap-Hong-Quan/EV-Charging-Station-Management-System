@@ -9,6 +9,8 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
+import UpdateStationModal from "./UpdateStationModal";
+import ViewStation from "./ViewStation";
 
 // =====================================================================
 // 🧹 Hàm bỏ dấu + lowercase + chống undefined
@@ -56,10 +58,13 @@ const getStatusColors = (status) => {
 // =====================================================================
 // 📌 COMPONENT CHÍNH
 // =====================================================================
-const StationListView = ({ stations, searchTerm, setSearchTerm, deleteStation }) => {
+const StationListView = ({ stations, searchTerm, setSearchTerm, deleteStation, fetchStations }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [selectedStationId, setSelectedStationId] = useState(null);
+  const [showViewStationModal, setShowViewStationModal] = useState(false);
 
+const [showUpdateStationModal, setShowUpdateStationModal] = useState(false);
   // =====================================================================
   // 🔍 SEARCH + FILTER LOGIC
   // =====================================================================
@@ -172,7 +177,7 @@ const filteredStations = stations.filter((s) => {
                     </div>
                     <div>
                       <p className="font-semibold text-slate-900">{s.name}</p>
-                      <p className="text-xs text-slate-500">{s._id.slice(-8)}</p>
+                      {/* <p className="text-xs text-slate-500">{s._id.slice(-8)}</p> */}
                     </div>
                   </div>
                 </td>
@@ -238,8 +243,8 @@ const filteredStations = stations.filter((s) => {
                 {/* ACTIONS */}
                 <td className="px-6 py-4">
                   <div className="flex justify-center gap-3">
-                    <Eye className="w-5 h-5 text-slate-400 hover:text-violet-600 cursor-pointer" />
-                    <Edit className="w-5 h-5 text-slate-400 hover:text-blue-600 cursor-pointer" />
+                    <Eye onClick={()=>setShowViewStationModal(!showViewStationModal)} className="w-5 h-5 text-slate-400 hover:text-violet-600 cursor-pointer" />
+                    <Edit onClick={()=>{setShowUpdateStationModal(!showUpdateStationModal); setSelectedStationId(s._id);}} className="w-5 h-5 text-slate-400 hover:text-blue-600 cursor-pointer" />
                     <Trash2 onClick={()=>deleteStation(s._id)} className="w-5 h-5 text-slate-400 hover:text-rose-600 cursor-pointer" />
                   </div>
                 </td>
@@ -257,6 +262,19 @@ const filteredStations = stations.filter((s) => {
           </tbody>
         </table>
       </div>
+      <UpdateStationModal
+        open={showUpdateStationModal}
+        onOpenChange={setShowUpdateStationModal}
+        stationId={selectedStationId}
+        onUpdated={fetchStations}
+      />
+      <ViewStation
+        open={showViewStationModal}
+        onOpenChange={setShowViewStationModal}
+        title="Xem thông tin trạm"
+      >
+        {/* Nội dung xem thông tin trạm */}
+      </ViewStation>
     </div>
   );
 };

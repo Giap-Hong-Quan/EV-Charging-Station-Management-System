@@ -18,7 +18,14 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+import { useModalStore } from "@/store/modalStore";
+import { stationService } from "@/services/stationService";
+
 const CreateStationModal = ({ open, onOpenChange }) => {
+  const close = useModalStore((s) => s.close);
+
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -27,16 +34,11 @@ const CreateStationModal = ({ open, onOpenChange }) => {
     connector_type: "AC_Type2",
     power_rating: "",
     total_points: "",
-    available_points: "",
     price_per_kwh: "",
     status: "online",
   });
 
-  const handleSubmit = () => {
-    console.log("Dữ liệu trạm sạc mới:", formData);
-    // Tại đây bạn có thể gọi API thêm trạm sạc
-    onOpenChange(false);
-    // Reset form
+  const resetForm = () => {
     setFormData({
       name: "",
       address: "",
@@ -45,10 +47,27 @@ const CreateStationModal = ({ open, onOpenChange }) => {
       connector_type: "AC_Type2",
       power_rating: "",
       total_points: "",
-      available_points: "",
       price_per_kwh: "",
       status: "online",
     });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      await stationService.createStation(formData);
+
+      // Đóng modal
+      close();
+
+      // Reset form để chuẩn bị cho lần mở tiếp theo
+      resetForm();
+
+    } catch (err) {
+      console.error("❌ Lỗi tạo trạm:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,27 +82,31 @@ const CreateStationModal = ({ open, onOpenChange }) => {
 
         <Alert className="bg-indigo-50 border-indigo-200">
           <AlertDescription className="text-indigo-800 text-sm">
-            ⚡ Nhập đầy đủ thông tin trạm sạc để thêm vào hệ thống quản lý.
+            ⚡ Nhập đầy đủ thông tin để thêm trạm sạc vào hệ thống.
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-4 mt-2">
-          {/* Name + Address */}
+        <div className="space-y-4 mt-3">
+
+          {/* Tên trạm */}
           <div>
             <Label htmlFor="name">Tên trạm sạc</Label>
             <Input
               id="name"
-              placeholder="VD: Trạm EV Siêu Thị Điện Máy Xanh Tô Ký"
+              placeholder="VD: Trạm EV Vincom Quận 9"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
             />
           </div>
 
+          {/* Địa chỉ */}
           <div>
             <Label htmlFor="address">Địa chỉ</Label>
             <Input
               id="address"
-              placeholder="VD: 290 Tô Ký, Phường Tân Chánh Hiệp, Quận 12, TP.HCM"
+              placeholder="VD: 123 Lê Văn Việt, TP. Thủ Đức"
               value={formData.address}
               onChange={(e) =>
                 setFormData({ ...formData, address: e.target.value })
@@ -91,27 +114,26 @@ const CreateStationModal = ({ open, onOpenChange }) => {
             />
           </div>
 
-          {/* Longitude - Latitude */}
+          {/* Kinh độ & Vĩ độ */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="longitude">Kinh độ (Longitude)</Label>
+              <Label>Kinh độ (Longitude)</Label>
               <Input
-                id="longitude"
                 type="number"
-                placeholder="VD: 106.631180"
                 value={formData.longitude}
+                placeholder="VD: 106.12345"
                 onChange={(e) =>
                   setFormData({ ...formData, longitude: e.target.value })
                 }
               />
             </div>
+
             <div>
-              <Label htmlFor="latitude">Vĩ độ (Latitude)</Label>
+              <Label>Vĩ độ (Latitude)</Label>
               <Input
-                id="latitude"
                 type="number"
-                placeholder="VD: 10.857250"
                 value={formData.latitude}
+                placeholder="VD: 10.98765"
                 onChange={(e) =>
                   setFormData({ ...formData, latitude: e.target.value })
                 }
@@ -119,17 +141,17 @@ const CreateStationModal = ({ open, onOpenChange }) => {
             </div>
           </div>
 
-          {/* Connector Type - Power */}
+          {/* Cổng sạc + Công suất */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="connector_type">Loại cổng sạc</Label>
+              <Label>Loại cổng sạc</Label>
               <Select
                 value={formData.connector_type}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, connector_type: value })
+                onValueChange={(v) =>
+                  setFormData({ ...formData, connector_type: v })
                 }
               >
-                <SelectTrigger id="connector_type">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -142,11 +164,10 @@ const CreateStationModal = ({ open, onOpenChange }) => {
             </div>
 
             <div>
-              <Label htmlFor="power_rating">Công suất (kW)</Label>
+              <Label>Công suất (kW)</Label>
               <Input
-                id="power_rating"
                 type="number"
-                placeholder="VD: 22"
+                placeholder="22"
                 value={formData.power_rating}
                 onChange={(e) =>
                   setFormData({ ...formData, power_rating: e.target.value })
@@ -155,30 +176,26 @@ const CreateStationModal = ({ open, onOpenChange }) => {
             </div>
           </div>
 
-          {/* Total - Available */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="total_points">Tổng số điểm sạc</Label>
-              <Input
-                id="total_points"
-                type="number"
-                placeholder="VD: 4"
-                value={formData.total_points}
-                onChange={(e) =>
-                  setFormData({ ...formData, total_points: e.target.value })
-                }
-              />
-            </div>
+          {/* Tổng điểm sạc */}
+          <div>
+            <Label>Tổng số điểm sạc</Label>
+            <Input
+              type="number"
+              placeholder="VD: 4"
+              value={formData.total_points}
+              onChange={(e) =>
+                setFormData({ ...formData, total_points: e.target.value })
+              }
+            />
           </div>
 
-          {/* Price + Status */}
+          {/* Giá + Trạng thái */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price_per_kwh">Giá mỗi kWh (VNĐ)</Label>
+              <Label>Giá mỗi kWh (VNĐ)</Label>
               <Input
-                id="price_per_kwh"
                 type="number"
-                placeholder="VD: 4500"
+                placeholder="4500"
                 value={formData.price_per_kwh}
                 onChange={(e) =>
                   setFormData({ ...formData, price_per_kwh: e.target.value })
@@ -187,14 +204,14 @@ const CreateStationModal = ({ open, onOpenChange }) => {
             </div>
 
             <div>
-              <Label htmlFor="status">Trạng thái</Label>
+              <Label>Trạng thái</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, status: value })
+                onValueChange={(v) =>
+                  setFormData({ ...formData, status: v })
                 }
               >
-                <SelectTrigger id="status">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -207,15 +224,17 @@ const CreateStationModal = ({ open, onOpenChange }) => {
           </div>
         </div>
 
-        <div className="flex gap-3 justify-end mt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="flex justify-end gap-3 mt-6">
+          <Button variant="outline" onClick={close}>
             Hủy
           </Button>
+
           <Button
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            disabled={loading}
             onClick={handleSubmit}
           >
-            Lưu trạm sạc
+            {loading ? "Đang lưu..." : "Lưu trạm sạc"}
           </Button>
         </div>
       </DialogContent>

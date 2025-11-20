@@ -3,6 +3,7 @@
   import { MapPin, CheckCircle, Wrench, AlertCircle, List, Map } from "lucide-react";
 import StationMapView from '@/components/admin/StationMapView';
 import StationListView from '@/components/admin/StationListView';
+import { useModalStore } from '@/store/modalStore';
  
   const StationAdmin = () => {
     const [stations, setStations] = useState([]);
@@ -12,48 +13,63 @@ import StationListView from '@/components/admin/StationListView';
     offline: 0,
     maintenance: 0,
     });
-    const [viewMode, setViewMode] = useState("map"); // 'map' | 'list'
+  const [viewMode, setViewMode] = useState(() => {
+  return localStorage.getItem("viewMode") || "map";
+});
 
+useEffect(() => {
+  localStorage.setItem("viewMode", viewMode);
+}, [viewMode]);
+ // 'map' | 'list'
+  const modal = useModalStore((s) => s.modal);
+ // API load danh sách
+  const fetchStations = async () => {
+    try {
+      const res = await stationService.getAllStations();
+      setStations(res.stations || []);
+      setStats({
+        total: res.count || 0,
+        online: res.countOnline || 0,
+        offline: res.countOffline || 0,
+        maintenance: res.countMaintenance || 0,
+      });
+    } catch (err) {
+      console.error("Lỗi load stations:", err);
+    }
+  };
+
+  // Lần đầu load
   useEffect(() => {
-    const fetchStations = async () => {
-      try {
-        const res = await stationService.getAllStations();
-        console.log("Station API: ", res); // tạm log ra để kiểm tra
-        // set danh sách trạm
-        setStations(res.stations || []);
-        // set số liệu thống kê từ API
-        setStats({
-          total: res.count || 0,
-          online: res.countOnline || 0,
-          offline: res.countOffline || 0,
-          maintenance: res.countMaintenance || 0,
-        });
-      } catch (error) {
-        console.error("Lỗi load stations:", error);
-      }
-    };
     fetchStations();
   }, []);
+
+  // 🔥 Khi modal đóng → reload lại data
+  useEffect(() => {
+    // modal === null nghĩa là vừa đóng modal
+    if (modal === null) {
+      fetchStations();
+    }
+  }, [modal]);
 
 //xOa
   const deleteStation = async (id) => {
     try {
       await stationService.deleteStation(id);
       setStations(prev => prev.filter(st => st._id !== id));
+      setStats(prev => ({
+        ...prev,
+        total: prev.total - 1,
+      }));
+      setStats(prev => ({
+        ...prev,
+        online: prev.online - 1,
+      }));
     } catch (err) {
       console.error("Lỗi xóa:", err);
     }
   };
   // thêm 
-  const addStation = async (stationData) => {
-    try {
-      const newStation = await stationService.createStation(stationData);
-      setStations(prev => [...prev, newStation]);
-    } catch (err) {
-      console.error("Lỗi thêm trạm:", err);
-    }
-  };
-  
+
     return (
       <div>
         {/* Stats */}
@@ -133,7 +149,7 @@ import StationListView from '@/components/admin/StationListView';
         {viewMode === "map" ? (
           <StationMapView stations={stations} />
         ) : (
-          <StationListView stations={stations} deleteStation={deleteStation} />
+          <StationListView stations={stations} deleteStation={deleteStation} fetchStations={fetchStations} />
         )}
       </div>
       </div>
