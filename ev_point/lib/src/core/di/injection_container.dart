@@ -11,6 +11,13 @@ import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point_by_id.dart';
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point_by_station_id.dart';
 import 'package:ev_point/src/features/charging_point/presentations/cubit/charging_point_cubit.dart';
+import 'package:ev_point/src/features/charging_station/data/datasources/charging_station_remote_datasource.dart';
+import 'package:ev_point/src/features/charging_station/data/repositories/charging_station_repository_impl.dart';
+import 'package:ev_point/src/features/charging_station/domain/repositories/charging_station_repository.dart';
+import 'package:ev_point/src/features/charging_station/domain/usecase/get_charging_station_by_id.dart';
+import 'package:ev_point/src/features/charging_station/domain/usecase/get_charging_stations.dart';
+import 'package:ev_point/src/features/charging_station/domain/usecase/search_charging_station.dart';
+import 'package:ev_point/src/features/charging_station/presentations/cubit/charging_station_cubit.dart';
 import 'package:ev_point/src/features/map/data/datasources/station_remote_datasource.dart';
 import 'package:ev_point/src/features/map/domain/usecase/get_station_by_id.dart';
 import 'package:ev_point/src/features/map/domain/usecase/search_station.dart';
@@ -29,25 +36,31 @@ import '../../features/map/presentation/cubit/station/station_cubit.dart';
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
-  final baseUrlChargingPoint = dotenv.env['API_EV_POINT_BASE_URL'];
-  final baseUrlBooking = dotenv.env['API_BOOKING_BASE_URL'];
+  final baseUrlGetway = dotenv.env['API_GETWAY_BASE_URL'];
 
   sl.registerLazySingleton(() => http.Client());
 
   //datasource
   sl.registerLazySingleton<StationRemoteDataSource>(
-    () => StationRemoteDataSourceImpl(sl(), baseUrlChargingPoint!),
+    () => StationRemoteDataSourceImpl(sl(), baseUrlGetway!),
   );
   sl.registerLazySingleton<ChargingPointRemoteDataSource>(
     () => ChargingPointRemoteDataSourceImpl(
       client: sl<http.Client>(),
-      baseChargingPointUrl: baseUrlChargingPoint!,
+      baseChargingPointUrl: baseUrlGetway!,
     ),
   );
   sl.registerLazySingleton<IBookingDatasource>(
     () => BookingDatasourceImpl(
       client: sl<http.Client>(),
-      baseBookingUrl: baseUrlBooking!,
+      baseBookingUrl: baseUrlGetway!,
+    ),
+  );
+
+  sl.registerLazySingleton<ChargingStationRemoteDataSource>(
+    () => ChargingStationRemoteDataSourceImpl(
+      client: sl<http.Client>(),
+      baseChargingStationUrl: baseUrlGetway!,
     ),
   );
 
@@ -60,6 +73,9 @@ Future<void> initDependencies() async {
   );
   sl.registerLazySingleton<IBookingRepository>(
     () => BookingRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<IChargingStationRepository>(
+    () => ChargingStationRepositoryImpl(sl()),
   );
 
   //usecase
@@ -75,6 +91,10 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => CreateBooking(sl()));
   sl.registerLazySingleton(() => GetBookingByUserId(sl()));
   sl.registerLazySingleton(() => CancelBooking(sl()));
+
+  sl.registerLazySingleton(() => GetChargingStations(sl()));
+  sl.registerLazySingleton(() => GetChargingStationById(sl()));
+  sl.registerLazySingleton(() => SearchChargingStation(sl()));
 
   //cubit
   sl.registerFactory<StationCubit>(
@@ -95,6 +115,14 @@ Future<void> initDependencies() async {
       getChargingPointByIdUseCase: sl<GetChargingPointById>(),
       getStationByIdUseCase: sl<GetStationById>(),
       cancelBookingUseCase: sl<CancelBooking>(),
+    ),
+  );
+
+  sl.registerFactory<ChargingStationCubit>(
+    () => ChargingStationCubit(
+      getChargingStationByIdUC: sl<GetChargingStationById>(),
+      getChargingStationsUC: sl<GetChargingStations>(),
+      searchChargingStationUC: sl<SearchChargingStation>(),
     ),
   );
 

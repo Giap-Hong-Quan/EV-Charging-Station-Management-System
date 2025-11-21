@@ -78,9 +78,9 @@ flutter_native_splash:
   ios: true
   web: false
 
-  color: "#031C47"
+  color: "#1A2332"
   image: assets/logo/image.png
 
   android_12:
     image: assets/logo/image.png
-    icon_background_color: "#031C47"
+    icon_background_color: "#1A2332"

@@ -1,8 +1,10 @@
 import 'package:ev_point/src/core/routes/routers_path.dart';
+import 'package:ev_point/src/features/auth/presentations/pages/login_screen.dart';
+import 'package:ev_point/src/features/auth/presentations/pages/register_screen.dart';
 import 'package:ev_point/src/features/booking/presentations/pages/booking_screen.dart';
 import 'package:ev_point/src/features/booking/presentations/pages/my_booking_screen.dart';
 import 'package:ev_point/src/features/map/domain/entities/station.dart';
-import 'package:ev_point/src/features/map/presentation/pages/home_screen.dart';
+import 'package:ev_point/src/features/home/presentations/pages/home_screen.dart';
 import 'package:ev_point/src/features/map/presentation/pages/map_screen.dart';
 import 'package:ev_point/src/features/splash_screen/presentations/on_boarding_screen.dart';
 import 'package:ev_point/src/features/splash_screen/presentations/splash_screen.dart';
@@ -23,8 +25,16 @@ class AppRouter {
 
     _router = GoRouter(
       navigatorKey: navigatorKey,
-      initialLocation: RouterPaths.splashScreen,
+      initialLocation: RouterPaths.homeScreen,
       routes: [
+        GoRoute(
+          path: RouterPaths.loginScreen,
+          builder: (_, __) => const LoginScreen(),
+        ),
+        GoRoute(
+          path: RouterPaths.registerScreen,
+          builder: (_, __) => const RegisterScreen(),
+        ),
         GoRoute(
           path: RouterPaths.onboardingScreen,
           builder: (_, __) => const OnboardingScreen(),

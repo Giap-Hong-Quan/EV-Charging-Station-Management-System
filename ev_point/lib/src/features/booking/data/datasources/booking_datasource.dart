@@ -38,7 +38,7 @@ Future<BookingModel> createBooking({
   required DateTime scheduleEndTime,
 }) async {
   final response = await client.post(
-    Uri.parse('$baseBookingUrl/bookings'),
+    Uri.parse('$baseBookingUrl/booking-service/bookings'),
     headers: {HttpHeaders.contentTypeHeader: 'application/json'},
     body: jsonEncode({
       'user_id': userId,
@@ -70,7 +70,7 @@ Future<BookingModel> createBooking({
   @override
   Future<List<BookingModel>> getUserBookings({required String userId}) async {
     final response = await client.get(
-      Uri.parse('$baseBookingUrl/bookings/user/$userId'),
+      Uri.parse('$baseBookingUrl/booking-service/bookings/user/$userId'),
       headers: {HttpHeaders.contentTypeHeader: 'application/json'},
     );
     if (response.statusCode == 200) {
@@ -90,7 +90,7 @@ Future<BookingModel> createBooking({
   @override
   Future<BookingModel> cancelBooking({required String bookingId}) async {
     final response = await client.post(
-      Uri.parse('$baseBookingUrl/bookings/cancel'),
+      Uri.parse('$baseBookingUrl/booking-service/bookings/cancel'),
       headers: {HttpHeaders.contentTypeHeader: 'application/json'},
       body: jsonEncode({'booking_id': bookingId}),
     );
