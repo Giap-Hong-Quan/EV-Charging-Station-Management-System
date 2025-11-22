@@ -235,7 +235,10 @@ const filteredStations = stations.filter((s) => {
                 {/* ACTIONS */}
                 <td className="px-6 py-4">
                   <div className="flex justify-center gap-3">
-                    <Eye onClick={()=>setShowViewStationModal(!showViewStationModal)} className="w-5 h-5 text-slate-400 hover:text-violet-600 cursor-pointer" />
+                    <Eye onClick={()=> {
+                      setSelectedStationId(s._id);
+                      setShowViewStationModal(true);
+                    }} className="w-5 h-5 text-slate-400 hover:text-violet-600 cursor-pointer" />
                     <Edit onClick={()=>{setShowUpdateStationModal(!showUpdateStationModal); setSelectedStationId(s._id);}} className="w-5 h-5 text-slate-400 hover:text-blue-600 cursor-pointer" />
                     <Trash2 onClick={()=>deleteStation(s._id)} className="w-5 h-5 text-slate-400 hover:text-rose-600 cursor-pointer" />
                   </div>
@@ -260,13 +263,14 @@ const filteredStations = stations.filter((s) => {
         stationId={selectedStationId}
         onUpdated={fetchStations}
       />
-      <ViewStation
-        open={showViewStationModal}
-        onOpenChange={setShowViewStationModal}
-        title="Xem thông tin trạm"
-      >
+ <ViewStation
+  open={showViewStationModal}
+  onOpenChange={setShowViewStationModal}
+  stationId={selectedStationId}
+/>
+
         {/* Nội dung xem thông tin trạm */}
-      </ViewStation>
+      
     </div>
   );
 };
