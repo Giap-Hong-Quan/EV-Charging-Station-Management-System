@@ -37,7 +37,7 @@ export const ChargingSessionService = {
                     end_soc_percent: 100,
                     status: ChargingSessionStatus.IN_PROGRESS,
                     total_kwh: 0,
-                    total_price: 0,
+                    total_price: 0, 
                     payment_method: null,
                 });
                 const savedSession = await newSession.save();
