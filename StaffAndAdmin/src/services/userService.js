@@ -6,7 +6,11 @@ export const userService = {
     const response = await api.get("/user-service/users");
     return response.data;
   },
-
+  // Lấy danh sách users
+  getUserById: async (id) => {
+    const response = await api.get(`/user-service/users/${id}`);
+    return response.data;
+  },
   // Tạo user mới
   createUser: async (userData) => {
     const response = await api.post("/user-service/users", userData);
@@ -48,4 +52,9 @@ export const userService = {
       throw error;
     }
   },
+
+  getUsersByRole: async (role_id) => {
+  const response = await api.get(`/user-service/users-by-role?role_id=${role_id}`);
+  return response.data.users;
+}
 };

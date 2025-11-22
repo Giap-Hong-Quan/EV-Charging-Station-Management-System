@@ -12,5 +12,8 @@ export const config = {
   },
   analyticsService: {
     baseUrl: "http://analytics_reporting_service:5002"
+  },
+  sessionService: {
+    baseUrl: "http://charging_session_service:5003"  
   }
 };

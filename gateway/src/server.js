@@ -8,6 +8,7 @@ import { setupRoutes_station } from "./routes/station.js";
 import { setupRoutes_booking } from "./routes/booking.js";
 import { setupRoutes_analytics } from "./routes/analytics.js";
 import { config } from "./config.js";
+import { setupRoutes_session } from "./routes/session.js";
 
 const app = express();
 
@@ -26,6 +27,7 @@ setupRoutes_user(app);
 setupRoutes_station(app);
 setupRoutes_booking(app);
 setupRoutes_analytics(app);
+setupRoutes_session(app);
 
 // ==== Parse body cho các route KHÁC gateway ====
 app.use(express.json());
