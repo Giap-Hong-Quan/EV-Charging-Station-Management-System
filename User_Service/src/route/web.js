@@ -54,8 +54,10 @@ router.put(
   "/users/:id",
   verifyToken,
   adminMiddleware,
+  upload.single("avatar"),
   userController.handleEditUser
 );
+
 
 router.delete(
   "/users/:id",
@@ -68,5 +70,12 @@ router.delete(
 router.get("/", (req, res) => {
   res.send("Hello world");
 });
+// get user theo role
+router.get(
+  "/users-by-role",
+  verifyToken,
+  adminMiddleware,
+  userController.handleGetUsersByRole
+);
 
 module.exports = router;

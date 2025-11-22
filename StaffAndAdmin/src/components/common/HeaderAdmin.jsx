@@ -59,7 +59,7 @@ const HeaderAdmin = ({ isSidebarOpen, setIsSidebarOpen }) => {
           {/* Nút mở modal */}
           <Button
             onClick={() => openModal("createStation")}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-violet-700 shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Thêm trạm

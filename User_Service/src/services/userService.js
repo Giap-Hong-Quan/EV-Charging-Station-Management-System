@@ -719,6 +719,33 @@ let getUserById = (userId) => {
     }
   });
 };
+let getUsersByRole = (role_id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let users = await db.User.findAll({
+        where: { role_id },
+        attributes: { exclude: ["password"] },
+        include: [
+          {
+            model: db.UserRole,
+            as: "role",
+            attributes: ["role_name"],
+          },
+          {
+            model: db.AuthSession,
+            as: "sessions",
+            attributes: ["token", "expires_at"],
+          },
+        ],
+        order: [["created_at", "DESC"]],
+      });
+
+      resolve(users);
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
 
 module.exports = {
   handleUserLogin: handleUserLogin,
@@ -734,4 +761,5 @@ module.exports = {
   getUserById: getUserById,
   checkUserEmail: checkUserEmail,
   hashUserPassword: hashUserPassword,
+  getUsersByRole: getUsersByRole,
 };

@@ -59,9 +59,12 @@ let handleDeleteUser = async (req, res) => {
 let handleEditUser = async (req, res) => {
   let data = req.body;
   data.id = req.params.id;
-  let message = await userService.updateUserData(data);
+  const file = req.file; // thêm dòng này
+
+  let message = await userService.updateUserData(data, file);
   return res.status(200).json(message);
 };
+
 
 let handleGoogleLogin = async (req, res) => {
   try {
@@ -294,6 +297,32 @@ let handleResetPassword = async (req, res) => {
   }
 };
 
+let handleGetUsersByRole = async (req, res) => {
+  try {
+    const role_id = req.query.role_id;
+
+    if (!role_id) {
+      return res.status(400).json({
+        errCode: 1,
+        message: "Missing role_id",
+      });
+    }
+
+    let users = await userService.getUsersByRole(role_id);
+
+    return res.status(200).json({
+      errCode: 0,
+      message: "OK",
+      users: users,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      errCode: -1,
+      message: "Server error",
+    });
+  }
+};
+
 module.exports = {
   handleLogin: handleLogin,
   handleCreateNewUser: handleCreateNewUser,
@@ -307,4 +336,5 @@ module.exports = {
   handleUpdateProfile: handleUpdateProfile,
   handleGetAllUsers: handleGetAllUsers,
   handleGetUserById: handleGetUserById,
+  handleGetUsersByRole: handleGetUsersByRole,
 };

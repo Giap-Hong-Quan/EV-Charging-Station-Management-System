@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
   AuthSession.init(
     {
     token: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING(512),
       primaryKey: true,
       allowNull: false,
     },

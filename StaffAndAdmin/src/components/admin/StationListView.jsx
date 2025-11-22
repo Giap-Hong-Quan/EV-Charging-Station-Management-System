@@ -156,12 +156,12 @@ const filteredStations = stations.filter((s) => {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Tên trạm</th>
               <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Địa chỉ</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Trạng thái</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Công suất</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Điểm sạc</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Loại cổng</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Giá/kWh</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Thao tác</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Trạng thái</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Công suất</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Điểm sạc</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Loại cổng</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Giá/kWh</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Thao tác</th>
             </tr>
           </thead>
 
@@ -172,13 +172,8 @@ const filteredStations = stations.filter((s) => {
                 {/* TÊN TRẠM */}
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
                       <Zap className="w-5 h-5 text-violet-600" />
-                    </div>
-                    <div>
                       <p className="font-semibold text-slate-900">{s.name}</p>
-                      {/* <p className="text-xs text-slate-500">{s._id.slice(-8)}</p> */}
-                    </div>
                   </div>
                 </td>
 
@@ -186,7 +181,7 @@ const filteredStations = stations.filter((s) => {
                 <td className="px-6 py-4 text-slate-600">{s.address}</td>
 
                 {/* TRẠNG THÁI */}
-                <td className="px-6 py-4 text-center">
+                <td className="px-6 py-4 ">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColors(
                       s.status
@@ -197,15 +192,12 @@ const filteredStations = stations.filter((s) => {
                 </td>
 
                 {/* CÔNG SUẤT */}
-                <td className="px-6 py-4 text-center">
-                  <div className="flex justify-center items-center gap-1">
-                    <Zap className="w-4 h-4 text-violet-600" />
+                <td className="px-6 py-4 text-left">
                     <span className="font-semibold">{s.power_rating} kW</span>
-                  </div>
                 </td>
 
                 {/* ĐIỂM SẠC */}
-                <td className="px-6 py-4 text-center">
+                <td className="px-6 py-4 text-left">
                   <div className="flex flex-col items-center">
                     <span className="font-semibold">
                       {s.available_points}/{s.total_points}
@@ -224,16 +216,16 @@ const filteredStations = stations.filter((s) => {
                 </td>
 
                 {/* CỔNG */}
-                <td className="px-6 py-4 text-center">
+                <td className="px-6 py-4 text-left">
                   <span className="px-2 py-1 bg-slate-100 rounded text-xs font-medium">
                     {s.connector_type}
                   </span>
                 </td>
 
                 {/* GIÁ */}
-                <td className="px-6 py-4 text-center">
-                  <div className="flex justify-center items-center gap-1">
-                    <DollarSign className="w-4 h-4 text-emerald-600" />
+                <td className="px-6 py-4 text-left">
+                  <div className="flex justify-start items-center gap-1">
+                        
                     <span className="font-semibold">
                       {s.price_per_kwh.toLocaleString()}đ
                     </span>
