@@ -8,6 +8,7 @@ abstract class UserRemoteDatasources {
   Future<UserModel> registerUser(RegisterRequestDto userDTO);
   Future<UserModel> loginUser(String email, String password);
   Future<UserModel> getCurrentProfileUser();
+  Future<void> logoutUser();
 }
 
 class UserRemoteDatasourcesImpl implements UserRemoteDatasources {
@@ -88,5 +89,24 @@ class UserRemoteDatasourcesImpl implements UserRemoteDatasources {
       }
       throw Exception('Không thể kết nối server');
     }
+  }
+
+  @override
+  Future<void> logoutUser() async {
+    try{
+      await dio.post(
+        '/user-service/auth/logout',
+        options: Options(
+          headers: {HttpHeaders.contentTypeHeader: 'application/json'},
+        ),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final message = e.response?.data['message'] ?? 'Lỗi không xác định';
+        throw Exception(message);
+      }
+      throw Exception('Không thể kết nối server');
+    }
+    return;
   }
 }

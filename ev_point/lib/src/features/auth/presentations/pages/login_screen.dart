@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: BlocConsumer<UserCubit, UserState>(
           listener: (context, state) {
-            if (state is UserCreated) {
+            if (state is UserLoggedIn) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Đăng nhập thành công!'),

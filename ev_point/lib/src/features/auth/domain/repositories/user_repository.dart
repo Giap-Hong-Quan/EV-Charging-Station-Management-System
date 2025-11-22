@@ -5,6 +5,7 @@ abstract class IUserRepository {
   Future<UserEntity> registerUser(RegisterRequestDto userDTO);
   Future<UserEntity> loginUser(String email, String password);
   Future<UserEntity> getCurrentProfileUser();
+  Future<void> logoutUser();
 
   Future<bool> hasValidToken();
   Future<String?> getSavedToken();

@@ -110,8 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             Expanded(
                               child: QuickActionWidget(
-                                icon: Icons.bolt,
-                                label: 'Sạc nhanh',
+                                icon: Icons.book_online,
+                                label: 'Đặt chỗ',
                                 color: Colors.yellow[700]!,
                               ),
                             ),

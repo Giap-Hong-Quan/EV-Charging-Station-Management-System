@@ -28,6 +28,12 @@ class UserRepositoryImpl implements IUserRepository {
     return remoteDatasources.getCurrentProfileUser();
   }
 
+  @override
+  Future<void> logoutUser() async { 
+    await remoteDatasources.logoutUser(); 
+    await localDataSource.clearToken();
+  }
+
     @override
   Future<String?> getSavedToken() async {
     return await localDataSource.getCachedToken();
@@ -37,4 +43,6 @@ class UserRepositoryImpl implements IUserRepository {
   Future<bool> hasValidToken() async {
     return await localDataSource.hasValidToken();
   }
+
+
 }
