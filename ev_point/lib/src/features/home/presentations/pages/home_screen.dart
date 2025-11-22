@@ -1,3 +1,7 @@
+import 'package:ev_point/src/core/di/injection_container.dart';
+import 'package:ev_point/src/features/auth/data/datasources/auth_local_datasources.dart';
+import 'package:ev_point/src/features/auth/domain/entities/user_entity.dart';
+import 'package:ev_point/src/features/auth/domain/repositories/user_repository.dart';
 import 'package:ev_point/src/features/charging_station/presentations/cubit/charging_station_cubit.dart';
 import 'package:ev_point/src/features/charging_station/presentations/cubit/charging_station_state.dart';
 import 'package:ev_point/src/features/charging_station/presentations/pages/charging_station_detail_screen.dart';
@@ -17,16 +21,49 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String? currentUserToken;
+  UserEntity? currentUser;
+  bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
     context.read<ChargingStationCubit>().loadChargingStations();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final authLocal = sl<AuthLocalDataSource>();
+    final token = await authLocal.getCachedToken();
+    setState(() {
+      currentUserToken = token;
+    });
+    if (token == null || token.isEmpty) {
+      setState(() => isLoading = false);
+      return;
+    }
+    final userRepo = sl<IUserRepository>();
+    try {
+      final user = await userRepo.getCurrentProfileUser();
+      setState(() {
+        currentUser = user;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
+      debugPrint('Error load current user: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HeaderAppbar(),
+      appBar: HeaderAppbar(
+        userName: currentUser?.fullname ?? '${currentUser}',
+      ),
       backgroundColor: Colors.white,
       body: BlocBuilder<ChargingStationCubit, ChargingStationState>(
         builder: (context, state) {
@@ -45,8 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   SearchWidget(),
 
                   // Battery Status Card
-                  BatteryStatusCard(),  
-              
+                  BatteryStatusCard(),
 
                   // Quick Actions
                   Padding(
@@ -139,10 +175,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) =>
-                                              ChargingStationDetailScreen(
-                                            chargingStation: state.chargingStations,
-                                          ),
+                                          builder:
+                                              (context) =>
+                                                  ChargingStationDetailScreen(
+                                                    chargingStation:
+                                                        state.chargingStations,
+                                                  ),
                                         ),
                                       );
                                     },
@@ -165,9 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
-                          Expanded(
-                            child: _buildStationList(state),
-                          ),
+                          Expanded(child: _buildStationList(state)),
                         ],
                       ),
                     ),
@@ -184,9 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStationList(ChargingStationState state) {
     if (state is ChargingStationLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Colors.green,
-        ),
+        child: CircularProgressIndicator(color: Colors.green),
       );
     }
 
@@ -195,11 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[300],
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
               'Có lỗi xảy ra',
@@ -212,10 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             Text(
               state.message,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -265,10 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 8),
               Text(
                 'Không tìm thấy trạm sạc nào',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[500],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[500]),
               ),
             ],
           ),
@@ -277,9 +301,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
       return ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 10),
-        itemCount: state.chargingStations.length > 1
-            ? 2 
-            : state.chargingStations.length,
+        itemCount:
+            state.chargingStations.length > 1
+                ? 2
+                : state.chargingStations.length,
         itemBuilder: (context, index) {
           return ChargingStationCard(
             chargingStation: state.chargingStations[index],

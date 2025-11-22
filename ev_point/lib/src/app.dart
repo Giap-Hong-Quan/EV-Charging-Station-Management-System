@@ -1,4 +1,5 @@
 import 'package:ev_point/src/core/routes/app_routers.dart';
+import 'package:ev_point/src/features/auth/presentations/cubit/user_cubit.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point_by_id.dart';
 import 'package:ev_point/src/features/charging_point/presentations/cubit/charging_point_cubit.dart';
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => GetIt.I<ChargingPointCubit>()),
         BlocProvider(create: (_) => GetIt.I<BookingCubit>()),
         BlocProvider(create: (_) => GetIt.I<ChargingStationCubit>()),
+        BlocProvider(create: (_) => GetIt.I<UserCubit>()),
         RepositoryProvider<GetStationById>(
           create: (_) => GetIt.I<GetStationById>(),
         ),

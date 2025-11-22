@@ -25,8 +25,8 @@ abstract class IBookingDatasource {
 
 class BookingDatasourceImpl implements IBookingDatasource {
   final http.Client client;
-  final String baseBookingUrl;
-  BookingDatasourceImpl({required this.client, required this.baseBookingUrl});
+  final String gatewayUrl;
+  BookingDatasourceImpl({required this.client, required this.gatewayUrl});
   @override
 Future<BookingModel> createBooking({
   required String userId,
@@ -38,7 +38,7 @@ Future<BookingModel> createBooking({
   required DateTime scheduleEndTime,
 }) async {
   final response = await client.post(
-    Uri.parse('$baseBookingUrl/booking-service/bookings'),
+    Uri.parse('$gatewayUrl/booking-service/bookings'),
     headers: {HttpHeaders.contentTypeHeader: 'application/json'},
     body: jsonEncode({
       'user_id': userId,
@@ -50,7 +50,6 @@ Future<BookingModel> createBooking({
       'schedule_end_time': scheduleEndTime.toIso8601String(),
     }),
   );
-  print('Create Booking Response: ${response.body}'); 
   if (response.statusCode == 200 || response.statusCode == 201) {
     final decoded = jsonDecode(response.body);
     final data = decoded['data'];
@@ -70,7 +69,7 @@ Future<BookingModel> createBooking({
   @override
   Future<List<BookingModel>> getUserBookings({required String userId}) async {
     final response = await client.get(
-      Uri.parse('$baseBookingUrl/booking-service/bookings/user/$userId'),
+      Uri.parse('$gatewayUrl/booking-service/bookings/user/$userId'),
       headers: {HttpHeaders.contentTypeHeader: 'application/json'},
     );
     if (response.statusCode == 200) {
@@ -90,7 +89,7 @@ Future<BookingModel> createBooking({
   @override
   Future<BookingModel> cancelBooking({required String bookingId}) async {
     final response = await client.post(
-      Uri.parse('$baseBookingUrl/booking-service/bookings/cancel'),
+      Uri.parse('$gatewayUrl/booking-service/bookings/cancel'),
       headers: {HttpHeaders.contentTypeHeader: 'application/json'},
       body: jsonEncode({'booking_id': bookingId}),
     );

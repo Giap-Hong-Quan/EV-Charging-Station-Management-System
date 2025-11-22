@@ -1,4 +1,5 @@
 import 'package:ev_point/src/core/routes/routers_path.dart';
+import 'package:ev_point/src/core/services/oboarding_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -36,23 +37,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
   ];
 
-  void _nextPage() {
+  void _nextPage()async {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
     } else {
+      await OnboardingPref.setSeen();
       context.go(RouterPaths.homeScreen);
     }
   }
 
-  void _skip() {
+  void _skip()async {
     _pageController.animateToPage(
       _pages.length - 1,
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeInOut,
     );
+    await OnboardingPref.setSeen();
+    context.go(RouterPaths.homeScreen);
   }
 
   Widget _buildIndicator() {

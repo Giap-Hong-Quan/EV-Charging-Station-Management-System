@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class HeaderAppbar extends StatelessWidget implements PreferredSizeWidget{
+  final String userName;
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-  const HeaderAppbar({super.key});
+  const HeaderAppbar({super.key, required this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +22,8 @@ class HeaderAppbar extends StatelessWidget implements PreferredSizeWidget{
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Xin chào, User!',
+              Text(
+                'Xin chào, $userName!',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,

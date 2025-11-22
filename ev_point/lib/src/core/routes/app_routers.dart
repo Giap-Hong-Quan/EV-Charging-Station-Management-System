@@ -25,7 +25,7 @@ class AppRouter {
 
     _router = GoRouter(
       navigatorKey: navigatorKey,
-      initialLocation: RouterPaths.homeScreen,
+      initialLocation: RouterPaths.splashScreen,
       routes: [
         GoRoute(
           path: RouterPaths.loginScreen,

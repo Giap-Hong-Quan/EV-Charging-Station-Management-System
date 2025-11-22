@@ -1,3 +1,13 @@
+import 'package:dio/dio.dart';
+import 'package:ev_point/src/core/network/auth_interceptor.dart';
+import 'package:ev_point/src/features/auth/data/datasources/auth_local_datasources.dart';
+import 'package:ev_point/src/features/auth/data/datasources/user_remote_datasources.dart';
+import 'package:ev_point/src/features/auth/data/repositories/user_repository_impl.dart';
+import 'package:ev_point/src/features/auth/domain/repositories/user_repository.dart';
+import 'package:ev_point/src/features/auth/domain/usecase/get_current_profile_user.dart';
+import 'package:ev_point/src/features/auth/domain/usecase/login_user.dart';
+import 'package:ev_point/src/features/auth/domain/usecase/register_user.dart';
+import 'package:ev_point/src/features/auth/presentations/cubit/user_cubit.dart';
 import 'package:ev_point/src/features/booking/data/datasources/booking_datasource.dart';
 import 'package:ev_point/src/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:ev_point/src/features/booking/domain/repositories/ibooking_repository.dart';
@@ -22,6 +32,7 @@ import 'package:ev_point/src/features/map/data/datasources/station_remote_dataso
 import 'package:ev_point/src/features/map/domain/usecase/get_station_by_id.dart';
 import 'package:ev_point/src/features/map/domain/usecase/search_station.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mb;
@@ -34,11 +45,47 @@ import '../../features/map/domain/usecase/get_user_location.dart';
 import '../../features/map/presentation/cubit/station/station_cubit.dart';
 
 final sl = GetIt.instance;
+Dio dioConfig(String baseUrl) {
+  return Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 12),
+        headers: {'Content-Type': 'application/json'},
+      ),
+    )
+    ..interceptors.add(
+      LogInterceptor(
+        request: true,
+        requestBody: true,
+        responseBody: true,
+        error: true,
+      ),
+    );
+}
 
 Future<void> initDependencies() async {
   final baseUrlGetway = dotenv.env['API_GETWAY_BASE_URL'];
 
   sl.registerLazySingleton(() => http.Client());
+
+  sl.registerLazySingleton<FlutterSecureStorage>(() => const FlutterSecureStorage());
+
+    sl.registerLazySingleton<AuthLocalDataSource>(
+    () => AuthLocalDataSourceImpl(sl<FlutterSecureStorage>()),
+  );
+
+
+  sl.registerLazySingleton<Dio>(() {
+    final dio = dioConfig(baseUrlGetway!);
+    dio.interceptors.add(
+      AuthInterceptor(
+        localDataSource: sl<AuthLocalDataSource>(),
+      ),
+    );
+    return dio;
+  });
+
 
   //datasource
   sl.registerLazySingleton<StationRemoteDataSource>(
@@ -53,16 +100,20 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<IBookingDatasource>(
     () => BookingDatasourceImpl(
       client: sl<http.Client>(),
-      baseBookingUrl: baseUrlGetway!,
+      gatewayUrl: baseUrlGetway!,
     ),
   );
-
   sl.registerLazySingleton<ChargingStationRemoteDataSource>(
     () => ChargingStationRemoteDataSourceImpl(
       client: sl<http.Client>(),
       baseChargingStationUrl: baseUrlGetway!,
     ),
   );
+  sl.registerLazySingleton<UserRemoteDatasources>(
+    () => UserRemoteDatasourcesImpl(dio: sl<Dio>(), gatewayUrl: baseUrlGetway!),
+  );
+
+
 
   //Repo
   sl.registerLazySingleton<StationRepository>(
@@ -76,6 +127,12 @@ Future<void> initDependencies() async {
   );
   sl.registerLazySingleton<IChargingStationRepository>(
     () => ChargingStationRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<IUserRepository>(
+    () => UserRepositoryImpl(
+      sl<UserRemoteDatasources>(),
+      sl<AuthLocalDataSource>(),
+    ),
   );
 
   //usecase
@@ -95,6 +152,10 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetChargingStations(sl()));
   sl.registerLazySingleton(() => GetChargingStationById(sl()));
   sl.registerLazySingleton(() => SearchChargingStation(sl()));
+
+  sl.registerLazySingleton(() => RegisterUserUC(sl()));
+  sl.registerLazySingleton(() => LoginUserUC(sl()));
+  sl.registerLazySingleton(() => GetCurrentProfileUserUC(sl()));
 
   //cubit
   sl.registerFactory<StationCubit>(
@@ -123,6 +184,15 @@ Future<void> initDependencies() async {
       getChargingStationByIdUC: sl<GetChargingStationById>(),
       getChargingStationsUC: sl<GetChargingStations>(),
       searchChargingStationUC: sl<SearchChargingStation>(),
+    ),
+  );
+
+  sl.registerFactory<UserCubit>(
+    () => UserCubit(
+      registerUserUC: sl<RegisterUserUC>(),
+      loginUserUC: sl<LoginUserUC>(),
+      getCurrentProfileUserUC: sl<GetCurrentProfileUserUC>(),
+      userRepository: sl<IUserRepository>(),
     ),
   );
 
