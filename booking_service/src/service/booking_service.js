@@ -53,6 +53,8 @@ export const BookingService = {
                     });
                 }
             }
+            console.log("Final start time (UTC):", finalStartTime);
+            console.log("Final start time (Local):", new Date(finalStartTime.getTime() + 7 * 60 * 60 * 1000));
 
             const booking_code = await this.generateUniqueBookingCode();
 
@@ -344,4 +346,3 @@ export const BookingService = {
     },
 
 };
-
