@@ -1,4 +1,4 @@
-import { AlertCircle, BarChart3, BatteryCharging, Brain, Briefcase, Building2, Calendar, DollarSign, FileText, Home, Package, Plus, Users, Wrench, Zap } from "lucide-react";
+import { AlertCircle, BarChart3, BatteryCharging, Brain, Briefcase, Building2, Calendar, Car, DollarSign, FileText, Home, Package, Plus, Users, Wrench, Zap } from "lucide-react";
 
 export const mainMenu= [
   { label: "Tổng quan", icon: BarChart3, path: "/staff/dashboard" },
@@ -35,6 +35,8 @@ export const menuAdmin = [
     {
       title: "DỊCH VỤ",
       items: [
+        { label: "Đặt lịch ", icon: Car, path: "/admin/booking" },
+        {label: "Phiên sạc",icon: Zap,path: "/admin/sessions"},
         { label: "Gói dịch vụ", icon: Package, path: "/admin/service" },
         { label: "Doanh thu", icon: DollarSign, path: "/admin/revenue" },
       ],
