@@ -158,7 +158,7 @@ const toggleStatus = async (item) => {
   const resolved = maintenances.filter((m) => m.status === "resolved").length;
 
   return (
-    <div className="p-4">
+    <div>
       {/* STATISTICS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
         <div className="bg-slate-50 p-4 rounded-xl border flex justify-between items-center">
