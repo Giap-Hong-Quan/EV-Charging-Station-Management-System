@@ -54,20 +54,7 @@ const HeaderStaff = ({ isSidebarOpen, setIsSidebarOpen }) => {
           {/* Right Section */}
           <div className="flex items-center gap-2">
 
-            <Button variant="ghost" size="icon" className="hover:bg-gray-100 relative">
-              <Eye className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 bg-gray-200 text-gray-700 text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                32
-              </span>
-            </Button>
-
-            <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-              <Link2 className="w-5 h-5" />
-            </Button>
-
-            <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-              <MessageSquare className="w-5 h-5" />
-            </Button>
+          
 
             <Separator orientation="vertical" className="h-6" />
 

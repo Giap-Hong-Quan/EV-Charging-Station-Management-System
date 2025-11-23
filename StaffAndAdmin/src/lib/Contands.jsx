@@ -2,8 +2,9 @@ import { AlertCircle, BarChart3, BatteryCharging, Brain, Briefcase, Building2, C
 
 export const mainMenu= [
   { label: "Tổng quan", icon: BarChart3, path: "/staff/dashboard" },
-  { label: "Phiên sạc", icon: BatteryCharging, path: "/staff/sessions", badge: 9 },
   { label: "Điểm sạc", icon: Zap, path: "/staff/chargingPoint" },
+  { label: "Phiên sạc", icon: BatteryCharging, path: "/staff/sessions", },
+  { label: "Đặt lịch ", icon: Car, path: "/staff/booking" },
   { label: "Lịch sử", icon: Calendar, path: "/staff/history" },
 ];
 
@@ -12,6 +13,7 @@ export const quickActions = [
   { label: "Tạo phiên sạc", icon: Plus },
   { label: "Thu tiền mặt", icon: DollarSign },
   { label: "Báo cáo sự cố", icon: AlertCircle },
+  
 ];
 
 

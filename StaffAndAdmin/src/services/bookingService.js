@@ -58,4 +58,11 @@ export const bookingService = {
     const response = await api.post("/booking-service/bookings/cancel", data);
     return response.data;
   },
+  // Lấy booking theo station_id
+getBookingsByStationId: async (stationId) => {
+  const response = await api.get(
+    `/booking-service/bookings/station/${stationId}`
+  );
+  return response.data;
+},
 };

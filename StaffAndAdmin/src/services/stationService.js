@@ -8,7 +8,7 @@ export const stationService = {
   },
 
   // Lấy tất cả Stations
-  getAllStations: async () => {
+  getAllStations: async () => { 
     const response = await api.get("/station-service/stations");
     return response.data;
   },
