@@ -30,10 +30,10 @@ class NotificationController extends Controller
             'content' => 'required|string',
         ]);
 
-        $template = new NotificationTemplate();
-        $template->name = $validated['name'];
-        $template->content = $validated['content'];
-        $template->save();
+        $template = NotificationTemplate::create([
+            'name' => $validated['name'],
+            'content' => $validated['content']
+        ]);
 
         return response()->json($template);
     }
@@ -50,13 +50,13 @@ class NotificationController extends Controller
 
         $template = NotificationTemplate::find($validated['template_id']);
 
-        $log = new NotificationLog();
-        $log->template_id = $template->id;
-        $log->receiver = $validated['receiver'];
-        $log->status = 'sent';
-        $log->message = $template->content;
-        $log->type = 'notification';
-        $log->save();
+         $log = NotificationLog::create([
+            'template_id' => $template->id,
+            'receiver' => $validated['receiver'],
+            'status' => 'sent',
+            'message' => $template->content,
+            'type' => 'notification',
+        ]);
 
         return response()->json(['message' => 'Notification sent successfully']);
     }
@@ -79,13 +79,15 @@ class NotificationController extends Controller
             );
 
             // Lưu log gửi mail - SỬA CÁCH NÀY
-            $log = new NotificationLog();
-            $log->template_id = null;
-            $log->receiver = $validated['to'];
-            $log->status = 'sent';
-            $log->message = $validated['message'];
-            $log->type = 'email';
-            $log->save();
+            $log = NotificationLog::create([
+                'template_id' => null,
+                'receiver' => $validated['to'],
+                'subject' => $validated['subject'],
+                'status' => 'sent',
+                'message' => $validated['message'],
+                'type' => 'email',
+                'template_variables' => null,
+            ]);
 
             return response()->json([
                 'status' => 'success',
@@ -93,6 +95,15 @@ class NotificationController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Mail send failed: ' . $e->getMessage());
+             NotificationLog::create([
+                'template_id' => null,
+                'receiver' => $validated['to'],
+                'subject' => $validated['subject'],
+                'status' => 'failed',
+                'message' => 'Failed: ' . $e->getMessage(),
+                'type' => 'email',
+                'template_variables' => null,
+            ]);
 
             return response()->json([
                 'status' => 'error',
@@ -125,7 +136,7 @@ class NotificationController extends Controller
             // Thay thế variables trong content
             $content = $template->content;
             foreach ($validated['variables'] as $key => $value) {
-                $content = str_replace("{{$key}}", $value, $content);
+                $content = str_replace("($key)", $value, $content);
             }
 
             // Gửi email
@@ -134,15 +145,15 @@ class NotificationController extends Controller
             );
 
             // Lưu log
-            $log = new NotificationLog();
-            $log->template_id = $template->id;
-            $log->receiver = $validated['to'];
-            $log->status = 'sent';
-            $log->message = $content;
-            $log->subject = $template->name; // Lưu subject
-            $log->template_variables = json_encode($validated['variables']); // Lưu biến đã dùng
-            $log->type = 'email_template';
-            $log->save();
+            $log = NotificationLog::create([
+                'template_id' => $template->id,
+                'receiver' => $validated['to'],
+                'subject' => $template->name,
+                'status' => 'sent',
+                'message' => $content,
+                'template_variables' => json_encode($validated['variables']),
+                'type' => 'email_template',
+            ]);
 
             return response()->json([
                 'status' => 'success',
@@ -150,6 +161,15 @@ class NotificationController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Template mail send failed: ' . $e->getMessage());
+            NotificationLog::create([
+                'template_id' => $template->id ?? null,
+                'receiver' => $validated['to'],
+                'subject' => $template->name ?? 'Unknown',
+                'status' => 'failed',
+                'message' => 'Failed: ' . $e->getMessage(),
+                'template_variables' => json_encode($validated['variables']),
+                'type' => 'email_template',
+            ]);
 
             return response()->json([
                 'status' => 'error',
@@ -169,7 +189,7 @@ class NotificationController extends Controller
                 'template' => 'required|string'
             ]);
 
-            Log::info('💰 Payment notification received', $data);
+            Log::info('Payment notification received', $data);
 
             $notificationData = $data['data'];
             $templateName = $data['template'];
@@ -180,13 +200,15 @@ class NotificationController extends Controller
             }
 
             // Log payment notification
-            $log = new NotificationLog();
-            $log->template_id = null;
-            $log->receiver = $notificationData['user_email'] ?? 'system';
-            $log->status = 'sent';
-            $log->message = "Payment notification: {$templateName}";
-            $log->type = 'payment_notification';
-            $log->save();
+             $log = NotificationLog::create([
+                'template_id' => null,
+                'receiver' => $notificationData['user_email'] ?? 'system',
+                'subject' => "Payment Notification: {$templateName}",
+                'status' => 'sent',
+                'message' => "Payment notification: {$templateName}",
+                'type' => 'payment_notification',
+                'template_variables' => json_encode($notificationData),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -195,11 +217,77 @@ class NotificationController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Payment notification error: ' . $e->getMessage());
+            NotificationLog::create([
+                'template_id' => null,
+                'receiver' => $notificationData['user_email'] ?? 'system',
+                'subject' => "Payment Notification Failed: {$templateName}",
+                'status' => 'failed',
+                'message' => 'Failed: ' . $e->getMessage(),
+                'type' => 'payment_notification',
+                'template_variables' => json_encode($notificationData ?? []),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to process payment notification'
             ], 500);
         }
+    }
+
+     /**
+     * Gửi SMS - THÊM METHOD MỚI ĐỂ KHỚP VỚI PAYMENT_SERVICE
+     */
+    public function sendSMS(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'phone' => 'required|string',
+                'message' => 'required|string',
+                'template' => 'sometimes|string'
+            ]);
+
+            // Giả lập gửi SMS (trong thực tế sẽ tích hợp với SMS gateway)
+            Log::info('SMS sent', [
+                'phone' => $validated['phone'],
+                'message' => $validated['message'],
+                'template' => $validated['template'] ?? 'default'
+            ]);
+
+            // Lưu log SMS
+            $log = NotificationLog::create([
+                'template_id' => null,
+                'receiver' => $validated['phone'],
+                'subject' => 'SMS Notification',
+                'status' => 'sent',
+                'message' => $validated['message'],
+                'type' => 'sms',
+                'template_variables' => json_encode(['template' => $validated['template'] ?? 'default']),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'SMS sent successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('SMS sending error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send SMS'
+            ], 500);
+        }
+    }
+
+    /**
+     * Health check endpoint - THÊM METHOD MỚI
+     */
+    public function healthCheck()
+    {
+        return response()->json([
+            'status' => 'healthy',
+            'service' => 'Notification Service',
+            'timestamp' => now()->toISOString()
+        ]);
     }
 
     /**
@@ -210,18 +298,22 @@ class NotificationController extends Controller
         try {
             // Chuẩn bị variables cho template
             $variables = [
+                'user_name' => $notificationData['user_name'] ?? 'Khách hàng',
                 'amount' => $notificationData['amount'] ?? 'N/A',
                 'transaction_id' => $notificationData['transaction_id'] ?? 'N/A',
                 'order_id' => $notificationData['order_id'] ?? 'N/A',
-                'reason' => $notificationData['reason'] ?? 'N/A'
+                'reason' => $notificationData['reason'] ?? 'N/A',
+                'station_name' => $notificationData['station_name'] ?? 'N/A',
+                'booking_code' => $notificationData['booking_code'] ?? 'N/A',
+                'login_time' => $notificationData['login_time'] ?? now()->format('H:i d/m/Y'),
             ];
 
-            // Gửi email qua endpoint template có sẵn
-            Http::post("http://127.0.0.1:8000/api/notifications/send-template-email", [
+            // Gửi request nội bộ
+            $this->sendTemplateEmail(new Request([
                 'to' => $notificationData['user_email'],
                 'template_name' => $templateName,
                 'variables' => $variables
-            ]);
+            ]));
 
             Log::info('Payment template email sent', [
                 'to' => $notificationData['user_email'],
@@ -230,6 +322,7 @@ class NotificationController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Failed to send payment template email: ' . $e->getMessage());
+            throw $e;
         }
     }
 }

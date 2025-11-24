@@ -1,4 +1,5 @@
 <?php
+// File: 2025_01_15_000004_add_user_name_to_payments_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,19 +10,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            // Sửa enum payment_method để thêm 'momo'
-            $table->enum('payment_method', ['momo', 'credit_card', 'bank_transfer', 'ewallet', 'cod'])
-                  ->default('momo')
-                  ->change();
+            $table->string('user_name')->nullable()->after('user_email');
         });
     }
 
     public function down(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->enum('payment_method', ['credit_card', 'bank_transfer', 'ewallet', 'cod'])
-                  ->default('credit_card')
-                  ->change();
+            $table->dropColumn('user_name');
         });
     }
 };

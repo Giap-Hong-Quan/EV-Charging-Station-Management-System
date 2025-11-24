@@ -7,8 +7,10 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'App\\Http\\Controllers\\Controller' => $baseDir . '/app/Http/Controllers/Controller.php',
+    'App\\Http\\Controllers\\EmailVerificationController' => $baseDir . '/app/Http/Controllers/EmailVerificationController.php',
     'App\\Http\\Controllers\\NotificationController' => $baseDir . '/app/Http/Controllers/NotificationController.php',
     'App\\Mail\\NotificationMail' => $baseDir . '/app/Mail/NotificationMail.php',
+    'App\\Models\\EmailVerification' => $baseDir . '/app/Models/EmailVerification.php',
     'App\\Models\\NotificationLog' => $baseDir . '/app/Models/NotificationLog.php',
     'App\\Models\\NotificationTemplate' => $baseDir . '/app/Models/NotificationTemplate.php',
     'App\\Models\\User' => $baseDir . '/app/Models/User.php',

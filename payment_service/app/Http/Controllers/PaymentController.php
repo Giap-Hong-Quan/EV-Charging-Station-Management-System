@@ -21,6 +21,104 @@ class PaymentController extends Controller
         $this->momoService = $momoService;
     }
 
+    /**
+     * Tạo QR Code thanh toán
+     */
+    public function createQRPayment(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'order_id' => 'required|string|unique:payments,order_id',
+                'user_id' => 'required|string',
+                'user_email' => 'required|email',
+                'user_name' => 'sometimes|string',
+                'amount' => 'required|numeric|min:1000|max:20000000',
+                'description' => 'sometimes|string'
+            ]);
+
+            // Tạo payment record
+            $paymentData = array_merge($validated, [
+                'payment_method' => 'momo_qr',
+                'currency' => 'VND'
+            ]);
+
+            $payment = $this->paymentService->createPayment($paymentData);
+
+            // Gọi Momo API tạo QR Code data
+            $qrResult = $this->momoService->createQRPayment(
+                $payment->order_id,
+                $payment->amount,
+                $validated['description'] ?? 'Thanh toán QR Code ' . $payment->order_id
+            );
+
+            if (isset($qrResult['resultCode']) && $qrResult['resultCode'] == 0) {
+                // Cập nhật payment với QR info
+                $payment->update([
+                    'transaction_id' => $qrResult['requestId'] ?? null,
+                    'payment_gateway' => 'momo_qr',
+                    'metadata' => [
+                        'qr_data' => $qrResult['qr_data'],
+                        'scheduled_process_at' => $qrResult['simulator_info']['scheduled_process_at'],
+                        'predicted_result' => $qrResult['simulator_info']['predicted_result'],
+                        'processing_time_seconds' => $qrResult['simulator_info']['processing_time_seconds'],
+                        'auto_determined' => true
+                    ]
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'QR Payment tạo thành công',
+                    'data' => [
+                        'order_id' => $payment->order_id,
+                        'payment_id' => $payment->id,
+                        'amount' => $payment->amount,
+                        'qr_data' => $qrResult['qr_data'],
+                        'check_status_url' => url("/api/payments/qr-status/{$payment->order_id}"),
+                        'simulator_info' => $qrResult['simulator_info']
+                    ]
+                ]);
+            }
+
+            throw new \Exception('Momo QR error: ' . ($qrResult['message'] ?? 'Unknown error'));
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Create QR Payment error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Kiểm tra trạng thái QR payment
+     */
+    public function checkQRPaymentStatus($orderId): JsonResponse
+    {
+        try {
+            $statusResult = $this->momoService->checkQRPaymentStatus($orderId);
+
+            return response()->json([
+                'success' => true,
+                'data' => $statusResult
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Check QR payment status error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    // Các method khác giữ nguyên
     public function index(): JsonResponse
     {
         try {
@@ -83,6 +181,7 @@ class PaymentController extends Controller
                 'order_id' => 'required|string|unique:payments,order_id',
                 'user_id' => 'required|string',
                 'user_email' => 'required|email',
+                'user_name' => 'sometimes|string',
                 'amount' => 'required|numeric|min:1000|max:20000000',
                 'description' => 'sometimes|string'
             ]);
@@ -132,9 +231,6 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * Webhook nhận kết quả từ Momo (IPN)
-     */
     public function momoIpn(Request $request): JsonResponse
     {
         try {
@@ -151,7 +247,7 @@ class PaymentController extends Controller
 
             if (!$payment) {
                 Log::error('Payment not found for order: ' . $data['orderId']);
-                return response()->json(['success' => false], 404); // SỬA LỖI: thiếu =>
+                return response()->json(['success' => false], 404);
             }
 
             // Cập nhật trạng thái payment
@@ -175,9 +271,6 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * Redirect URL sau khi thanh toán thành công
-     */
     public function paymentSuccess(Request $request): JsonResponse
     {
         $orderId = $request->input('orderId');
@@ -197,31 +290,6 @@ class PaymentController extends Controller
             'success' => false,
             'message' => 'Payment failed or not found'
         ], 400);
-    }
-
-    // Giữ nguyên các method khác (process, show, getUserPayments, refund, getByOrderId)...
-    public function process(Request $request, $paymentId): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'transaction_id' => 'sometimes|string',
-                'gateway' => 'sometimes|string'
-            ]);
-
-            $payment = $this->paymentService->processPayment($paymentId, $validated);
-
-            return response()->json([
-                'success' => true,
-                'data' => $payment,
-                'message' => "Payment {$payment->status}"
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        }
     }
 
     public function show($paymentId): JsonResponse
@@ -261,29 +329,6 @@ class PaymentController extends Controller
         }
     }
 
-    public function refund(Request $request, $paymentId): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'reason' => 'required|string|min:5'
-            ]);
-
-            $payment = $this->paymentService->refundPayment($paymentId, $validated['reason']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $payment,
-                'message' => 'Payment refunded successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
-
     public function getByOrderId($orderId): JsonResponse
     {
         try {
@@ -306,6 +351,16 @@ class PaymentController extends Controller
                 'success' => false,
                 'message' => $e->getMessage()
             ], 400);
+        }
+    }
+
+    public function getStats(): JsonResponse
+    {
+        try {
+            $stats = $this->paymentService->getPaymentStats();
+            return response()->json(['success' => true, 'data' => $stats]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         }
     }
 }

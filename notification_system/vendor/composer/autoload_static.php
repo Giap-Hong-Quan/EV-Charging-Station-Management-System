@@ -534,8 +534,10 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
 
     public static $classMap = array (
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
+        'App\\Http\\Controllers\\EmailVerificationController' => __DIR__ . '/../..' . '/app/Http/Controllers/EmailVerificationController.php',
         'App\\Http\\Controllers\\NotificationController' => __DIR__ . '/../..' . '/app/Http/Controllers/NotificationController.php',
         'App\\Mail\\NotificationMail' => __DIR__ . '/../..' . '/app/Mail/NotificationMail.php',
+        'App\\Models\\EmailVerification' => __DIR__ . '/../..' . '/app/Models/EmailVerification.php',
         'App\\Models\\NotificationLog' => __DIR__ . '/../..' . '/app/Models/NotificationLog.php',
         'App\\Models\\NotificationTemplate' => __DIR__ . '/../..' . '/app/Models/NotificationTemplate.php',
         'App\\Models\\User' => __DIR__ . '/../..' . '/app/Models/User.php',

@@ -7,6 +7,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Health check route cho web
+Route::get('/up', [NotificationController::class, 'healthCheck']);
+
 Route::withoutMiddleware(['web'])->group(function () {
     Route::post('/send-mail', [NotificationController::class, 'sendEmail']);
     Route::get('/notifications', [NotificationController::class, 'index']);

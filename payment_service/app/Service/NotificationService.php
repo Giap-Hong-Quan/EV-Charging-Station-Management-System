@@ -33,7 +33,10 @@ class NotificationService
             if ($response->successful()) {
                 Log::info('Payment notification sent successfully', [
                     'order_id' => $notificationData['order_id'] ?? null,
-                    'status' => $notificationData['status'] ?? null
+                    'user_name' => $notificationData['user_name'] ?? null,
+
+                    'status' => $notificationData['status'] ?? null,
+                    'amount' => $notificationData['amount'] ?? null,
                 ]);
                 return $response->json();
             }
@@ -46,7 +49,8 @@ class NotificationService
 
         } catch (\Exception $e) {
             Log::error('Notification service error: ' . $e->getMessage(), [
-                'order_id' => $notificationData['order_id'] ?? null
+                'order_id' => $notificationData['order_id'] ?? null,
+                'user_name' => $notificationData['user_name'] ?? null,
             ]);
             return null;
         }
@@ -64,12 +68,16 @@ class NotificationService
                     'to' => $emailData['to'],
                     'subject' => $emailData['subject'],
                     'template' => $emailData['template'] ?? 'payment-success',
-                    'data' => $emailData['data'] ?? []
+                    'data' => $emailData['data'] ?? [], [
+                        'user_name' => $emailData['user_name'] ?? 'Khách hàng',
+                        'user_email' => $emailData['to']
+                    ]
                 ]);
 
             if ($response->successful()) {
                 Log::info('Email sent via notification service', [
                     'to' => $emailData['to'],
+                    'user_name' => $emailData['user_name'] ?? 'Khách hàng',
                     'subject' => $emailData['subject'],
                     'template' => $emailData['template'] ?? 'payment-success',
                 ]);
@@ -82,7 +90,10 @@ class NotificationService
             return null;
 
         } catch (\Exception $e) {
-            Log::error('Email service error: ' . $e->getMessage());
+            Log::error('Email service error: ' . $e->getMessage(), [
+                'to' => $emailData['to'],
+                'user_name' => $emailData['user_name'] ?? 'Khách hàng',
+            ]);
             return null;
         }
     }
