@@ -167,6 +167,36 @@ services:
     command: npm run dev
     networks:
       - evcs_network
+    # 💳 Payment MongoDB
+  payment_mongo:
+    image: mongo:6
+    container_name: payment_mongo
+    restart: always
+    ports:
+      - "27020:27017"
+    volumes:
+      - payment_mongo_data:/data/db
+    networks:
+      - evcs_network
+
+  # 💳 Payment Service
+  payment_service:
+    build:
+      context: ./payment_service
+    container_name: payment_service
+    restart: unless-stopped
+    ports:
+      - "5004:5004"
+    env_file:
+      - ./payment_service/.env
+    depends_on:
+      - payment_mongo
+    volumes:
+      - ./payment_service:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - evcs_network
 
   # 🌐 API Gateway
   gateway:
@@ -180,6 +210,7 @@ services:
       - station_management_service
       - booking_service
       - analytics_reporting_service
+      - payment_service
     volumes:
       - ./gateway:/app
       - /app/node_modules
@@ -193,6 +224,8 @@ volumes:
   station_data:
   booking_mysql_data:
   charging_session_data:
+  payment_mongo_data:
+
 
 networks:
   evcs_network:
