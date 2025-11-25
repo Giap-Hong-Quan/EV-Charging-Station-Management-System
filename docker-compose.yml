@@ -159,8 +159,7 @@ services:
       - ./charging_session_service/.env
     depends_on:
       - charging_session_mongo
-      - booking_service        # vì session cần validate booking
-      - gateway                # vì gọi qua gateway
+      - booking_service        # vì session cần validate booking         
     volumes:
       - ./charging_session_service:/app
       - /app/node_modules
@@ -210,7 +209,6 @@ services:
       - station_management_service
       - booking_service
       - analytics_reporting_service
-      - payment_service
     volumes:
       - ./gateway:/app
       - /app/node_modules

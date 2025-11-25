@@ -1,36 +1,24 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import chargingSessionRouter from './routes/charging_session.routes.js';
-
+// src/server.js
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import chargingSessionRouter from "./routes/chargingSessionRouter.js";
+import { connectDB } from "./config/db.js";
 
 dotenv.config();
+const app = express();
 
-async function connectDB() {
-    const uri = process.env.MONGO_URI;
-    await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-    console.log("Connected to MongoDB");
-}
+// Middlewares
+app.use(cors());
+app.use(express.json());
 
-async function startServer() {
-    await connectDB();
-    const app = express();
-    app.use(express.json());
+// Connect DB ONE TIME ONLY
+connectDB();
 
-    app.get("/", (req, res) => {
-        res.send("EVCS Charging Session Service is running");
-    });
+// Routes
+app.use("/api/v1/sessions", chargingSessionRouter);
 
-    app.use("/api/v1/charging_sessions", chargingSessionRouter);
-    const PORT = process.env.PORT || 5002;
-    app.listen(PORT, () => {
-        console.log(`✅ Charging Session Service running on port ${PORT}`);
-        console.log(`📡 API available at: http://localhost:${PORT}/api/v1/charging_sessions`);
-    });
-}
-
-startServer().catch((error) => {
-    console.error("Failed to start server:", error);
-    process.exit(1);
+const PORT = process.env.PORT || 5003;
+app.listen(PORT, () => {
+  console.log(`🚀 Charging Session Service running on ${PORT}`);
 });
-

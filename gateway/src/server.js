@@ -9,7 +9,6 @@ import { setupRoutes_booking } from "./routes/booking.js";
 import { setupRoutes_analytics } from "./routes/analytics.js";
 import { config } from "./config.js";
 import { setupRoutes_session } from "./routes/session.js";
-import { set } from "mongoose";
 import { setupRoutes_payment } from "./routes/payment.js";
 
 const app = express();
