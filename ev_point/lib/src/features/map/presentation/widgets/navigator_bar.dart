@@ -3,13 +3,13 @@ import 'nav_item.dart';
 
 class NavigatorBar extends StatelessWidget {
   final int currentIndex;
-  final ValueChanged<int> onTap;
+  final ValueChanged<int>? onTap;
   final EdgeInsets margin;
 
   const NavigatorBar({
     super.key,
     required this.currentIndex,
-    required this.onTap,
+    this.onTap,
     this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
   });
 
@@ -49,7 +49,7 @@ class NavigatorBar extends StatelessWidget {
             final active = i == currentIndex;
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => onTap(i),
+              onTap: () {},
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

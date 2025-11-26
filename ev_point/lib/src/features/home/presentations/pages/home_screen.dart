@@ -1,10 +1,8 @@
-import 'package:ev_point/src/core/di/injection_container.dart';
-import 'package:ev_point/src/features/auth/data/datasources/auth_local_datasources.dart';
+import 'package:ev_point/src/core/routes/routers_path.dart';
 import 'package:ev_point/src/features/auth/domain/entities/user_entity.dart';
-import 'package:ev_point/src/features/auth/domain/repositories/user_repository.dart';
+import 'package:ev_point/src/features/auth/presentations/cubit/user_cubit.dart';
 import 'package:ev_point/src/features/charging_station/presentations/cubit/charging_station_cubit.dart';
 import 'package:ev_point/src/features/charging_station/presentations/cubit/charging_station_state.dart';
-import 'package:ev_point/src/features/charging_station/presentations/pages/charging_station_detail_screen.dart';
 import 'package:ev_point/src/features/charging_station/presentations/widgets/charging_station_card.dart';
 import 'package:ev_point/src/features/home/widgets/battery_status_card.dart';
 import 'package:ev_point/src/features/home/widgets/header_appbar.dart';
@@ -12,6 +10,7 @@ import 'package:ev_point/src/features/home/widgets/quick_action_widget.dart';
 import 'package:ev_point/src/features/home/widgets/search_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,45 +24,19 @@ class _HomeScreenState extends State<HomeScreen> {
   UserEntity? currentUser;
   bool isLoading = true;
 
+
   @override
   void initState() {
     super.initState();
     context.read<ChargingStationCubit>().loadChargingStations();
-    _loadCurrentUser();
-  }
-
-  Future<void> _loadCurrentUser() async {
-    final authLocal = sl<AuthLocalDataSource>();
-    final token = await authLocal.getCachedToken();
-    setState(() {
-      currentUserToken = token;
-    });
-    if (token == null || token.isEmpty) {
-      setState(() => isLoading = false);
-      return;
-    }
-    final userRepo = sl<IUserRepository>();
-    try {
-      final user = await userRepo.getCurrentProfileUser();
-      setState(() {
-        currentUser = user;
-        isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        isLoading = false;
-      });
-      debugPrint('Error load current user: $e');
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final userCubit = context.watch<UserCubit>();
+    final currentUser = userCubit.currentUser;
     return Scaffold(
-      appBar: HeaderAppbar(
-        userName: currentUser?.fullname ?? '${currentUser}',
-      ),
+      appBar: HeaderAppbar(userName: currentUser?.fullname ?? 'User'),
       backgroundColor: Colors.white,
       body: BlocBuilder<ChargingStationCubit, ChargingStationState>(
         builder: (context, state) {
@@ -106,6 +79,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 icon: Icons.location_on,
                                 label: 'Tìm trạm',
                                 color: Colors.blue[500]!,
+                                onTap: () {
+                                  context.push(
+                                    RouterPaths.chargingStationDetailsScreen,
+                                  );
+                                },
                               ),
                             ),
                             Expanded(
@@ -113,6 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 icon: Icons.book_online,
                                 label: 'Đặt chỗ',
                                 color: Colors.yellow[700]!,
+                                onTap: () {
+                                  context.push(RouterPaths.myBookingScreen);
+                                },
                               ),
                             ),
                             Expanded(
@@ -120,6 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 icon: Icons.history,
                                 label: 'Lịch sử',
                                 color: Colors.purple[500]!,
+                                onTap: () {
+                                  // context.push(RouterPaths.bookingHistoryScreen);
+                                },
                               ),
                             ),
                             Expanded(
@@ -127,6 +111,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 icon: Icons.credit_card,
                                 label: 'Thanh toán',
                                 color: Colors.pink[500]!,
+                                onTap: () {
+                                  // context.push(RouterPaths.paymentMethodsScreen);
+                                },
                               ),
                             ),
                           ],
@@ -172,16 +159,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     state.chargingStations.length > 2)
                                   GestureDetector(
                                     onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) =>
-                                                  ChargingStationDetailScreen(
-                                                    chargingStation:
-                                                        state.chargingStations,
-                                                  ),
-                                        ),
+                                      context.push(
+                                        RouterPaths
+                                            .chargingStationDetailsScreen,
+                                        extra: state.chargingStations,
                                       );
                                     },
                                     child: Row(
@@ -308,6 +289,12 @@ class _HomeScreenState extends State<HomeScreen> {
         itemBuilder: (context, index) {
           return ChargingStationCard(
             chargingStation: state.chargingStations[index],
+            onTap: () {
+              context.push(
+                RouterPaths.viewChargingStation,
+                extra: state.chargingStations[index],
+              );
+            },
           );
         },
       );

@@ -104,7 +104,7 @@ class BookingModel extends Booking {
     userId: '',
     stationId: '',
     pointId: data['Point Number'] ?? '',
-    vehicleName: data['vehicle Name'] ?? '',          // QR không có => để rỗng
+    vehicleName: data['vehicle Name'] ?? '',         
     vehicleNumber: data['vehicle_number'] ?? '',      // QR không có => để rỗng
     scheduleStartTime: parseScheduleStart(),
     scheduleEndTime: null,

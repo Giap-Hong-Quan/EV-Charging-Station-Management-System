@@ -33,7 +33,7 @@ class _TimeSelectionSectionState extends State<TimeSelectionSection> {
     
     final duration = selectedEndTime!.difference(selectedStartTime!);
     final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
+    final minutes = duration.inMinutes.remainder(15);
     
     if (hours > 0 && minutes > 0) {
       return '$hours giờ $minutes phút';

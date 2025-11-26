@@ -40,6 +40,15 @@ class BookingError extends BookingState {
   List<Object?> get props => [message];
 }
 
+class BookingCancelled extends BookingState {
+  final Booking booking;
+
+  const BookingCancelled(this.booking);
+
+  @override
+  List<Object?> get props => [booking];
+}
+
 class MyBookingDetailLoaded extends BookingState {
   final List<BookingDetail> bookingDetails;
 

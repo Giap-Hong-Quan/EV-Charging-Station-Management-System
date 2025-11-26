@@ -1,85 +1,152 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:ev_point/src/features/charging_point/data/models/charging_point_model.dart';
-import 'package:http/http.dart' as http;
 
 abstract class ChargingPointRemoteDataSource {
   Future<List<ChargingPointModel>> fetchAllChargingPoint();
   Future<List<ChargingPointModel>> getChargingPointByStationId(
     String stationId,
   );
-  Future<ChargingPointModel> getChargingPointById(
+  Future<ChargingPointModel> getChargingPointById(String chargingPointId);
+  Future<ChargingPointModel> patchStatusChargingPoint(
     String chargingPointId,
+    String pointStatus,
   );
 }
 
 class ChargingPointRemoteDataSourceImpl
     implements ChargingPointRemoteDataSource {
-  final http.Client client;
-  final String baseChargingPointUrl;
+  final Dio dio;
+  final String baseGatewayUrl;
 
   ChargingPointRemoteDataSourceImpl({
-    required this.client,
-    required this.baseChargingPointUrl,
+    required this.dio,
+    required this.baseGatewayUrl,
   });
 
+  /// GET {baseGatewayUrl}/points
   @override
   Future<List<ChargingPointModel>> fetchAllChargingPoint() async {
-    final res = await client.get(
-      Uri.parse('$baseChargingPointUrl/points'),
-    );
+    final res = await dio.get('$baseGatewayUrl/station-service/points');
 
     if (res.statusCode != 200) {
-      throw Exception('HTTP ${res.statusCode}');
+      throw Exception('HTTP ${res.statusCode} khi fetchAllChargingPoint');
     }
 
-    // Parse thẳng list
-    final data = jsonDecode(res.body) as List<dynamic>;
+    final dynamic raw = res.data;
+    final dynamic decoded = raw is String ? jsonDecode(raw) : raw;
 
-    return data.map((e) => ChargingPointModel.fromJson(e)).toList();
+    if (decoded is! List) {
+      throw Exception('Dữ liệu trả về không phải List');
+    }
+
+    return decoded
+        .map((e) => ChargingPointModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
+  /// GET {baseGatewayUrl}/points/{stationId}/points
+  @override
+  Future<List<ChargingPointModel>> getChargingPointByStationId(
+    String stationId,
+  ) async {
+    try {
+      final res = await dio.get(
+        '$baseGatewayUrl/station-service/points/$stationId/points',
+      );
 
- @override
-  Future<List<ChargingPointModel>> getChargingPointByStationId(String stationId,) async {
-    // Try query param pattern first: /points?station_id=...
-    final url = Uri.parse('$baseChargingPointUrl/points/$stationId/points');
-    final response = await client.get(url);
+      if (res.statusCode == 200) {
+        final dynamic raw = res.data;
+        final dynamic decoded = raw is String ? jsonDecode(raw) : raw;
 
-    if (response.statusCode == 200) {
-      final decoded = json.decode(response.body);
-      final List<dynamic> data = decoded is List
-          ? decoded
-          : (decoded is Map && decoded['data'] is List)
-              ? decoded['data']
-              : <dynamic>[];
+        final List<dynamic> data =
+            decoded is List
+                ? decoded
+                : (decoded is Map && decoded['data'] is List)
+                ? decoded['data'] as List
+                : <dynamic>[];
 
-      final list = data.map((e) => ChargingPointModel.fromJson(e as Map<String, dynamic>)).toList();
+        final list =
+            data
+                .map(
+                  (e) => ChargingPointModel.fromJson(e as Map<String, dynamic>),
+                )
+                .toList();
 
-      // If server returned empty, fallback to local filter
-      if (list.isEmpty) {
+        if (list.isEmpty) {
+          final all = await fetchAllChargingPoint();
+          return all.where((p) => p.stationId == stationId).toList();
+        }
+
+        return list;
+      } else {
         final all = await fetchAllChargingPoint();
         return all.where((p) => p.stationId == stationId).toList();
       }
-
-      return list;
-    } else {
-      // Fallback: fetch all and filter locally
+    } on DioException {
       final all = await fetchAllChargingPoint();
       return all.where((p) => p.stationId == stationId).toList();
     }
   }
-  
+
+  /// GET {baseGatewayUrl}/points/{chargingPointId}
   @override
-  Future<ChargingPointModel> getChargingPointById(String chargingPointId) {
-    final url = Uri.parse('$baseChargingPointUrl/points/$chargingPointId');
-    return client.get(url).then((response) {
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return ChargingPointModel.fromJson(data);
-      } else {
-        throw Exception('Failed to load charging point');
+  Future<ChargingPointModel> getChargingPointById(
+    String chargingPointId,
+  ) async {
+    final res = await dio.get(
+      '$baseGatewayUrl/station-service/points/$chargingPointId',
+    );
+
+    if (res.statusCode == 200) {
+      final dynamic raw = res.data;
+      final dynamic decoded = raw is String ? jsonDecode(raw) : raw;
+
+      if (decoded is! Map<String, dynamic>) {
+        throw Exception('Dữ liệu trả về không phải Map');
       }
-    });
+
+      final Map<String, dynamic> jsonMap =
+          decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+
+      return ChargingPointModel.fromJson(jsonMap);
+    } else {
+      throw Exception('Failed to load charging point (HTTP ${res.statusCode})');
+    }
+  }
+
+  @override
+  Future<ChargingPointModel> patchStatusChargingPoint(
+    String chargingPointId,
+    String pointStatus,
+  ) async {
+    try {
+      final res = await dio.patch(
+        '$baseGatewayUrl/station-service/points/$chargingPointId/status',
+        data: {'point_status': pointStatus},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+
+      if (res.statusCode == 200) {
+        final dynamic raw = res.data;
+        final dynamic decoded = raw is String ? jsonDecode(raw) : raw;
+
+        final Map<String, dynamic> jsonMap =
+            decoded['data'] is Map<String, dynamic>
+                ? decoded['data'] as Map<String, dynamic>
+                : decoded;
+
+        return ChargingPointModel.fromJson(jsonMap);
+      } else {
+        throw Exception(
+          'Failed to patch charging point status (HTTP ${res.statusCode})',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception('DioException: ${e.message}');
+    }
   }
 }

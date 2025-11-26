@@ -1,4 +1,6 @@
 // lib/src/features/booking/presentation/screens/booking_detail_screen.dart
+import 'package:ev_point/src/core/utils/app_color.dart';
+import 'package:ev_point/src/features/auth/presentations/cubit/user_cubit.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/bottom_button.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/charger_selection.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/charging_point_selection.dart';
@@ -7,12 +9,13 @@ import 'package:ev_point/src/features/booking/presentations/widgets/station_sele
 import 'package:ev_point/src/features/booking/presentations/widgets/time_selection_section.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/vehicle_selection.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/warning_banner.dart';
+import 'package:ev_point/src/features/charging_station/domain/entities/charging_station.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../charging_point/domain/entities/charging_point.dart';
-import '../../../map/domain/entities/station.dart';
 
 class BookingScreen extends StatefulWidget {
-  final Station station;
+  final ChargingStation station;
 
   const BookingScreen({super.key, required this.station});
 
@@ -63,25 +66,24 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   Widget build(BuildContext context) {
     final String stationId = widget.station.id;
+    final userCubit = context.watch<UserCubit>();
+    final currentUser = userCubit.currentUser;
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
           'Đặt chỗ sạc',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textColor,
+          ),
         ),
-        backgroundColor: Colors.white,
+        centerTitle: true,
+        backgroundColor: AppColors.background,
         elevation: 0,
         surfaceTintColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: () {
-              // More options
-            },
-            icon: const Icon(Icons.more_vert),
-          ),
-        ],
+        iconTheme: IconThemeData(color: AppColors.textColor),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -104,7 +106,7 @@ class _BookingScreenState extends State<BookingScreen> {
             DatetimeSelection(),
             const SizedBox(height: 24),
             ChargingPointSelection(
-              stationId: stationId,
+              chargingstationId: stationId,
               onChanged: (point) {
                 setState(() => selectedPoint = point);
               },
@@ -128,10 +130,10 @@ class _BookingScreenState extends State<BookingScreen> {
         ),
       ),
       bottomSheet: BottomButton(
-        userId: 'user123',
+        userId: currentUser?.id.toString() ?? 'user',
         vehicleName: selectedVehicleName,
         vehicleNumber: selectedLicensePlate,
-        stationId: stationId,
+        stationId: stationId, 
         pointId: selectedPoint?.id ?? '',
         scheduleStartTime: selectedStartTime ?? DateTime.now(),
         scheduleEndTime:

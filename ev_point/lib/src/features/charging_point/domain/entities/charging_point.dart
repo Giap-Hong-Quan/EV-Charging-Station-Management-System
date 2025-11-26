@@ -10,7 +10,7 @@ class ChargingPoint {
     this.id = '',
     required this.stationId,
     required this.pointNumber,
-    this.pointStatus = 'available',
+    this.pointStatus = 'Empty',
     this.createdAt,
     this.updatedAt,
   });

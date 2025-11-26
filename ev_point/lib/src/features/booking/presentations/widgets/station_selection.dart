@@ -1,8 +1,8 @@
-import 'package:ev_point/src/features/map/domain/entities/station.dart';
+import 'package:ev_point/src/features/charging_station/domain/entities/charging_station.dart';
 import 'package:flutter/material.dart';
 
 class StationSelection extends StatelessWidget {
-  final Station station;
+  final ChargingStation station;
   const StationSelection({super.key, required this.station});
 
   @override
