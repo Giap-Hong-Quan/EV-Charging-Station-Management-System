@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:ev_point/src/core/routes/routers_path.dart';
-import 'package:ev_point/src/features/map/domain/entities/station.dart';
-import 'package:ev_point/src/features/map/presentation/cubit/station/station_cubit.dart';
-import 'package:ev_point/src/features/map/presentation/cubit/station/station_state.dart';
+import 'package:ev_point/src/features/charging_station/domain/entities/charging_station.dart';
+import 'package:ev_point/src/features/charging_station/presentations/cubit/charging_station_cubit.dart';
+import 'package:ev_point/src/features/charging_station/presentations/cubit/charging_station_state.dart';
 import 'package:ev_point/src/features/map/presentation/widgets/search_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -13,7 +13,6 @@ import 'package:geolocator/geolocator.dart' as geo;
 import 'package:go_router/go_router.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
-import '../../../booking/presentations/pages/booking_screen.dart';
 import '../widgets/navigator_bar.dart';
 import '../widgets/search_header.dart';
 
@@ -38,9 +37,9 @@ class _MapScreenState extends State<MapScreen> {
   Timer? _debounce;
 
   // Dữ liệu
-  List<Station> _allStations = [];
-  List<Station> _filteredStations = [];
-  final Map<String, Station> _annotationToStation = {};
+  List<ChargingStation> _allStations = [];
+  List<ChargingStation> _filteredStations = [];
+  final Map<String, ChargingStation> _annotationToStation = {};
 
   // FIX: Cache ảnh dưới dạng Uint8List
   final Map<String, Uint8List> _markerImageCache = {};
@@ -56,7 +55,7 @@ class _MapScreenState extends State<MapScreen> {
       if (ok) _centerToMyLocation(); // Tự động di chuyển đến vị trí 1 lần
     });
     // Tải danh sách trạm sạc
-    context.read<StationCubit>().load();
+    context.read<ChargingStationCubit>().getChargingStationsUC();
   }
 
   // ===== Permission & Location =====
@@ -157,7 +156,7 @@ class _MapScreenState extends State<MapScreen> {
     return bytes;
   }
 
-  Future<void> _renderStations(List<Station> stations) async {
+  Future<void> _renderStations(List<ChargingStation> stations) async {
     if (_map == null || _annoMgr == null) return;
 
     await _annoMgr!.deleteAll();
@@ -195,7 +194,7 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _fitToStations(List<Station> stations) async {
+  Future<void> _fitToStations(List<ChargingStation> stations) async {
     if (_map == null || stations.isEmpty) return;
 
     double minLat = stations.first.latitude, maxLat = stations.first.latitude;
@@ -232,7 +231,7 @@ class _MapScreenState extends State<MapScreen> {
     if (station != null) _showStationBottomSheet(station);
   }
 
-  void _showStationBottomSheet(Station station) {
+  void _showStationBottomSheet(ChargingStation station) {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
@@ -518,56 +517,56 @@ class _MapScreenState extends State<MapScreen> {
             onMapCreated: _onMapCreated,
             onStyleLoadedListener: _onStyleLoaded,
           ),
-          BlocConsumer<StationCubit, StationState>(
-            listenWhen:
-                (prev, curr) =>
-                    prev.error != curr.error ||
-                    (prev.loading == true && curr.loading == false),
-            buildWhen:
-                (prev, curr) =>
-                    prev.loading != curr.loading ||
-                    prev.stations != curr.stations,
-            listener: (context, state) {
-              if (state.error != null) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Lỗi: ${state.error}')));
-                return;
-              }
+          // BlocConsumer<ChargingStationCubit, ChargingStationState>(
+          //   listenWhen:
+          //       (prev, curr) =>
+          //           prev. != curr.error ||
+          //           (prev.loading == true && curr.loading == false),
+          //   buildWhen:
+          //       (prev, curr) =>
+          //           prev.loading != curr.loading ||
+          //           prev.stations != curr.stations,
+          //   listener: (context, state) {
+          //     if (state.error != null) {
+          //       ScaffoldMessenger.of(
+          //         context,
+          //       ).showSnackBar(SnackBar(content: Text('Lỗi: ${state.error}')));
+          //       return;
+          //     }
               
-              if (!state.loading && state.stations.isNotEmpty) {
-                setState(() {
-                  _allStations = state.stations;
-                  _filteredStations = [];
-                  _stationsReady = true;
-                });
-                _tryDraw();
-              }
-            },
-            builder: (context, state) {
-              if (state.loading) {
-                return Container(
-                  color: Colors.black.withOpacity(0.2),
-                  child: const Center(
-                    child: Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('Đang tải trạm sạc...'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
+          //     if (!state.loading && state.stations.isNotEmpty) {
+          //       setState(() {
+          //         _allStations = state.stations;
+          //         _filteredStations = [];
+          //         _stationsReady = true;
+          //       });
+          //       _tryDraw();
+          //     }
+          //   },
+          //   builder: (context, state) {
+          //     if (state.loading) {
+          //       return Container(
+          //         color: Colors.black.withOpacity(0.2),
+          //         child: const Center(
+          //           child: Card(
+          //             child: Padding(
+          //               padding: EdgeInsets.all(20.0),
+          //               child: Column(
+          //                 mainAxisSize: MainAxisSize.min,
+          //                 children: [
+          //                   CircularProgressIndicator(),
+          //                   SizedBox(height: 16),
+          //                   Text('Đang tải trạm sạc...'),
+          //                 ],
+          //               ),
+          //             ),
+          //           ),
+          //         ),
+          //       );
+          //     }
+          //     return const SizedBox.shrink();
+          //   },
+          // ),
           Positioned(
             left: 0,
             right: 0,
@@ -575,7 +574,7 @@ class _MapScreenState extends State<MapScreen> {
             child: SearchHeader(
               controller: _searchCtrl,
               onFilterTap: _showFilterBottomSheet,
-              cubit: context.read<StationCubit>(),
+              cubit: context.read<ChargingStationCubit>(),
             ),
           ),
 
@@ -592,28 +591,19 @@ class _MapScreenState extends State<MapScreen> {
                   borderRadius: BorderRadius.circular(14),
                   elevation: 8,
                   clipBehavior: Clip.antiAlias,
-                  child: SearchResult(
-                    onStationTap: (st) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BookingScreen(station: st),
-                        ),
-                      );
-                    },
-                  ),
+                  child: const Text("SearchResult()"),
                 ),
               ),
             ),
           Positioned(
             top: 80,
             left: 16,
-            child: BlocBuilder<StationCubit, StationState>(
+            child: BlocBuilder<ChargingStationCubit , ChargingStationState>(
               builder: (context, state) {
-                if (state.stations.isEmpty) return const SizedBox.shrink();
+                if (state.props.isEmpty) return const SizedBox.shrink();
                 final count =
                     _filteredStations.isEmpty
-                        ? state.stations.length
+                        ? state.props.length
                         : _filteredStations.length;
                 return Container(
                   padding: const EdgeInsets.symmetric(

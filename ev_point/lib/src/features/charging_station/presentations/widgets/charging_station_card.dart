@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 
 class ChargingStationCard extends StatelessWidget {
   final ChargingStation chargingStation;
-  const ChargingStationCard({super.key, required this.chargingStation});
+  final VoidCallback? onTap;
+  const ChargingStationCard({super.key, required this.chargingStation, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),

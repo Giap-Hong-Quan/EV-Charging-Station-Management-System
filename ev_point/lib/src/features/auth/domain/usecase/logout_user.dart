@@ -7,3 +7,5 @@ class LogoutUserUC {
     return await userRepository.logoutUser();
   }
 }
+
+  

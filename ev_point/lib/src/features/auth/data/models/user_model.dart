@@ -99,6 +99,24 @@ class UserModel extends UserEntity {
     };
   }
 
+  factory UserModel.fromEntity(UserEntity entity) {
+    return UserModel(
+      id: entity.id,
+      email: entity.email,
+      password: entity.password,
+      fullname: entity.fullname,
+      address: entity.address,
+      roleId: entity.roleId,
+      role: entity.role,
+      stationId: entity.stationId,
+      permissions: entity.permissions,
+      avatar: entity.avatar,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      token: entity.token,
+    );
+  }
+
   UserModel copyWith({
     int? id,
     String? email,

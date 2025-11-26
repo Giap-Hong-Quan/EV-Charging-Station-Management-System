@@ -18,7 +18,7 @@ class AppRouter {
 
     _router = GoRouter(
       navigatorKey: navigatorKey,
-      initialLocation: PathRouters.chargingSessionStartScreen,
+      initialLocation: PathRouters.chargingSessionScreen,
       routes: [
         GoRoute(
           path: PathRouters.chargingSessionScreen,

@@ -1,11 +1,11 @@
 import 'package:equatable/equatable.dart';
 import 'package:ev_point/src/features/booking/domain/entities/booking.dart';
 import 'package:ev_point/src/features/charging_point/domain/entities/charging_point.dart';
-import 'package:ev_point/src/features/map/domain/entities/station.dart';
+import 'package:ev_point/src/features/charging_station/domain/entities/charging_station.dart';
 
 class BookingDetail extends Equatable {
   final Booking booking;
-  final Station station;
+  final ChargingStation station;
   final ChargingPoint chargingPoint;
 
   const BookingDetail({
@@ -18,7 +18,7 @@ class BookingDetail extends Equatable {
   List<Object?> get props => [booking, station, chargingPoint];
   BookingDetail copyWith({
   Booking? booking,
-  Station? station,
+  ChargingStation? station,
   ChargingPoint? chargingPoint,
 }) {
   return BookingDetail(

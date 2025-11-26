@@ -17,7 +17,7 @@ class ChargingStationDetailCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
+        decoration: BoxDecoration(  
           color: Colors.white,
           borderRadius: BorderRadius.circular(30),
           border: Border.all(color: Colors.grey[200]!),

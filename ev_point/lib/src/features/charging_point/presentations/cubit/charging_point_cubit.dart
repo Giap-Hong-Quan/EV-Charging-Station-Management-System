@@ -1,4 +1,5 @@
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point_by_id.dart';
+import 'package:ev_point/src/features/charging_point/domain/usecase/update_charging_point_status.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ev_point/src/features/charging_point/domain/entities/charging_point.dart';
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point.dart';
@@ -9,11 +10,13 @@ class ChargingPointCubit extends Cubit<ChargingPointState> {
   final GetChargingPointByStationId getChargingPointByStationIdUseCase;
   final GetChargingPoint getChargingPointUseCase;
   final GetChargingPointById getChargingPointByIdUseCase;
+  final UpdateChargingPointStatus updateChargingPointStatusUseCase;
 
   ChargingPointCubit({
     required this.getChargingPointByStationIdUseCase,
     required this.getChargingPointUseCase,
     required this.getChargingPointByIdUseCase,
+    required this.updateChargingPointStatusUseCase,
   }) : super(ChargingPointInitial());
 
   Future<List<ChargingPoint>> loadAllChargingPoint() async {
@@ -44,6 +47,21 @@ class ChargingPointCubit extends Cubit<ChargingPointState> {
     emit(ChargingPointLoading());
     try {
       final ChargingPoint result = await getChargingPointByIdUseCase(chargingPointId);
+      emit(ChargingPointLoaded([result]));
+      return result;
+    } catch (e) {
+      emit(ChargingPointError(e.toString()));
+      return null;
+    }
+  }
+
+  Future<ChargingPoint?> updateChargingPointStatus({required String chargingPointId,required String status}) async {
+    emit(ChargingPointLoading());
+    try {
+      final ChargingPoint result = await updateChargingPointStatusUseCase(
+        chargingPointId: chargingPointId,
+        status: status,
+      );
       emit(ChargingPointLoaded([result]));
       return result;
     } catch (e) {

@@ -24,8 +24,11 @@ class UserRepositoryImpl implements IUserRepository {
   }
 
   @override
-  Future<UserEntity> getCurrentProfileUser() {
-    return remoteDatasources.getCurrentProfileUser();
+  Future<UserEntity> getCurrentProfileUser() async {
+    final model = await remoteDatasources.getCurrentProfileUser();
+
+    return model;
+
   }
 
   @override

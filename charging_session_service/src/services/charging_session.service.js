@@ -52,8 +52,24 @@ export const ChargingSessionService = {
         }
     },
 
+    async getAllChargingSessions() {
+        try{
+            const sessions = await ChargingSession.findAll();
+            return sessions;
+        } catch (error) {
+            console.error('Error retrieving charging sessions:', error);
+            throw error;
+        }
+    },
+
     async getChargingSessionById(sessionId) {
-        // Implementation for retrieving a charging session by ID
+        try {
+            const session = await ChargingSession.findByPk(sessionId);
+            return session;
+        } catch (error) {
+            console.error('Error retrieving charging session by ID:', error);
+            throw error;
+        }
     }
 
 

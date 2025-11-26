@@ -1,4 +1,5 @@
 import express from "express";
+import chargingSessionRouter from "./routes/charging_session.routes.js";
 
 const app = express();
 app.use(express.json());

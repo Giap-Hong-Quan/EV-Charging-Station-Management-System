@@ -1,10 +1,10 @@
-import 'package:ev_point/src/features/map/presentation/cubit/station/station_cubit.dart';
+import 'package:ev_point/src/features/charging_station/presentations/cubit/charging_station_cubit.dart';
 import 'package:flutter/material.dart';
 
 class SearchHeader extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onFilterTap;
-  final StationCubit cubit;
+  final ChargingStationCubit cubit;
   const SearchHeader({
     super.key,
     required this.controller,
@@ -38,7 +38,7 @@ class SearchHeader extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 onChanged: (value){
-                  cubit.search(value, '');
+                  cubit.searchChargingStationUC(value, '');
                 },
                 decoration: const InputDecoration(
                   hintText: "Search station",
