@@ -11,6 +11,7 @@ import ReportIssueModal from "../staff/ReportIssueModal"
 import { authService } from "@/services/authService"
 import { useState, useEffect } from "react"
 import { Badge, BarChart3, BatteryCharging, Calendar,  Home,  } from "lucide-react"
+import { stationService } from "@/services/stationService"
 
 const SidebarStaff = ({isSidebarOpen}) => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const SidebarStaff = ({isSidebarOpen}) => {
   const [showCashPaymentModal, setShowCashPaymentModal] = useState(false);
   const [showReportIssueModal, setShowReportIssueModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false)
+    const [chargers, setChargers] = useState([]);
   const [userData, setUserData] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('user') || '{}')
@@ -50,6 +52,24 @@ const SidebarStaff = ({isSidebarOpen}) => {
     }
   }, [])
 
+const token = localStorage.getItem("token");
+let user = null;
+if (token) {
+  user = JSON.parse(atob(token.split(".")[1]));
+}
+
+  useEffect(() => {
+    const fetchData = async ()=>{
+      try {
+        const res= await stationService.getStationById(user.station_id);
+        setChargers(res);
+        console.log("Chargers data in sidebar:", res);
+      } catch (error) {
+         console.error("Lỗi load points:", error);
+      }
+    }
+    fetchData();
+  }, []);
 
   // Hàm xử lý logout
   const handleLogout = async () => {
@@ -104,7 +124,7 @@ const SidebarStaff = ({isSidebarOpen}) => {
             </div>
             <div>
               <h1 className="text-xl font-bold">EV Charging</h1>
-              <p className="text-xs text-emerald-200">Admin Dashboard</p>
+              <p className="text-xs text-emerald-200">Staff Dashboard</p>
             </div>
           </div>
         </div>
@@ -114,8 +134,8 @@ const SidebarStaff = ({isSidebarOpen}) => {
           <div className="flex items-start gap-2">
             <MapPin className="w-4 h-4 mt-1 flex-shrink-0 " />
             <div>
-              <p className="text-sm font-semibold">VinFast Landmark 81</p>
-              <p className="text-xs text-emerald-200">720A Điện Biên Phủ, Quận 1</p>
+              <p className="text-sm font-semibold">{chargers.name}</p>
+              <p className="text-xs text-emerald-200">{chargers.address}</p>
             </div>
           </div>
         </div>

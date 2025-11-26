@@ -11,6 +11,7 @@ router.get("/code/:booking_code", BookingController.getBookingByCode);
 router.get("/user/:user_id", BookingController.getBookingsByUserId);
 router.put("/update_status/", BookingController.updateBookingStatus);
 router.post("/cancel", BookingController.cancelBooking);
+router.get("/station/:station_id", BookingController.getBookingsByStationId);
 
 
 export default router;

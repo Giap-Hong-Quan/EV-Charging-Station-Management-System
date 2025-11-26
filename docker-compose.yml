@@ -159,10 +159,39 @@ services:
       - ./charging_session_service/.env
     depends_on:
       - charging_session_mongo
-      - booking_service        # vì session cần validate booking
-      - gateway                # vì gọi qua gateway
+      - booking_service        # vì session cần validate booking         
     volumes:
       - ./charging_session_service:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - evcs_network
+    # 💳 Payment MongoDB
+  payment_mongo:
+    image: mongo:6
+    container_name: payment_mongo
+    restart: always
+    ports:
+      - "27020:27017"
+    volumes:
+      - payment_mongo_data:/data/db
+    networks:
+      - evcs_network
+
+  # 💳 Payment Service
+  payment_service:
+    build:
+      context: ./payment_service
+    container_name: payment_service
+    restart: unless-stopped
+    ports:
+      - "5004:5004"
+    env_file:
+      - ./payment_service/.env
+    depends_on:
+      - payment_mongo
+    volumes:
+      - ./payment_service:/app
       - /app/node_modules
     command: npm run dev
     networks:
@@ -193,6 +222,8 @@ volumes:
   station_data:
   booking_mysql_data:
   charging_session_data:
+  payment_mongo_data:
+
 
 networks:
   evcs_network:

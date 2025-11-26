@@ -1,7 +1,9 @@
 import 'package:ev_point/src/features/auth/data/dto/register_request_dto.dart';
+import 'package:ev_point/src/features/auth/domain/entities/user_entity.dart';
 import 'package:ev_point/src/features/auth/domain/repositories/user_repository.dart';
 import 'package:ev_point/src/features/auth/domain/usecase/get_current_profile_user.dart';
 import 'package:ev_point/src/features/auth/domain/usecase/login_user.dart';
+import 'package:ev_point/src/features/auth/domain/usecase/logout_user.dart';
 import 'package:ev_point/src/features/auth/domain/usecase/register_user.dart';
 import 'package:ev_point/src/features/auth/presentations/cubit/user_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,33 +13,63 @@ class UserCubit extends Cubit<UserState> {
   final RegisterUserUC registerUserUC;
   final LoginUserUC loginUserUC;
   final GetCurrentProfileUserUC getCurrentProfileUserUC;
+  final LogoutUserUC logoutUserUC;
   final IUserRepository userRepository;
 
   UserCubit({
     required this.registerUserUC,
     required this.loginUserUC,
     required this.userRepository,
+    required this.logoutUserUC,
     required this.getCurrentProfileUserUC,
   }) : super(UserInitial());
 
-  Future<void> checkTokenValidity() async {
-    emit(UserLoading());
+  UserEntity? get currentUser {
+    final s = state;
+    if (s is UserLoggedIn) {
+      return s.user;
+    }
+    if (s is UserProfileLoaded) {
+      return s.user;
+    }
+    if(s is UserCreated) {
+      return s.user;
+    } 
+    return null;
+  }
+
+Future<void> loadCurrentUser() async {
+    if (currentUser != null && state is UserProfileLoaded) {
+      return;
+    }
+    if (state is UserInitial) {
+      emit(UserLoading());
+    }
+
     try {
-      final token = await userRepository.getSavedToken();
-      if (token == null) {
-        emit(UserUnauthenticated());
-        return;
-      }
-      final isExpired = JwtDecoder.isExpired(token);
-      if (isExpired) {
-        emit(UserUnauthenticated());
-      } else {
-        emit(UserAuthenticated());
-      }
+      final userProfile = await getCurrentProfileUserUC.call();
+      emit(UserProfileLoaded(userProfile));
     } catch (e) {
-      emit(UserError(e.toString()));
+      emit(UserUnauthenticated());
     }
   }
+
+  Future<void> checkTokenValidity() async {
+  emit(UserLoading());
+  try {
+    final token = await userRepository.getSavedToken();
+    if (token == null || JwtDecoder.isExpired(token)) {
+      emit(UserUnauthenticated());
+      return;
+    }
+
+    final userProfile = await getCurrentProfileUserUC.call();
+    emit(UserProfileLoaded(userProfile));
+  } catch (e) {
+    emit(UserError(e.toString()));
+  }
+}
+
 
   Future<void> registerUser(RegisterRequestDto userDTO) async {
     emit(UserLoading());
@@ -64,6 +96,16 @@ class UserCubit extends Cubit<UserState> {
     try {
       final userProfile = await getCurrentProfileUserUC.call();
       emit(UserProfileLoaded(userProfile));
+    } catch (e) {
+      emit(UserError(e.toString()));
+    }
+  }
+
+  void logoutUser() async {
+    emit(UserLoading());
+    try {
+      await logoutUserUC.call();
+      emit(UserUnauthenticated());
     } catch (e) {
       emit(UserError(e.toString()));
     }

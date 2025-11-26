@@ -48,3 +48,14 @@ class ChargingSessionChecked extends ChargingSessionState {
   @override
   List<Object?> get props => [booking];
 }
+
+class ChargingSessionStoppedSuccess extends ChargingSessionState {
+  final ChargingSession chargingSession;
+
+  const ChargingSessionStoppedSuccess(this.chargingSession);
+
+  @override
+  List<Object?> get props => [chargingSession];
+}
+
+class ChargingSessionStopping extends ChargingSessionState {}

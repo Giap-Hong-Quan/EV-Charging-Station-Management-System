@@ -4,4 +4,5 @@ abstract class IChargingPointRepository{
   Future<List<ChargingPoint>> getAllChargingPoint();
   Future<List<ChargingPoint>> getChargingPointByStationId(String stationId);
   Future<ChargingPoint> getChargingPointById(String chargingPointId);
+  Future<ChargingPoint> updateChargingPointStatus(String chargingPointId, String status);
 }

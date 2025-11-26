@@ -15,5 +15,8 @@ export const config = {
   },
   sessionService: {
     baseUrl: "http://charging_session_service:5003"  
+  },
+   paymentService: {
+    baseUrl: "http://payment_service:5004"  
   }
 };

@@ -13,7 +13,7 @@ class ChargingPointModel extends ChargingPoint {
       id: json['_id'] ?? '',
       stationId: json['station_id'] ?? '',
       pointNumber: json['point_number'] ?? 0,
-      pointStatus: json['point_status'] ?? 'available',
+      pointStatus: json['point_status'] ?? 'Empty',
     );
   }
 

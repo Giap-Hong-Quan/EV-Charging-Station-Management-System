@@ -9,6 +9,7 @@ import { setupRoutes_booking } from "./routes/booking.js";
 import { setupRoutes_analytics } from "./routes/analytics.js";
 import { config } from "./config.js";
 import { setupRoutes_session } from "./routes/session.js";
+import { setupRoutes_payment } from "./routes/payment.js";
 
 const app = express();
 
@@ -28,6 +29,7 @@ setupRoutes_station(app);
 setupRoutes_booking(app);
 setupRoutes_analytics(app);
 setupRoutes_session(app);
+setupRoutes_payment(app);
 
 // ==== Parse body cho các route KHÁC gateway ====
 app.use(express.json());

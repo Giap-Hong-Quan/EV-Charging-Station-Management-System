@@ -1,16 +1,36 @@
 import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:ev_point_session/core/routes/path_routers.dart';
+import 'package:ev_point_session/features/charging_session/data/dto/request_end_charging_session_dto.dart';
+import 'package:ev_point_session/features/charging_session/data/dto/charging_session_detail_dto.dart';
+import 'package:ev_point_session/features/charging_session/presentations/cubit/charging_sesion_cubit.dart';
+import 'package:ev_point_session/features/charging_session/presentations/cubit/charging_session_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 class ChargingSessionActiveScreen extends StatefulWidget {
-  final String bookingCode;
-  final String vehicleName;
-  final String vehicleNumber;
-
+  final String sessionId;
+  final String userId;
+  final String stationId;
+  final int powerKWh;
+  final int pricePerKWh;
+  final int startSocPercent;
+  final String stationName;
+  final int pointNumber;
+  final DateTime startTime;
   const ChargingSessionActiveScreen({
     super.key,
-    required this.bookingCode,
-    required this.vehicleName,
-    required this.vehicleNumber,
+    required this.sessionId,
+    required this.userId,
+    required this.stationId,
+    required this.powerKWh,
+    required this.pricePerKWh,
+    required this.stationName,
+    required this.pointNumber,
+    required this.startTime,
+    this.startSocPercent = 25,
   });
 
   @override
@@ -19,20 +39,20 @@ class ChargingSessionActiveScreen extends StatefulWidget {
 }
 
 class _ChargingSessionActiveScreenState
-    extends State<ChargingSessionActiveScreen> with TickerProviderStateMixin {
+    extends State<ChargingSessionActiveScreen>
+    with TickerProviderStateMixin {
   // Session data
   late DateTime startTime;
-  int currentBatteryPercent = 38;
-  int targetBatteryPercent = 80;
-  double powerKW = 7.2;
-  double totalCost = 24.0;
-  double mileage = 742.3;
+  late int currentBatteryPercent;
+  final int targetBatteryPercent = 100;
+
+  static int batteryCapacityKWh = 60;
+
   bool isCharging = true;
 
   // Timer
   Timer? _timer;
-  Duration elapsedTime = const Duration(minutes: 12, seconds: 46);
-  Duration remainingTime = const Duration(minutes: 12, seconds: 46);
+  Duration elapsedTime = Duration.zero;
 
   // Animation
   late AnimationController _pulseController;
@@ -42,9 +62,10 @@ class _ChargingSessionActiveScreenState
   @override
   void initState() {
     super.initState();
-    startTime = DateTime.now().subtract(elapsedTime);
-    _startTimer();
+    currentBatteryPercent = widget.startSocPercent;
+    startTime = DateTime.now();
     _initAnimations();
+    _startTimer();
   }
 
   void _initAnimations() {
@@ -70,21 +91,31 @@ class _ChargingSessionActiveScreenState
       setState(() {
         elapsedTime = DateTime.now().difference(startTime);
 
-        // Simulate battery charging (1% every 2 minutes)
-        if (elapsedTime.inSeconds % 120 == 0 &&
-            currentBatteryPercent < targetBatteryPercent) {
-          currentBatteryPercent++;
-        }
+        final totalSeconds = elapsedTime.inSeconds;
 
-        // Calculate remaining time
-        final percentRemaining = targetBatteryPercent - currentBatteryPercent;
-        remainingTime = Duration(minutes: percentRemaining * 2);
+        // kWh đã sạc được đến hiện tại
+        final chargedKWh =
+            (widget.powerKWh * totalSeconds) / 3600.0; // kWh = kW * h
 
-        // Update cost
-        totalCost = (powerKW * elapsedTime.inSeconds) / 3600 * 3.5;
+        // % pin tăng thêm
+        final percentIncrease =
+            (chargedKWh / batteryCapacityKWh) * 100.0; // (%)
 
-        // Auto stop when reaching target
-        if (currentBatteryPercent >= targetBatteryPercent) {
+        // SOC hiện tại = SOC ban đầu + % tăng
+        final newPercent = (widget.startSocPercent + percentIncrease).clamp(
+          0.0,
+          100.0,
+        );
+
+        currentBatteryPercent = newPercent.round();
+
+        // Auto stop khi đạt target (hoặc 100%)
+        if (currentBatteryPercent >= targetBatteryPercent ||
+            currentBatteryPercent >= 100) {
+          currentBatteryPercent = math.min(
+            targetBatteryPercent,
+            100,
+          ); // đảm bảo không > 100
           isCharging = false;
           _pulseController.stop();
         }
@@ -92,7 +123,42 @@ class _ChargingSessionActiveScreenState
     });
   }
 
+  /// Tổng kWh đã sạc tới thời điểm hiện tại
+  double get _chargedKWh {
+    return (widget.powerKWh * elapsedTime.inSeconds) / 3600.0;
+  }
+
+  /// Thời gian còn lại để từ SOC hiện tại lên targetBatteryPercent
+  Duration get _remainingTime {
+    if (!isCharging || currentBatteryPercent >= targetBatteryPercent) {
+      return Duration.zero;
+    }
+
+    final percentRemaining =
+        targetBatteryPercent - currentBatteryPercent; // % còn thiếu
+
+    // kWh cần thêm để lên target
+    final kWhNeeded = batteryCapacityKWh * (percentRemaining / 100.0); // kWh
+
+    // Thời gian cần (giây) = kWh / kW * 3600
+    final secondsNeeded = (kWhNeeded / widget.powerKWh) * 3600.0;
+
+    return Duration(seconds: secondsNeeded.round());
+  }
+
+  /// Tổng tiền = kWh đã sạc * đơn giá
+  double get _totalCost {
+    return _chargedKWh * widget.pricePerKWh;
+  }
+
   void _stopCharging() {
+    final endChargingSessionDTO = RequestEndChargingSessionDto(
+      sessionId: widget.sessionId,
+      endSocPercent: currentBatteryPercent,
+      totalPrice: _totalCost.toInt(),
+      totalKwh: _chargedKWh,
+    );
+
     showDialog(
       context: context,
       barrierColor: Colors.black54,
@@ -114,7 +180,7 @@ class _ChargingSessionActiveScreenState
               ),
               const SizedBox(height: 16),
               const Text(
-                'Stop Charging?',
+                'Kết thúc phiên sạc?',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -123,12 +189,9 @@ class _ChargingSessionActiveScreenState
               ),
               const SizedBox(height: 8),
               Text(
-                'Are you sure you want to stop charging at $currentBatteryPercent%?',
+                'Bạn có chắc muốn kết thúc phiên sạc ở mức $currentBatteryPercent%?',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white60,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Colors.white60, fontSize: 14),
               ),
               const SizedBox(height: 24),
               Row(
@@ -144,7 +207,7 @@ class _ChargingSessionActiveScreenState
                         ),
                       ),
                       child: const Text(
-                        'Cancel',
+                        'Hủy',
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
@@ -153,8 +216,18 @@ class _ChargingSessionActiveScreenState
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context); // Close dialog
-                        Navigator.pop(context); // Close charging screen
+                        // đóng dialog
+                        Navigator.pop(context);
+
+                        // dừng tính toán local
+                        setState(() {
+                          isCharging = false;
+                        });
+
+                        // call Cubit stop session
+                        context
+                            .read<ChargingSessionCubit>()
+                            .stopChargingSession(endChargingSessionDTO);
                       },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -164,7 +237,7 @@ class _ChargingSessionActiveScreenState
                         ),
                       ),
                       child: const Text(
-                        'Stop',
+                        'Kết thúc',
                         style: TextStyle(
                           color: Color(0xFF0A1929),
                           fontWeight: FontWeight.bold,
@@ -185,8 +258,7 @@ class _ChargingSessionActiveScreenState
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final hours = twoDigits(duration.inHours);
     final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$hours:$minutes:$seconds';
+    return '$hours:$minutes';
   }
 
   @override
@@ -199,279 +271,255 @@ class _ChargingSessionActiveScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A1929),
-      body: SafeArea(
-        child: Stack(
+    return BlocConsumer<ChargingSessionCubit, ChargingSessionState>(
+      listener: (context, state) {
+        if (state is ChargingSessionStoppedSuccess) {
+          print("station name: $state ${widget.stationName}, point number: ${widget.pointNumber}");
+          final session = state.chargingSession; 
+          final detailDto = ChargingSessionDetailDto(
+            userId: widget.userId, // Replace with actual user ID
+            stationId: widget.stationId, // Replace with actual station ID
+            chargingSession: session,
+            powerDelivered: _chargedKWh.toInt(),
+            stationName: widget.stationName,
+            pointNumber: widget.pointNumber,
+            startSocPercent: widget.startSocPercent,
+            endSocPercent: currentBatteryPercent,
+            durationMinutes: elapsedTime.inMinutes,
+            startTime: widget.startTime,
+            endTime: DateTime.now(),
+          );
+
+          print(  "Navigating to details with DTO: ${detailDto.toJson()}");
+
+          context.push(
+            PathRouters.chargingSessionDetailsScreen,
+            extra: detailDto,
+          );
+        }
+
+        if (state is ChargingSessionError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is ChargingSessionStopping;
+
+        return Stack(
           children: [
-            // Background waves
-            ...List.generate(3, (index) {
-              return AnimatedBuilder(
-                animation: _waveController,
-                builder: (context, child) {
-                  return Positioned.fill(
-                    child: CustomPaint(
-                      painter: WavePainter(
-                        animation: _waveController.value,
-                        index: index,
-                      ),
-                    ),
-                  );
-                },
-              );
-            }),
-
-            // Main content
-            Column(
-              children: [
-                // App bar
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ),
-                      const Text(
-                        'Charging',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.more_vert, color: Colors.white),
-                          onPressed: () {},
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Car visualization with charging animation
-                Expanded(
-                  child: Center(
-                    child: AnimatedBuilder(
-                      animation: _pulseAnimation,
-                      builder: (context, child) {
-                        return Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Outer pulse circles
-                            ...List.generate(3, (index) {
-                              final scale = 1.0 + (_pulseAnimation.value * 0.5) - (index * 0.15);
-                              final opacity = (1.0 - _pulseAnimation.value) * (1.0 - index * 0.3);
-                              return Container(
-                                width: 280 * scale,
-                                height: 280 * scale,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFF00D9FF).withOpacity(opacity * 0.3),
-                                    width: 2,
-                                  ),
-                                ),
-                              );
-                            }),
-
-                            // Main circle
-                            Container(
-                              width: 280,
-                              height: 280,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    const Color(0xFF1A2F3F),
-                                    const Color(0xFF0A1929),
-                                  ],
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF00D9FF).withOpacity(0.2),
-                                    blurRadius: 40,
-                                    spreadRadius: 5,
-                                  ),
-                                ],
-                              ),
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  // Car image
-                                  Image.asset(
-                                    'assets/car_top_view.png', // Add your car asset
-                                    width: 120,
-                                    height: 200,
-                                    color: const Color(0xFF00D9FF),
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Icon(
-                                        Icons.directions_car,
-                                        size: 100,
-                                        color: const Color(0xFF00D9FF),
-                                      );
-                                    },
-                                  ),
-
-                                  // Charging indicator line
-                                  Positioned(
-                                    top: 90,
-                                    left: 90,
-                                    right: 90,
-                                    child: Container(
-                                      height: 3,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            Colors.transparent,
-                                            const Color(0xFF00D9FF),
-                                            Colors.transparent,
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
-                // Battery info
-                Column(
+            Scaffold(
+              backgroundColor: const Color(0xFF0A1929),
+              body: SafeArea(
+                child: Stack(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.bolt,
-                          color: const Color(0xFF00D9FF),
-                          size: 24,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Charging',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '$currentBatteryPercent',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 64,
-                            fontWeight: FontWeight.bold,
-                            height: 1,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Text(
-                            '.45%',
-                            style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
+                    // Background waves
+                    ...List.generate(3, (index) {
+                      return AnimatedBuilder(
+                        animation: _waveController,
+                        builder: (context, child) {
+                          return Positioned.fill(
+                            child: CustomPaint(
+                              painter: WavePainter(
+                                animation: _waveController.value,
+                                index: index,
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
+                      );
+                    }),
+
+                    // Main content
+                    Column(
+                      children: [
+                        _buildAppBar(),
+                        const SizedBox(height: 20),
+                        _buildChargingAnimation(),
+                        _buildBatteryInfo(),
+                        const SizedBox(height: 32),
+                        _buildStatsCards(),
+                        const SizedBox(height: 24),
+                        _buildStopButton(),
+                        const SizedBox(height: 24),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${_formatDuration(remainingTime).substring(0, 5)} Time Remaining',
-                      style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 14,
-                      ),
                     ),
                   ],
                 ),
+              ),
+            ),
 
-                const SizedBox(height: 32),
+            if (isLoading)
+              Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFF00D9FF)),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
 
-                // Stats cards
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          icon: Icons.speed,
-                          label: 'Mileage',
-                          value: '${mileage.toStringAsFixed(1)} km',
-                        ),
+  Widget _buildAppBar() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildIconButton(Icons.arrow_back, () => Navigator.pop(context)),
+          const Text(
+            'Đang sạc',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          _buildIconButton(Icons.more_vert, () {}),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, VoidCallback onPressed) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white),
+        onPressed: onPressed,
+      ),
+    );
+  }
+
+  Widget _buildChargingAnimation() {
+    return Expanded(
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                // Outer pulse circles
+                ...List.generate(3, (index) {
+                  final scale =
+                      1.0 + (_pulseAnimation.value * 0.5) - (index * 0.15);
+                  final opacity =
+                      (1.0 - _pulseAnimation.value) * (1.0 - index * 0.3);
+                  return Container(
+                    width: 280 * scale,
+                    height: 280 * scale,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(
+                          0xFF00D9FF,
+                        ).withOpacity(opacity * 0.3),
+                        width: 2,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          icon: Icons.attach_money,
-                          label: 'Total Cost',
-                          value: '${totalCost.toStringAsFixed(0)} USD',
-                        ),
+                    ),
+                  );
+                }),
+
+                // Main circle with car
+                Container(
+                  width: 280,
+                  height: 280,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const RadialGradient(
+                      colors: [Color(0xFF1A2F3F), Color(0xFF0A1929)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF00D9FF).withOpacity(0.2),
+                        blurRadius: 40,
+                        spreadRadius: 5,
                       ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Stop button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ElevatedButton(
-                    onPressed: _stopCharging,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00D9FF),
-                      minimumSize: const Size(double.infinity, 56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Stop Charging',
-                      style: TextStyle(
-                        color: Color(0xFF0A1929),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  child: const Icon(
+                    Icons.directions_car,
+                    size: 100,
+                    color: Color(0xFF00D9FF),
                   ),
                 ),
-
-                const SizedBox(height: 24),
               ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBatteryInfo() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.bolt, color: Color(0xFF00D9FF), size: 24),
+            SizedBox(width: 8),
+            Text(
+              'Đang sạc',
+              style: TextStyle(color: Colors.white70, fontSize: 16),
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Text(
+          '$currentBatteryPercent%',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 64,
+            fontWeight: FontWeight.bold,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${_formatDuration(_remainingTime)} Còn lại',
+          style: const TextStyle(color: Colors.white60, fontSize: 14),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsCards() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildStatCard(
+              icon: Icons.speed,
+              label: 'Công suất',
+              value: '${widget.powerKWh} kW',
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildStatCard(
+              icon: Icons.attach_money,
+              label: 'Chi phí',
+              // Nếu muốn hiển thị tổng tiền real-time:
+              // value: '${_totalCost.toStringAsFixed(0)} đ',
+              value: '${widget.pricePerKWh}/kWh',
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -486,10 +534,7 @@ class _ChargingSessionActiveScreenState
       decoration: BoxDecoration(
         color: const Color(0xFF1A2F3F).withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       child: Row(
         children: [
@@ -499,11 +544,7 @@ class _ChargingSessionActiveScreenState
               color: const Color(0xFF00D9FF).withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: const Color(0xFF00D9FF),
-              size: 24,
-            ),
+            child: Icon(icon, color: const Color(0xFF00D9FF), size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -512,17 +553,14 @@ class _ChargingSessionActiveScreenState
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white60, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -530,6 +568,31 @@ class _ChargingSessionActiveScreenState
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStopButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ElevatedButton(
+        onPressed: _stopCharging,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF00D9FF),
+          minimumSize: const Size(double.infinity, 56),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+        ),
+        child: const Text(
+          'Kết thúc',
+          style: TextStyle(
+            color: Color(0xFF0A1929),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
@@ -557,10 +620,11 @@ class WavePainter extends CustomPainter {
     path.moveTo(0, size.height * (0.3 + index * 0.15));
 
     for (double x = 0; x <= size.width; x++) {
-      final y = size.height * (0.3 + index * 0.15) +
-          waveHeight * 
-          (1 + index * 0.5) *
-          (0.5 + 0.5 * Math.sin((x - offset) / waveLength * 2 * Math.pi));
+      final y =
+          size.height * (0.3 + index * 0.15) +
+          waveHeight *
+              (1 + index * 0.5) *
+              (0.5 + 0.5 * math.sin((x - offset) / waveLength * 2 * math.pi));
       path.lineTo(x, y);
     }
 
@@ -571,10 +635,4 @@ class WavePainter extends CustomPainter {
   bool shouldRepaint(WavePainter oldDelegate) {
     return animation != oldDelegate.animation;
   }
-}
-
-// Math helper
-class Math {
-  static double sin(double value) => value.sign * (value.abs() % (2 * pi));
-  static const double pi = 3.14159265359;
 }

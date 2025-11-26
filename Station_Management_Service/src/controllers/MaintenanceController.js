@@ -134,3 +134,23 @@ export const updateMaintenanceStatus=async (req,res)=>{
         res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
     }
 }
+// delete su co
+export const deleteMaintenance = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await MaintenanceLog.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Không tìm thấy sự cố cần xóa" });
+    }
+
+    res.status(200).json({
+      message: "Xóa sự cố thành công",
+      data: deleted,
+    });
+  } catch (error) {
+    console.error("Lỗi xóa sự cố:", error);
+    res.status(500).json({ message: "Lỗi hệ thống" });
+  }
+};

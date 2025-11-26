@@ -1,136 +1,155 @@
-import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/card/up_coming_booking_card.dart';
-import 'package:ev_point/src/features/charging_point/domain/entities/charging_point.dart';
-import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point_by_id.dart';
-import 'package:ev_point/src/features/map/domain/entities/station.dart';
-import 'package:ev_point/src/features/map/domain/usecase/get_station_by_id.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../domain/entities/booking.dart';
-import 'package:ev_point/src/core/utils/format_date_time.dart';
 
-class MyBookingUpcoming extends StatelessWidget {
+import 'package:ev_point/src/core/utils/format_date_time.dart';
+import 'package:ev_point/src/features/booking/domain/entities/booking.dart';
+import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/card/up_coming_booking_card.dart';
+import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
+import 'package:ev_point/src/features/booking/presentations/cubit/booking_state.dart';
+
+import 'package:ev_point/src/features/charging_station/domain/entities/charging_station.dart';
+import 'package:ev_point/src/features/charging_station/presentations/cubit/charging_station_cubit.dart';
+
+import 'package:ev_point/src/features/charging_point/domain/entities/charging_point.dart';
+import 'package:ev_point/src/features/charging_point/presentations/cubit/charging_point_cubit.dart';
+
+class MyBookingUpcoming extends StatefulWidget {
   final List<Booking> bookings;
   const MyBookingUpcoming({super.key, required this.bookings});
 
   @override
-  Widget build(BuildContext context) {
-    if (bookings.isEmpty) {
-      return Center(
-        child: Text(
-          'Không có lịch đặt nào',
-          style: TextStyle(color: Colors.grey[600]),
-        ),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-      itemCount: bookings.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (context, i) {
-        final b = bookings[i];
-        
-        final getStationByIdUC = context.read<GetStationById>();
-        final getChargingPointByIdUC = context.read<GetChargingPointById>();
-    
-        return FutureBuilder<Map<String, dynamic>>(
-          future: _fetchStationAndPoint(
-            getStationByIdUC,
-            getChargingPointByIdUC,
-            b.stationId,
-            b.pointId,
-          ),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              );  
-            }
+  State<MyBookingUpcoming> createState() => _MyBookingUpcomingState();
+}
 
-            if (snapshot.hasError || !snapshot.hasData) {
-              return _buildFallbackCard(b);
-            }
+class _MyBookingUpcomingState extends State<MyBookingUpcoming> {
+  late final Map<String, Future<Map<String, dynamic>>> _futureDetails;
 
-            final data = snapshot.data!;
-            final station = data['station'] as Station?;
-            final point = data['point'] as ChargingPoint?;
+  @override
+  void initState() {
+    super.initState();
+    final stationCubit = context.read<ChargingStationCubit>();
+    final pointCubit = context.read<ChargingPointCubit>();
 
-            if (station == null) {
-              return _buildFallbackCard(b);
-            }
-
-            return _buildBookingCard(b, station, point);
-          },
-        );
-      },
-    );
+    _futureDetails = {
+      for (final b in widget.bookings)
+        b.id.toString(): _getStationAndPoint(stationCubit, pointCubit, b.stationId, b.pointId),
+    };
   }
 
-  Future<Map<String, dynamic>> _fetchStationAndPoint(
-    GetStationById getStation,
-    GetChargingPointById getPoint,
+  Future<Map<String, dynamic>> _getStationAndPoint(
+    ChargingStationCubit stationCubit,
+    ChargingPointCubit pointCubit,
     String stationId,
     String pointId,
   ) async {
     try {
       final results = await Future.wait([
-        getStation(stationId),
-        getPoint(pointId),
+        stationCubit.getChargingStationByIdUC(stationId),
+        pointCubit.getChargingPointByIdUseCase(pointId),
       ]);
-      
+
       return {
-        'station': results[0] as Station?,
-        'point': results[1] as ChargingPoint?,
+        "station": results[0] as ChargingStation?,
+        "point": results[1] as ChargingPoint?,
       };
-    } catch (e) {
-      return {
-        'station': null,
-        'point': null,
-      };
+    } catch (_) {
+      return {"station": null, "point": null};
     }
   }
 
-  Widget _buildBookingCard(Booking b, Station station, ChargingPoint? point) {
-    final start = b.scheduleStartTime;
-    final date = '${mm(start.month)} ${dd(start.day)}, ${start.year}';
-    final time = '${hh2(start.hour)}:${hh2(start.minute)}';
 
-    return UpComingBookingCard(
-      bookingId: b.id.toString(),
-      date: date,
-      time: time,
-      name: station.name,
-      bookingCode: b.bookingCode,
-      vehicalName: b.vehicleName,
-      vehialNumber: b.vehicleNumber,
-      address: station.address,
-      power: '${station.powerKw} kW',
-      timeStart: time,
-      pointNumber: point?.pointNumber ?? 1,
-      hasReminder: false,
-    );
+  void _cancelBooking(BuildContext context, Booking booking) {
+    context.read<BookingCubit>().cancelBooking(bookingId: booking.id.toString());
   }
 
-  Widget _buildFallbackCard(Booking b) {
-    final start = b.scheduleStartTime;
-    final date = '${mm(start.month)} ${dd(start.day)}, ${start.year}';
-    final time = '${hh2(start.hour)}:${hh2(start.minute)}';
+  @override
+  Widget build(BuildContext context) {
+    if (widget.bookings.isEmpty) {
+      return Center(
+        child: Text(
+          "Không có đặt chỗ sắp tới",
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+      );
+    }
 
-    return UpComingBookingCard(
-      bookingId: b.id.toString(),
-      date: date,
-      time: time,
-      name: 'Unknown Station',
-      bookingCode: b.bookingCode,
-      vehicalName: b.vehicleName,
-      vehialNumber: b.vehicleNumber,
-      address: '',
-      power: 'N/A',
-      timeStart: time,
-      pointNumber: 1,
-      hasReminder: false,
+    return BlocListener<BookingCubit, BookingState>(
+      listener: (context, state) {
+        print("BookingCubit State Changed: $state");
+        if (state is BookingCancelled) {
+          final canceledBooking = state.booking;
+          context.read<ChargingPointCubit>().updateChargingPointStatus(
+                chargingPointId: canceledBooking.pointId,
+                status: 'Empty',
+              );
+
+           context
+          .read<BookingCubit>()
+          .getUserBookings(userId: canceledBooking.userId);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Hủy đặt chỗ thành công!"),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else if (state is BookingError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Lỗi: ${state.message}"),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+        itemCount: widget.bookings.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        itemBuilder: (context, index) {
+          final b = widget.bookings[index];
+
+          final start = b.scheduleStartTime;
+          final date = "${mm(start.month)} ${dd(start.day)}, ${start.year}";
+          final time = "${hh2(start.hour)}:${hh2(start.minute)}";
+
+          return FutureBuilder<Map<String, dynamic>>(
+            future: _futureDetails[b.id.toString()],
+            builder: (context, snapshot) {
+              final station = snapshot.data?["station"] as ChargingStation?;
+              final point = snapshot.data?["point"] as ChargingPoint?;
+
+              final stationName = station?.name ?? "Unknown Station";
+              final stationAddr = station?.address ?? "";
+              final stationPower = station?.powerKw ?? 0;
+              final pointNumber = point?.pointNumber ?? 0;
+
+              return UpComingBookingCard(
+                bookingId: b.id.toString(),
+                userId: b.userId,
+                stationId: b.stationId,
+                date: date,
+                time: time,
+                name: stationName,
+                bookingCode: b.bookingCode,
+                vehicalName: b.vehicleName,
+                vehialNumber: b.vehicleNumber,
+                address: stationAddr,
+                powerKw: stationPower,
+                pricePerKwh:  station?.pricePerKwh ?? 0,
+                timeStart: time,
+                pointNumber: pointNumber,
+                chargingPointId: b.pointId,
+                hasReminder: false,
+
+                onCancelPressed: () => _cancelBooking(context, b),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

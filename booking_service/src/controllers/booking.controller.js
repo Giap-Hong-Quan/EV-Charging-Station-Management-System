@@ -63,4 +63,19 @@ export const cancelBooking = async (req, res) => {
     return res.status(result.status).json(result);
 };
 
+export const getBookingsByStationId = async (req, res) => {
+  try {
+    const { station_id } = req.params;
+
+    const bookings = await Booking.findAll({
+      where: { station_id: station_id },
+      order: [["created_at", "DESC"]],
+    });
+
+    return res.status(200).json({ bookings });
+  } catch (err) {
+    console.error("Lỗi getBookingsByStationId:", err);
+    return res.status(500).json({ error: "Lỗi server" });
+  }
+};
 

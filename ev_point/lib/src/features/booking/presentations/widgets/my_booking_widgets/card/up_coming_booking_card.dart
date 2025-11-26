@@ -1,11 +1,13 @@
-import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
-import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/build/build_detail.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/build/build_detail.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-class UpComingBookingCard extends StatefulWidget {
+class UpComingBookingCard extends StatelessWidget {
   final String bookingId;
+  final String userId;
+  final String stationId;
+  final String chargingPointId;
+
   final String date;
   final String time;
   final String name;
@@ -13,13 +15,20 @@ class UpComingBookingCard extends StatefulWidget {
   final String vehicalName;
   final String vehialNumber;
   final String address;
-  final String power;
+  final int powerKw;
+  final int pricePerKwh;
   final String timeStart;
   final int pointNumber;
   final bool hasReminder;
+
+  final VoidCallback? onCancelPressed;
+  final VoidCallback? onShowQrPressed;
+
   const UpComingBookingCard({
     super.key,
     required this.bookingId,
+    required this.userId,
+    required this.stationId,
     required this.date,
     required this.time,
     required this.name,
@@ -27,156 +36,118 @@ class UpComingBookingCard extends StatefulWidget {
     required this.vehicalName,
     required this.vehialNumber,
     required this.address,
-    required this.power,
+    required this.powerKw,
+    required this.pricePerKwh,
     required this.timeStart,
     required this.pointNumber,
+    required this.chargingPointId,
     required this.hasReminder,
+    this.onCancelPressed,
+    this.onShowQrPressed,
   });
 
-  @override
-  State<UpComingBookingCard> createState() => _UpComingBookingCardState();
-}
-
-class _UpComingBookingCardState extends State<UpComingBookingCard> {
-  bool reminderEnabled = false;
-
-  @override
-  void initState() {
-    super.initState();
-    reminderEnabled = widget.hasReminder;
-  }
-
-  void _showQRCode() {
-    String bookingInfo = '''
-      BookingId: ${widget.bookingId}
-      Date: ${widget.date}
-      Time: ${widget.time}
-      Location: ${widget.name}
-      Address: ${widget.address}
-      BookingCode: ${widget.bookingCode}
-      Power: ${widget.power}
-      TimeStart: ${widget.timeStart}
-      Point Number: ${widget.pointNumber}
-      Vehical Name: ${widget.vehicalName}
-      Vehical Number: ${widget.vehialNumber}
-      ''';
-
+  void _showCancelDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Mã QR đặt chỗ',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: QrImageView(
-                    data: bookingInfo,
-                    version: QrVersions.auto,
-                    size: 200.0,
-                    backgroundColor: Colors.white,
-                  ),
-                ),
-            
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, 
-                        color: Colors.teal.shade700, 
-                        size: 18
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Quét mã QR này tại trạm sạc để bắt đầu quá trình sạc.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.teal.shade700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
+            title: const Text("Xác nhận hủy đặt chỗ"),
+            content: const Text("Bạn có chắc chắn muốn hủy đặt chỗ này không?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Không"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Bạn đã chọn hủy đặt chỗ"),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                child: const Text(
+                  "Hủy đặt chỗ",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-        );
-      },
     );
   }
 
+  String buildBookingQrData() {
+    return '''
+{
+  "bookingCode": "$bookingCode",
+  "user_id": "$userId",
+  "station_id": "$stationId",
+  "charging_point_id": "$chargingPointId",
+  "stationName": "$name",
+  "address": "$address",
+  "date": "$date",
+  "time": "$time",
+  "vehicleName": "$vehicalName",
+  "vehicleNumber": "$vehialNumber",
+  "powerKw": $powerKw,
+  "pricePerKwh": $pricePerKwh,
+  "pointNumber": $pointNumber
+}
+''';
+  }
 
-  void _cancelBooking() {
+  void _openQrDialog(BuildContext context) {
+    final qrData = buildBookingQrData();
+
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Xác nhận hủy đặt chỗ',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          'Bạn có chắc chắn muốn hủy đặt chỗ này không?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Không'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              context.read<BookingCubit>().cancelBooking(
-                    bookingId: widget.bookingId,
-                  );
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
+      builder:
+          (_) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('Hủy đặt chỗ'),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Mã QR đặt chỗ",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  QrImageView(
+                    data: qrData,
+                    version: QrVersions.auto,
+                    size: 230,
+                    backgroundColor: Colors.white,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Quét tại trạm sạc để bắt đầu sạc",
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Đóng"),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    bool reminderEnabled = hasReminder;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -192,6 +163,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
       ),
       child: Column(
         children: [
+          // Header
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -201,12 +173,12 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.date,
+                      date,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      widget.time,
+                      time,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -218,18 +190,24 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                   children: [
                     const Text('Nhắc tôi', style: TextStyle(fontSize: 13)),
                     const SizedBox(width: 8),
-                    Switch(
-                      value: reminderEnabled,
-                      onChanged: (value) {
-                        setState(() => reminderEnabled = value);
+                    StatefulBuilder(
+                      builder: (context, setStateSB) {
+                        return Switch(
+                          value: reminderEnabled,
+                          onChanged: (bool value) {
+                            setStateSB(() => reminderEnabled = value);
+                          },
+                          activeColor: Colors.teal,
+                        );
                       },
-                      activeColor: Colors.teal,
                     ),
                   ],
                 ),
               ],
             ),
           ),
+
+          // Station info
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -252,7 +230,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.name,
+                        name,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -260,7 +238,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        widget.address,
+                        address,
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade600,
@@ -272,33 +250,49 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
               ],
             ),
           ),
+
           const SizedBox(height: 16),
+
+          // Detail row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                BuildDetail(icon: Icons.ev_station, label: 'Công suất', value: widget.power),
+                BuildDetail(
+                  icon: Icons.ev_station,
+                  label: 'Công suất',
+                  value: '$powerKw kW',
+                ),
                 const SizedBox(width: 20),
-                BuildDetail(icon: Icons.access_time, label: 'Thời gian', value: widget.timeStart),
+                BuildDetail(
+                  icon: Icons.access_time,
+                  label: 'Thời gian',
+                  value: timeStart,
+                ),
                 const SizedBox(width: 20),
-                BuildDetail(icon: Icons.point_of_sale, label: 'Điểm sạc', value: widget.pointNumber.toString()),
+                BuildDetail(
+                  icon: Icons.point_of_sale,
+                  label: 'Điểm sạc',
+                  value: pointNumber.toString(),
+                ),
                 const Spacer(),
-              
               ],
             ),
           ),
 
           const SizedBox(height: 16),
 
+          // Buttons
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _cancelBooking,
+                    onPressed:
+                        onCancelPressed ?? () => _showCancelDialog(context),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.teal, width: 2),
+                      side: BorderSide(color: Colors.teal, width: 2),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -317,7 +311,8 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _showQRCode,
+                    onPressed: onShowQrPressed ?? () => _openQrDialog(context),
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       shape: RoundedRectangleBorder(
@@ -340,6 +335,7 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
             ),
           ),
 
+          // Note
           Container(
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             padding: const EdgeInsets.all(12),
@@ -352,14 +348,10 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
               children: [
                 Icon(Icons.info_outline, color: Colors.teal.shade700, size: 20),
                 const SizedBox(width: 8),
-                Expanded(
+                const Expanded(
                   child: Text(
-                    'Cắm đầu nối sạc vào xe của bạn để bắt đầu sạc. Nếu bạn không sạc sau 15 phút kể từ thời điểm đó, đặt chỗ này sẽ tự động bị hủy.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.teal.shade700,
-                      height: 1.4,
-                    ),
+                    'Cắm đầu sạc vào xe để bắt đầu sạc. Sau 15 phút nếu không sạc, đặt chỗ sẽ tự động bị hủy.',
+                    style: TextStyle(fontSize: 12, height: 1.4),
                   ),
                 ),
               ],
@@ -369,6 +361,4 @@ class _UpComingBookingCardState extends State<UpComingBookingCard> {
       ),
     );
   }
-
-  
 }

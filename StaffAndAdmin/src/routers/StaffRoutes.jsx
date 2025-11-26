@@ -1,3 +1,4 @@
+import BookingStaff from "@/pages/staff/BookingStaff";
 import ChargingPointStaff from "@/pages/staff/ChargingPointStaff";
 import DashboardStaff from "@/pages/staff/DashboardStaff";
 import IssuesStaff from "@/pages/staff/IssuesStaff";
@@ -8,5 +9,6 @@ export const staffRoutes = [
   { path: "dashboard", element: <DashboardStaff /> },       
   { path: "sessions", element: <SessionsStaff /> },          
   { path: "chargingPoint", element: <ChargingPointStaff /> },          
-  { path: "history", element: <IssuesStaff /> },              
+  { path: "history", element: <IssuesStaff /> },  
+  { path: "booking", element: <BookingStaff /> },            
 ];

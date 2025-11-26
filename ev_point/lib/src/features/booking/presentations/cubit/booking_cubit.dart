@@ -4,19 +4,19 @@ import 'package:ev_point/src/features/booking/domain/usecase/create_booking.dart
 import 'package:ev_point/src/features/booking/domain/usecase/get_booking_by_user_id.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_state.dart';
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point_by_id.dart';
-import 'package:ev_point/src/features/map/domain/usecase/get_station_by_id.dart';
+import 'package:ev_point/src/features/charging_station/domain/usecase/get_charging_station_by_id.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BookingCubit extends Cubit<BookingState> {
   final CreateBooking createBookingUseCase;
   final GetBookingByUserId getBookingByUserIdUseCase;
-  final GetStationById getStationByIdUseCase;
+  final GetChargingStationById getChargingStationByIdUseCase;
   final GetChargingPointById getChargingPointByIdUseCase;
   final CancelBooking cancelBookingUseCase;
   BookingCubit({
     required this.createBookingUseCase,
     required this.getBookingByUserIdUseCase,
-    required this.getStationByIdUseCase,
+    required this.getChargingStationByIdUseCase,
     required this.getChargingPointByIdUseCase,
     required this.cancelBookingUseCase,
   }) : super(BookingInitial());
@@ -51,6 +51,7 @@ class BookingCubit extends Cubit<BookingState> {
     emit(BookingLoading());
     try {
       final bookings = await getBookingByUserIdUseCase(userId: userId);
+
       emit(BookingsLoaded(bookings));
     } catch (e) {
       emit(BookingError(e.toString()));
@@ -64,7 +65,7 @@ class BookingCubit extends Cubit<BookingState> {
 
       final bookingDetails = await Future.wait(
         bookings.map((booking) async {
-          final station = await getStationByIdUseCase(booking.stationId);
+          final station = await getChargingStationByIdUseCase(booking.stationId);
           final chargingPoint = await getChargingPointByIdUseCase(
             booking.pointId,
           );
@@ -84,10 +85,14 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   Future<void> cancelBooking({required String bookingId}) async {
+      print("🚫 CANCELLING BOOKING ID = $bookingId");
+
     emit(BookingLoading());
     try {
       final canceledBooking = await cancelBookingUseCase(bookingId: bookingId);
-      emit(BookingCreated(canceledBooking));
+          print("✅ CANCEL SUCCESS: ${canceledBooking.status}");
+
+      emit(BookingCancelled(canceledBooking));
     } catch (e) {
       emit(BookingError(e.toString()));
     }

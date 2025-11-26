@@ -1,4 +1,5 @@
-import '../../../domain/entities/station.dart';
+import 'package:ev_point/src/features/charging_station/domain/entities/charging_station.dart';
+
 import 'package:geolocator/geolocator.dart' as geo;
 
 sealed class MapState {
@@ -15,7 +16,7 @@ class MapLoading extends MapState {
 
 class MapLoaded extends MapState {
   final geo.Position userPos;
-  final List<Station> stations;
+  final List<ChargingStation> stations;
   const MapLoaded(this.userPos, this.stations);
 }
 

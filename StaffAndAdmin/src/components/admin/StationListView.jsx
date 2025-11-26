@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import UpdateStationModal from "./UpdateStationModal";
 import ViewStation from "./ViewStation";
+import { stationService } from "@/services/stationService";
 
 // =====================================================================
 // 🧹 Hàm bỏ dấu + lowercase + chống undefined
@@ -41,20 +42,6 @@ const getStatusText = (status) => {
       return status;
   }
 };
-
-const getStatusColors = (status) => {
-  switch (status) {
-    case "online":
-      return "bg-emerald-50 text-emerald-700 border border-emerald-200";
-    case "maintenance":
-      return "bg-amber-50 text-amber-700 border border-amber-200";
-    case "offline":
-      return "bg-rose-50 text-rose-700 border border-rose-200";
-    default:
-      return "bg-slate-100 text-slate-600 border border-slate-200";
-  }
-};
-
 // =====================================================================
 // 📌 COMPONENT CHÍNH
 // =====================================================================
@@ -87,6 +74,20 @@ const filteredStations = stations.filter((s) => {
 
   return matchText && matchFilter;
 });
+const handleUpdateStatus = async (id, currentStatus) => {
+  let newStatus = "online";
+
+  if (currentStatus === "online") newStatus = "offline";
+  else if (currentStatus === "offline") newStatus = "maintenance";
+  else if (currentStatus === "maintenance") newStatus = "online";
+
+  try {
+    await stationService.updateStationStatus(id, { status: newStatus });
+    fetchStations(); // load lại danh sách
+  } catch (err) {
+    console.error("Lỗi cập nhật trạng thái:", err);
+  }
+};
 
 
   // =====================================================================
@@ -181,14 +182,20 @@ const filteredStations = stations.filter((s) => {
                 <td className="px-6 py-4 text-slate-600">{s.address}</td>
 
                 {/* TRẠNG THÁI */}
-                <td className="px-6 py-4 ">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColors(
-                      s.status
-                    )}`}
+              
+                <td className="px-6 py-4">
+                  <button
+                    onClick={() => handleUpdateStatus(s._id, s.status)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                      s.status === "online"
+                        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                        : s.status === "offline"
+                        ? "bg-rose-50 text-rose-600 border border-rose-200"
+                        : "bg-amber-50 text-amber-600 border border-amber-200"
+                    }`}
                   >
                     {getStatusText(s.status)}
-                  </span>
+                  </button>
                 </td>
 
                 {/* CÔNG SUẤT */}

@@ -1,15 +1,13 @@
-import 'package:ev_point/src/core/routes/routers_path.dart';
 import 'package:ev_point/src/core/utils/app_color.dart';
+import 'package:ev_point/src/features/auth/presentations/cubit/user_cubit.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_cubit.dart';
 import 'package:ev_point/src/features/booking/presentations/cubit/booking_state.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/build/buil_tab.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/my_booking_canceled.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/my_booking_completed.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/my_booking_upcoming.dart';
-import 'package:ev_point/src/features/map/presentation/widgets/navigator_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class MyBookingScreen extends StatefulWidget {
   const MyBookingScreen({super.key});
@@ -20,34 +18,37 @@ class MyBookingScreen extends StatefulWidget {
 
 class _MyBookingScreenState extends State<MyBookingScreen> {
   int selectedIndex = 0;
-  int bottomNavIndex = 2;
-  final String userId = 'user123'; // Example user ID
+  String? userId;
 
   @override
   void initState() {
     super.initState();
-    context.read<BookingCubit>().getUserBookings(userId: userId);
+    _loadBookings();
+  }
+
+  void _loadBookings() {
+    final user = context.read<UserCubit>().currentUser;
+    if (user != null) {
+      context.read<BookingCubit>().getUserBookings(userId: user.id.toString());
+    }
+    else{
+      SnackBar(
+        content: Text(
+          'Vui lòng đăng nhập để xem đặt chỗ của bạn',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.red,
+      );
+    }
+    
   }
 
   Future<void> refreshBookings() async {
-    context.read<BookingCubit>().getUserBookings(userId: userId);
-  }
-
-  void _onBottomNavTap(int index) {
-    setState(() => bottomNavIndex = index);
-    if (index == 0) {
-      context.go(RouterPaths.mapScreen);
-    }
-    if (index == 1) {
-    }
-    if (index == 2) {
-      context.go(RouterPaths.myBookingScreen);
-    }
-    if (index == 3) {
-      // Navigate to Wallet Screen (to be implemented)
-    }
-    if (index == 4) {
-      context.go(RouterPaths.mapScreen);
+    final user = context.read<UserCubit>().currentUser;
+    if (user != null) {
+      await context.read<BookingCubit>().getUserBookings(
+        userId: user.id.toString(),
+      );
     }
   }
 
@@ -57,7 +58,6 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: const Icon(Icons.location_on, color: Colors.teal),
         title: const Text(
           'Đặt chỗ của tôi',
           style: TextStyle(
@@ -66,12 +66,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: Column(
         children: [
@@ -101,64 +96,221 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
           Expanded(
             child: BlocBuilder<BookingCubit, BookingState>(
               builder: (context, state) {
-                if (state is BookingInitial) {
-                  return const Center(child: CircularProgressIndicator());
+                print ("Rebuilding MyBookingScreen with state: $state");
+                // Loading state
+                if (state is BookingInitial || state is BookingLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  );
                 }
 
-                if (state is BookingLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+                // Error state
                 if (state is BookingError) {
-                  return Center(child: Text('Error: ${state.message}'));
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 80,
+                            color: Colors.red[300],
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Không thể tải đặt chỗ',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            state.message,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          ElevatedButton.icon(
+                            onPressed: _loadBookings,
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Thử lại',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
                 }
+
+                // Success state with data
                 if (state is BookingsLoaded) {
                   final allBookings = state.bookings;
+                  print("Total bookings loaded: ${allBookings.length}");
+                  print(
+                    "User ID for bookings: ${context.read<UserCubit>().currentUser?.id}",
+                  );
 
+                  // Empty state
                   if (allBookings.isEmpty) {
-                    return const Center(child: Text('No bookings found.'));
+                    return RefreshIndicator(
+                      onRefresh: refreshBookings,
+                      color: AppColors.primary,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.inbox_outlined,
+                                  size: 100,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 24),
+                                Text(
+                                  'Chưa có đặt chỗ nào',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Kéo xuống để làm mới',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
                   }
 
+                  // Filter bookings by status
                   final upcoming =
                       allBookings
-                          .where(
-                            (b) => (b.status).toUpperCase() == 'UPCOMING',
-                          )
+                          .where((b) => b.status.toUpperCase() == 'UPCOMING')
                           .toList();
 
                   final completed =
-                      allBookings.where((b) {
-                        final s = (b.status).toUpperCase();
-                        return s == 'COMPLETED';
-                      }).toList();
+                      allBookings
+                          .where((b) => b.status.toUpperCase() == 'COMPLETED')
+                          .toList();
 
                   final canceled =
-                      allBookings.where((b) {
-                        final s = (b.status).toUpperCase();
-                        return s == 'CANCELLED';
-                      }).toList();
+                      allBookings
+                          .where((b) => b.status.toUpperCase() == 'CANCELLED')
+                          .toList();
 
                   return RefreshIndicator(
-                    onRefresh: refreshBookings,
+                    onRefresh: () async => {},
+                    color: AppColors.primary,
                     child: IndexedStack(
                       index: selectedIndex,
                       children: [
-                        MyBookingUpcoming(bookings: upcoming),
-                        MyBookingCompleted(bookings: completed),
-                        MyBookingCanceled(bookings: canceled),
+                        _buildBookingList(
+                          bookings: upcoming,
+                          emptyMessage: 'Không có đặt chỗ sắp tới',
+                          child: MyBookingUpcoming(bookings: upcoming),
+                        ),
+                        _buildBookingList(
+                          bookings: completed,
+                          emptyMessage: 'Không có đặt chỗ đã hoàn thành',
+                          child: MyBookingCompleted(bookings: completed),
+                        ),
+                        _buildBookingList(
+                          bookings: canceled,
+                          emptyMessage: 'Không có đặt chỗ đã hủy',
+                          child: MyBookingCanceled(bookings: canceled),
+                        ),
                       ],
                     ),
                   );
                 }
-                return const Center(child: Text('Unexpected state'));
+
+                // Unexpected state
+                return const Center(  
+                  child: Text(
+                    'Trạng thái không xác định',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                );
               },
             ),
           ),
         ],
       ),
-      bottomNavigationBar: NavigatorBar(
-        currentIndex: bottomNavIndex,
-        onTap: _onBottomNavTap,
-      ),
     );
+  }
+
+  Widget _buildBookingList({
+    required List bookings,
+    required String emptyMessage,
+    required Widget child,
+  }) {
+    if (bookings.isEmpty) {
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.event_busy_outlined,
+                  size: 80,
+                  color: Colors.grey[400],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  emptyMessage,
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Kéo xuống để làm mới',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return child;
   }
 }

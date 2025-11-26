@@ -3,8 +3,8 @@ import 'package:ev_point/src/features/booking/domain/entities/booking.dart';
 import 'package:ev_point/src/features/booking/presentations/widgets/my_booking_widgets/card/canceled_booking_card.dart';
 import 'package:ev_point/src/features/charging_point/domain/entities/charging_point.dart';
 import 'package:ev_point/src/features/charging_point/domain/usecase/get_charging_point_by_id.dart';
-import 'package:ev_point/src/features/map/domain/entities/station.dart';
-import 'package:ev_point/src/features/map/domain/usecase/get_station_by_id.dart';
+import 'package:ev_point/src/features/charging_station/domain/entities/charging_station.dart';
+import 'package:ev_point/src/features/charging_station/domain/usecase/get_charging_station_by_id.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -28,12 +28,12 @@ class MyBookingCanceled extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, i) {
         final b = bookings[i];
-        final getStationByIdUC = context.read<GetStationById>();
+        final getChargingStationByIdUC = context.read<GetChargingStationById>();
         final getChargingPointByIdUC = context.read<GetChargingPointById>();
 
         return FutureBuilder<Map<String, dynamic>>(
           future: _fetchStationAndPoint(
-            getStationByIdUC,
+            getChargingStationByIdUC,
             getChargingPointByIdUC,
             b.stationId,
             b.pointId,
@@ -53,7 +53,7 @@ class MyBookingCanceled extends StatelessWidget {
             }
 
             final data = snapshot.data!;
-            final station = data['station'] as Station?;
+            final station = data['station'] as ChargingStation?;
             final point = data['point'] as ChargingPoint?;
 
             if (station == null) {
@@ -68,7 +68,7 @@ class MyBookingCanceled extends StatelessWidget {
   }
 
   Future<Map<String, dynamic>> _fetchStationAndPoint(
-    GetStationById getStation,
+    GetChargingStationById getStation,
     GetChargingPointById getPoint,
     String stationId,
     String pointId,
@@ -80,7 +80,7 @@ class MyBookingCanceled extends StatelessWidget {
       ]);
 
       return {
-        'station': results[0] as Station?,
+        'station': results[0] as ChargingStation?,
         'point': results[1] as ChargingPoint?,
       };
     } catch (e) {
@@ -91,7 +91,7 @@ class MyBookingCanceled extends StatelessWidget {
     }
   }
 
-  Widget _buildBookingCard(Booking b, Station station, ChargingPoint? point) {
+  Widget _buildBookingCard(Booking b, ChargingStation station, ChargingPoint? point) {
     final start = b.scheduleStartTime;
     final canceledAt = b.cancelledAt;
 
