@@ -69,7 +69,7 @@ const getUserFromToken = () => {
 const SessionsStaff = () => {
   const [sessions, setSessions] = useState([]);           // dữ liệu gốc từ API
   const [enriched, setEnriched] = useState([]);           // đã gắn tên trạm + điểm sạc
-  const [filteredSessions, setFilteredSessions] = useState([]); 
+  const [filteredSessions, setFilteredSessions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Search + Filter
