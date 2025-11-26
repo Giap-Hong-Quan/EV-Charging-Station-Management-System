@@ -1,42 +1,99 @@
-import React, { useState } from 'react';
-import { DollarSign } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import React, { useState, useEffect } from "react";
+import { DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
-const CashPaymentModal = ({ open, onOpenChange }) => {
+import { paymentService } from "@/services/paymentService";
+import { chargingSessionService } from "@/services/chargingSessionService";
+import { pointService } from "@/services/pointService";
+
+const CashPaymentModal = ({ open, onOpenChange, session }) => {
   const [cashForm, setCashForm] = useState({
-    sessionId: '',
-    totalAmount: '',
-    customerPaid: '',
-    changeAmount: ''
+    sessionId: "",
+    totalAmount: "",
+    customerPaid: "",
+    changeAmount: "",
   });
 
+  // Load session khi modal mở
+  useEffect(() => {
+    if (session) {
+      setCashForm({
+        sessionId: session._id,
+        totalAmount: session.total_price || 0,
+        customerPaid: "",
+        changeAmount: 0,
+      });
+    }
+  }, [session]);
+
   const calculateChange = () => {
-    const total = parseFloat(cashForm.totalAmount) || 0;
-    const paid = parseFloat(cashForm.customerPaid) || 0;
+    const total = Number(cashForm.totalAmount);
+    const paid = Number(cashForm.customerPaid);
     const change = paid - total;
-    setCashForm({ ...cashForm, changeAmount: change >= 0 ? change : 0 });
+
+    setCashForm((f) => ({
+      ...f,
+      changeAmount: change > 0 ? change : 0,
+    }));
   };
 
-  const handleCashPayment = () => {
-    console.log('Thu tiền mặt:', cashForm);
-    onOpenChange(false);
-    // Reset form
-    setCashForm({
-      sessionId: '',
-      totalAmount: '',
-      customerPaid: '',
-      changeAmount: ''
-    });
+  // ============================
+  // XỬ LÝ THANH TOÁN COD
+  // ============================
+  const handleCashPayment = async () => {
+    try {
+      if (!cashForm.customerPaid || cashForm.customerPaid < cashForm.totalAmount) {
+        return toast.error("Khách đưa chưa đủ tiền!");
+      }
+
+      toast.loading("Đang xử lý thanh toán...");
+
+      // 1 GỌI API TẠO THANH TOÁN
+      const res = await paymentService.createPayment({
+        sessionId: session._id,
+        userId: session.user_id || null,
+        stationId: session.station_id,
+        amount: session.total_price, // TIỀN PHẢI THU
+        method: "COD",
+      });
+
+      toast.dismiss();
+      toast.success("Thanh toán thành công!");
+
+      const paymentId =
+        res.paymentId || res.data?.paymentId || res.data?.payment?.paymentId;
+
+      // 2 CẬP NHẬT TRẠNG THÁI THANH TOÁN CHO PHIÊN SẠC
+      await chargingSessionService.updateSessionPayment(session._id, {
+        payment_status: "paid",
+      payment_method: "cash",
+      });
+      await pointService.updatePointStatus(session.point_id, {
+        point_status: "Empty",
+      });
+      //  ĐÓNG MODAL
+      onOpenChange(false);
+
+      //  Refresh bên ngoài nếu cần
+      if (typeof session.onPaid === "function") {
+        session.onPaid(paymentId);
+      }
+
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Thanh toán thất bại!");
+      console.error(err);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
+
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <DollarSign className="w-6 h-6 text-yellow-600" />
@@ -45,84 +102,63 @@ const CashPaymentModal = ({ open, onOpenChange }) => {
         </DialogHeader>
 
         <div className="space-y-4">
+
+          {/* Mã phiên */}
           <div>
-            <Label htmlFor="sessionId">Chọn phiên sạc</Label>
-            <Select
-              value={cashForm.sessionId}
-              onValueChange={(value) => setCashForm({ ...cashForm, sessionId: value })}
-            >
-              <SelectTrigger id="sessionId">
-                <SelectValue placeholder="-- Chọn phiên sạc --" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="S00123">S00123 - A01 (Chờ thanh toán)</SelectItem>
-                <SelectItem value="S00124">S00124 - C01 (Chờ thanh toán)</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Phiên sạc</Label>
+            <p className="font-mono text-sm bg-slate-100 px-3 py-2 rounded">
+              #{session?.session_code}
+            </p>
           </div>
 
+          {/* Số tiền cần thu */}
           <div>
-            <Label htmlFor="totalAmount">Số tiền cần thu</Label>
+            <Label>Số tiền cần thu</Label>
             <Input
-              id="totalAmount"
-              type="number"
-              placeholder="128,250đ"
               value={cashForm.totalAmount}
-              onChange={(e) => {
-                setCashForm({ ...cashForm, totalAmount: e.target.value });
-                calculateChange();
-              }}
+              disabled
+              className="bg-gray-100"
             />
           </div>
 
+          {/* KH đưa bao nhiêu */}
           <div>
-            <Label htmlFor="customerPaid">Khách đưa</Label>
+            <Label>Khách đưa</Label>
             <Input
-              id="customerPaid"
               type="number"
-              placeholder="200000"
               value={cashForm.customerPaid}
               onChange={(e) => {
                 setCashForm({ ...cashForm, customerPaid: e.target.value });
-                setTimeout(calculateChange, 100);
+                setTimeout(calculateChange, 20);
               }}
-              onBlur={calculateChange}
             />
           </div>
 
+          {/* Tiền thừa */}
           <div>
-            <Label htmlFor="changeAmount">Tiền thừa trả lại</Label>
+            <Label>Tiền thừa trả lại</Label>
             <Input
-              id="changeAmount"
-              type="number"
-              placeholder="0đ"
-              value={cashForm.changeAmount}
               disabled
-              className="bg-gray-50"
+              value={cashForm.changeAmount}
+              className="bg-gray-100"
             />
           </div>
-
-          {parseFloat(cashForm.customerPaid) < parseFloat(cashForm.totalAmount) && cashForm.customerPaid && (
-            <Alert className="bg-yellow-50 border-yellow-300">
-              <AlertDescription className="text-yellow-800 text-sm">
-                ⚠️ Hãy kiểm tra kỹ số tiền trước khi xác nhận thanh toán
-              </AlertDescription>
-            </Alert>
-          )}
         </div>
 
-        <div className="flex gap-3 justify-end mt-6">
+        {/* Nút */}
+        <div className="flex justify-end gap-3 mt-6">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
-          <Button 
-            className="bg-emerald-600 hover:bg-emerald-700" 
+
+          <Button
+            className="bg-emerald-600 hover:bg-emerald-700"
             onClick={handleCashPayment}
-            disabled={!cashForm.sessionId || !cashForm.totalAmount || !cashForm.customerPaid}
           >
             Xác nhận thanh toán
           </Button>
         </div>
+
       </DialogContent>
     </Dialog>
   );

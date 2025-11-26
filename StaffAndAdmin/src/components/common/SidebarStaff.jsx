@@ -166,14 +166,7 @@ if (token) {
               <span>Tạo phiên sạc</span>
             </Button>
 
-            <Button
-              variant="ghost"
-              onClick={() => setShowCashPaymentModal(true)}
-              className="w-full justify-start gap-3 px-6 py-3 h-auto rounded-none text-white hover:bg-emerald-600"
-            >
-              <DollarSign className="w-5 h-5" />
-              <span>Thu tiền mặt</span>
-            </Button>
+    
 
             <Button
               variant="ghost"

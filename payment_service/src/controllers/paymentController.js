@@ -11,7 +11,7 @@ export const createPayment = async (req, res) => {
 
     console.log("📝 Create payment request:", { sessionId, userId, stationId, amount, method });
 
-    if (!sessionId || !userId || !stationId || !amount || !method) {
+    if (!sessionId  || !stationId || !amount || !method) {
       return res.status(400).json({ error: "Thiếu dữ liệu đầu vào" });
     }
 
@@ -30,7 +30,7 @@ export const createPayment = async (req, res) => {
       const paymentData = {
         paymentId,
         sessionId,
-        userId,
+        userId: userId || null,
         stationId,
         amount,
         method,

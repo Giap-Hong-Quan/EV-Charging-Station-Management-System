@@ -1,61 +1,46 @@
+///////////////////////////////////////////////////////////////
+// 📦 SESSIONS STAFF PAGE – Full Version
+///////////////////////////////////////////////////////////////
 import React, { useEffect, useState } from "react";
 import {
   Zap,
   MapPin,
-  Calendar,
-  Clock,
   Search,
   Filter,
   ChevronDown,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Battery,
   Banknote,
+  Eye,
+  Battery,
 } from "lucide-react";
 
+import { toast } from "sonner";
 import { chargingSessionService } from "@/services/chargingSessionService";
 import { stationService } from "@/services/stationService";
 import { pointService } from "@/services/pointService";
-import { toast } from "sonner";
+import SessionDetailModal from "@/components/staff/SessionDetailModal";
+import CashPaymentModal from "@/components/staff/CashPaymentModal";
 
-// =====================================================================
-// 🧹 Hàm bỏ dấu + lowercase
-// =====================================================================
-const removeVietnameseTones = (str) => {
-  if (!str) return "";
-  return str
-    .normalize("NFD")
+///////////////////////////////////////////////////////////////
+// 🛠 HELPERS
+///////////////////////////////////////////////////////////////
+const removeVietnameseTones = (str) =>
+  str
+    ?.normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
     .toLowerCase()
-    .trim();
-};
+    .trim() || "";
 
-// =====================================================================
-// 🎨 Hàm format tiền VNĐ
-// =====================================================================
-const formatCurrency = (amount) => {
-  if (!amount) return "0 ₫";
-  return new Intl.NumberFormat("vi-VN", {
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
-  }).format(amount);
-};
+  }).format(amount || 0);
 
-// =====================================================================
-// 🎨 Hàm format thời gian (phút → h / m)
-// =====================================================================
-const formatDuration = (minutes) => {
-  if (!minutes) return "0 phút";
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins} phút`;
-};
-
-// Lấy user từ token
 const getUserFromToken = () => {
   try {
     const token = localStorage.getItem("token");
@@ -66,519 +51,470 @@ const getUserFromToken = () => {
   }
 };
 
+///////////////////////////////////////////////////////////////
+// 🚀 MAIN COMPONENT
+///////////////////////////////////////////////////////////////
 const SessionsStaff = () => {
-  const [sessions, setSessions] = useState([]);           // dữ liệu gốc từ API
-  const [enriched, setEnriched] = useState([]);           // đã gắn tên trạm + điểm sạc
+  const [sessions, setSessions] = useState([]);
+  const [enriched, setEnriched] = useState([]);
   const [filteredSessions, setFilteredSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSession, setSelectedSession] = useState(null);
 
-  // Search + Filter
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPayment, setFilterPayment] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [showCashModal, setShowCashModal] = useState(false);
+const [cashSession, setCashSession] = useState(null);
+
 
   const user = getUserFromToken();
   const stationId = user?.station_id;
 
-  // =====================================================================
-  // 1️⃣ Fetch sessions theo station_id (chỉ dành cho staff)
-  // =====================================================================
+  ///////////////////////////////////////////////////////////////
+  // 1️⃣ FETCH SESSIONS
+  ///////////////////////////////////////////////////////////////
   useEffect(() => {
-    const fetchSessions = async () => {
+    const load = async () => {
       try {
-        if (!stationId) {
-          toast.error("Không tìm thấy station_id của nhân viên");
-          setLoading(false);
-          return;
-        }
-
         setLoading(true);
+        const res = await chargingSessionService.getSessionsByStation(stationId);
 
-        const res = await chargingSessionService.getSessionsByStation(
-          stationId
-        );
-        // res dự kiến: { success: true, data: [...] }
-        let list = [];
-
-        if (Array.isArray(res)) {
-          list = res;
-        } else if (Array.isArray(res?.data)) {
-          list = res.data;
-        } else if (Array.isArray(res?.sessions)) {
-          list = res.sessions;
-        } else {
-          console.warn("Dữ liệu sessions không phải mảng:", res);
-        }
+        const list =
+          Array.isArray(res)
+            ? res
+            : Array.isArray(res?.data)
+            ? res.data
+            : Array.isArray(res?.sessions)
+            ? res.sessions
+            : [];
 
         setSessions(list);
-      } catch (err) {
-        console.error("Lỗi fetch sessions:", err);
-        toast.error("Không thể tải dữ liệu phiên sạc");
+      } catch {
+        toast.error("Không tải được phiên sạc");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSessions();
+    if (stationId) load();
   }, [stationId]);
 
-  // =====================================================================
-  // 2️⃣ JOIN tên trạm + tên điểm sạc
-  // =====================================================================
+  ///////////////////////////////////////////////////////////////
+  // 2️⃣ JOIN STATION NAME + POINT NAME
+  ///////////////////////////////////////////////////////////////
   useEffect(() => {
-    const joinStationAndPoint = async () => {
-      if (!sessions || sessions.length === 0) {
-        setEnriched([]);
-        return;
-      }
+    const joinData = async () => {
+      if (!sessions.length) return setEnriched([]);
 
-      try {
-        // lấy danh sách id duy nhất
-        const stationIds = [...new Set(sessions.map((s) => s.station_id))];
-        const pointIds = [...new Set(sessions.map((s) => s.point_id))];
+      const stationMap = {};
+      const pointMap = {};
 
-        const stationMap = {};
-        for (const id of stationIds) {
+      await Promise.all(
+        [...new Set(sessions.map((s) => s.station_id))].map(async (sid) => {
           try {
-            const res = await stationService.getStationById(id);
-            stationMap[id] = res?.name || "Không rõ trạm";
-          } catch (err) {
-            console.error("Lỗi load station:", err);
-            stationMap[id] = "Không rõ trạm";
+            const res = await stationService.getStationById(sid);
+            stationMap[sid] = res?.name || "Không rõ trạm";
+          } catch {
+            stationMap[sid] = "Không rõ trạm";
           }
-        }
+        })
+      );
 
-        const pointMap = {};
-        for (const pid of pointIds) {
-          try {
-            const res = await pointService.getPointById(pid);
-            pointMap[pid] = res?.point?.name || pid || "Không rõ điểm";
-          } catch (err) {
-            console.error("Lỗi load point:", err);
-            pointMap[pid] = pid || "Không rõ điểm";
-          }
-        }
+      await Promise.all(
+  [...new Set(sessions.map((s) => s.point_id))].map(async (pid) => {
+    try {
+      const res = await pointService.getPointById(pid);
+      pointMap[pid] = res?.point_number
+        ? `Trụ #${res.point_number}`
+        : `Trụ ???`;
+    } catch {
+      pointMap[pid] = "Trụ ???";
+    }
+  })
+);
 
-        const merged = sessions.map((s) => ({
+
+      setEnriched(
+        sessions.map((s) => ({
           ...s,
           station_name: stationMap[s.station_id],
           point_name: pointMap[s.point_id],
-        }));
-
-        setEnriched(merged);
-      } catch (err) {
-        console.error("Lỗi join station/point:", err);
-      }
+        }))
+      );
     };
 
-    joinStationAndPoint();
+    joinData();
   }, [sessions]);
+// const map = {
+//   in_progress: { label: "Đang sạc", icon: AlertCircle, color: "text-blue-600" },
+//   waiting_payment: { label: "Chờ thanh toán", icon: Banknote, color: "text-amber-600" },
+//   paid: { label: "Đã thanh toán", icon: CheckCircle, color: "text-emerald-700" },
+//   completed: { label: "Hoàn thành", icon: CheckCircle, color: "text-emerald-600" },
+//   cancelled: { label: "Đã hủy", icon: XCircle, color: "text-rose-600" },
+// };
 
-  // =====================================================================
-  // 3️⃣ SEARCH + FILTER LOGIC trên enriched
-  // =====================================================================
+  ///////////////////////////////////////////////////////////////
+  // 3️⃣ FILTER + SEARCH
+  ///////////////////////////////////////////////////////////////
   useEffect(() => {
-    let temp = Array.isArray(enriched) ? [...enriched] : [];
-
     const keyword = removeVietnameseTones(searchTerm);
 
-    temp = temp.filter((s) => {
-      const statusNorm = (s.status || "").toLowerCase();
-      const paymentNorm = (s.payment_status || "").toLowerCase();
+    setFilteredSessions(
+      enriched.filter((s) => {
+        const statusNorm = (s.status || "").toLowerCase();
+        const paymentNorm = (s.payment_status || "").toLowerCase();
 
-      const fields = [
-        removeVietnameseTones(s.session_code || ""),
-        removeVietnameseTones(s.vehicle_number || ""),
-        removeVietnameseTones(s.vehicle_name || ""),
-        removeVietnameseTones(s.station_name || ""),
-        removeVietnameseTones(s.point_name || ""),
-        statusNorm,
-        paymentNorm,
-      ];
+        const matchText = [
+          s.session_code,
+          s.vehicle_number,
+          s.vehicle_name,
+          s.station_name,
+          s.point_name,
+        ]
+          .map(removeVietnameseTones)
+          .some((x) => x.includes(keyword));
 
-      const matchText = fields.some((f) => f.includes(keyword));
+        const matchStatus = filterStatus === "all" || filterStatus === statusNorm;
+        const matchPayment = filterPayment === "all" || filterPayment === paymentNorm;
 
-      const matchStatus =
-        filterStatus === "all" ? true : statusNorm === filterStatus;
-
-      const matchPayment =
-        filterPayment === "all" ? true : paymentNorm === filterPayment;
-
-      return matchText && matchStatus && matchPayment;
-    });
-
-    setFilteredSessions(temp);
+        return matchText && matchStatus && matchPayment;
+      })
+    );
   }, [searchTerm, filterStatus, filterPayment, enriched]);
 
-  if (loading) return <p className="p-6">Đang tải...</p>;
+  ///////////////////////////////////////////////////////////////
+  // 4️⃣ END SESSION – FULL CALCULATION
+  ///////////////////////////////////////////////////////////////
+ const handleEndSession = async (session) => {
+  try {
+    toast.loading("Đang kết thúc phiên...");
 
-  // =====================================================================
-  // 📌 TÍNH TOÁN THỐNG KÊ
-  // =====================================================================
-  const total = enriched.length;
-  const activeCount = enriched.filter(
-    (s) => (s.status || "").toLowerCase() === "in_progress"
-  ).length;
-  const completedCount = enriched.filter(
-    (s) => (s.status || "").toLowerCase() === "completed"
-  ).length;
-  const totalRevenue = enriched.reduce(
-    (sum, s) => sum + (s.payment_status === "paid" ? (s.total_price || 0) : 0),
-    0
-  );
+    const station = await stationService.getStationById(session.station_id);
 
-  // =====================================================================
-  // 🎨 Badges
-  // =====================================================================
-  const getStatusBadge = (status) => {
-    const norm = (status || "").toLowerCase();
-    const config = {
-      in_progress: {
-        bg: "bg-blue-50",
-        text: "text-blue-700",
-        border: "border-blue-200",
-        icon: AlertCircle,
-        label: "Đang sạc",
-      },
-      completed: {
-        bg: "bg-emerald-50",
-        text: "text-emerald-700",
-        border: "border-emerald-200",
-        icon: CheckCircle,
-        label: "Hoàn thành",
-      },
-      cancelled: {
-        bg: "bg-rose-50",
-        text: "text-rose-700",
-        border: "border-rose-200",
-        icon: XCircle,
-        label: "Đã hủy",
-      },
+    const price = station?.price_per_kwh || 0;
+    const power = station?.power_rating || 7;
+
+    const start = new Date(session.start_time);
+    const end = new Date();
+
+    const durationMinutes = Math.floor((end - start) / 60000);
+    const durationHours = durationMinutes / 60;
+
+    const total_kwh = Number((power * durationHours).toFixed(2));
+    const batteryCapacity = 60;
+
+    const percentIncrease = (total_kwh / batteryCapacity) * 100;
+    const end_soc_percent = Math.min(
+      100,
+      Math.round((session.start_soc_percent || 0) + percentIncrease)
+    );
+
+    const total_price = Math.round(total_kwh * price);
+
+    const payload = {
+      end_time: end.toISOString(),
+      total_kwh,
+      total_price,
+      end_soc_percent,
     };
 
-    const c = config[norm] || config.completed;
+    // Gọi API kết thúc phiên
+    await chargingSessionService.endSession(session._id, payload);
+
+    toast.dismiss();
+    toast.success("Đã kết thúc phiên!");
+
+    // 🔥 Tạo object session mới đúng dữ liệu
+    const updatedSession = {
+      ...session,
+      ...payload,
+      status: "completed",
+      payment_status: "pending", // thêm trạng thái pending
+    };
+
+    // 🔥 Cập nhật UI
+    setSessions((prev) =>
+      prev.map((s) => (s._id === session._id ? updatedSession : s))
+    );
+
+    // 🔥 Mở modal thu tiền với session đã update
+    setCashSession(updatedSession);
+    setShowCashModal(true);
+
+  } catch (err) {
+    toast.dismiss();
+    toast.error("Không thể kết thúc phiên");
+    console.error(err);
+  }
+};
+
+
+  ///////////////////////////////////////////////////////////////
+  // BADGE
+  ///////////////////////////////////////////////////////////////
+  const getStatusBadge = (status) => {
+    const map = {
+      in_progress: { label: "Đang sạc", icon: AlertCircle, color: "text-blue-600" },
+      completed: { label: "Hoàn thành", icon: CheckCircle, color: "text-emerald-600" },
+      cancelled: { label: "Đã hủy", icon: XCircle, color: "text-rose-600" },
+    };
+
+    const c = map[status] || map.completed;
     const Icon = c.icon;
 
     return (
-      <span
-        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${c.bg} ${c.text} ${c.border}`}
-      >
-        <Icon className="w-3 h-3" />
-        {c.label}
+      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${c.color}`}>
+        <Icon className="w-3.5 h-3.5" /> {c.label}
       </span>
     );
   };
 
-  const getPaymentBadge = (paymentStatus) => {
-    const norm = (paymentStatus || "").toLowerCase();
-    const config = {
-      paid: {
-        bg: "bg-emerald-50",
-        text: "text-emerald-700",
-        border: "border-emerald-200",
-        label: "Đã thanh toán",
-      },
-      pending: {
-        bg: "bg-amber-50",
-        text: "text-amber-700",
-        border: "border-amber-200",
-        label: "Chờ thanh toán",
-      },
-      failed: {
-        bg: "bg-rose-50",
-        text: "text-rose-700",
-        border: "border-rose-200",
-        label: "Thất bại",
-      },
-    };
 
-    const c = config[norm] || config.pending;
-
+  // LOADING
+  if (loading)
     return (
-      <span
-        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${c.bg} ${c.text} ${c.border}`}
-      >
-        {c.label}
-      </span>
+      <div className="p-10 text-center text-slate-500">
+        <div className="w-8 h-8 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin mx-auto" />
+        <p>Đang tải dữ liệu...</p>
+      </div>
     );
-  };
 
-  // =====================================================================
-  // RENDER UI
-  // =====================================================================
+
+  // RENDER
+
   return (
-    <div>
-      {/* ============================
-          📊 STAT CARDS
-      ============================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-        {/* Tổng số phiên */}
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm">
-          <div>
-            <p className="text-sm text-slate-600 font-medium">Tổng phiên sạc</p>
-            <p className="text-3xl font-bold text-slate-900 mt-1">{total}</p>
-          </div>
-          <div className="w-11 h-11 bg-slate-200 rounded-xl flex items-center justify-center">
-            <Battery className="w-6 h-6 text-slate-700" />
-          </div>
-        </div>
+    <div className="p-4 max-w-[1600px] mx-auto font-sans">
 
-        {/* Đang sạc */}
-        <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 flex justify-between items-center shadow-sm">
-          <div>
-            <p className="text-sm text-blue-700 font-medium">Đang sạc</p>
-            <p className="text-3xl font-bold text-blue-700 mt-1">
-              {activeCount}
-            </p>
+      {/* ===================== BẢNG THỐNG KÊ ===================== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: "Tổng phiên", value: enriched.length, icon: Battery },
+          { label: "Đang sạc", value: enriched.filter((s) => s.status.toLowerCase() === "in_progress").length, icon: Zap },
+          { label: "Hoàn thành", value: enriched.filter((s) => s.status.toLowerCase() === "completed").length, icon: CheckCircle },
+          {
+            label: "Doanh thu",
+            value: formatCurrency(
+              enriched.reduce(
+                (sum, s) => sum + (s.payment_status === "paid" ? s.total_price || 0 : 0),
+                0
+              )
+            ),
+            icon: Banknote,
+          },
+        ].map((i, idx) => (
+          <div key={idx} className="bg-white p-5 rounded-xl border shadow-sm flex justify-between items-center">
+            <div>
+              <p className="text-sm text-slate-500">{i.label}</p>
+              <p className="text-xl font-bold">{i.value}</p>
+            </div>
+            <i.icon className="w-8 h-8 text-slate-500" />
           </div>
-          <div className="w-11 h-11 bg-blue-200 rounded-xl flex items-center justify-center">
-            <Zap className="w-6 h-6 text-blue-700" />
-          </div>
-        </div>
-
-        {/* Hoàn thành */}
-        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200 flex justify-between items-center shadow-sm">
-          <div>
-            <p className="text-sm text-emerald-700 font-medium">Hoàn thành</p>
-            <p className="text-3xl font-bold text-emerald-700 mt-1">
-              {completedCount}
-            </p>
-          </div>
-          <div className="w-11 h-11 bg-emerald-200 rounded-xl flex items-center justify-center">
-            <CheckCircle className="w-6 h-6 text-emerald-700" />
-          </div>
-        </div>
-
-        {/* Doanh thu */}
-        <div className="bg-violet-50 p-4 rounded-xl border border-violet-200 flex justify-between items-center shadow-sm">
-          <div>
-            <p className="text-sm text-violet-700 font-medium">Doanh thu</p>
-            <p className="text-2xl font-bold text-violet-700 mt-1">
-              {formatCurrency(totalRevenue)}
-            </p>
-          </div>
-          <div className="w-11 h-11 bg-violet-200 rounded-xl flex items-center justify-center">
-            <Banknote className="w-6 h-6 text-violet-700" />
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* ============================
-          🎨 SEARCH + TABLE CARD
-      ============================= */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mt-6">
-        {/* 🔍 SEARCH + FILTER */}
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <div className="flex-1 max-w-md relative">
-            <Search className="absolute w-4 h-4 left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      {/* ===================== TABLE ===================== */}
+      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+
+        <div className="p-4 border-b flex justify-between gap-4">
+
+          {/* SEARCH */}
+          <div className="relative w-full max-w-lg">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
-              type="text"
-              placeholder="Tìm kiếm theo mã phiên, biển số, trạm, điểm sạc..."
+              className="w-full pl-10 pr-3 py-2.5 border rounded-lg bg-slate-50"
+              placeholder="Tìm kiếm mã phiên, biển số…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
 
-          {/* BUTTON Lọc */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-slate-100"
-            >
-              <Filter className="w-4 h-4" />
-              Lọc
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${
-                  showFilters ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+          {/* FILTER */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="px-4 py-2.5 border rounded-lg bg-white flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" /> Bộ lọc
+            <ChevronDown className={`w-4 h-4 ${showFilters ? "rotate-180" : ""}`} />
+          </button>
+        </div>
 
-            {showFilters && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-xl p-3 z-20">
-                {/* Status */}
-                <div className="mb-3">
-                  <p className="text-xs font-semibold text-slate-600 uppercase mb-2">
-                    Trạng thái
-                  </p>
-                  <div className="space-y-1">
-                    {[
-                      { value: "all", label: "Tất cả" },
-                      { value: "in_progress", label: "Đang sạc" },
-                      { value: "completed", label: "Hoàn thành" },
-                      { value: "cancelled", label: "Đã hủy" },
-                    ].map((status) => (
-                      <button
-                        key={status.value}
-                        onClick={() => setFilterStatus(status.value)}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
-                          filterStatus === status.value
-                            ? "bg-violet-50 text-violet-700"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                      >
-                        {status.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+        {/* FILTER DROPDOWN */}
+        {showFilters && (
+          <div className="border-b p-4 bg-slate-50">
 
-                {/* Payment */}
-                <div>
-                  <p className="text-xs font-semibold text-slate-600 uppercase mb-2">
-                    Thanh toán
-                  </p>
-                  <div className="space-y-1">
-                    {[
-                      { value: "all", label: "Tất cả" },
-                      { value: "paid", label: "Đã thanh toán" },
-                      { value: "pending", label: "Chờ thanh toán" },
-                      { value: "failed", label: "Thất bại" },
-                    ].map((p) => (
-                      <button
-                        key={p.value}
-                        onClick={() => setFilterPayment(p.value)}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
-                          filterPayment === p.value
-                            ? "bg-violet-50 text-violet-700"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setShowFilters(false)}
-                  className="w-full mt-3 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700"
-                >
-                  Đóng
-                </button>
+            {/* STATUS */}
+            <div className="mb-4">
+              <p className="text-xs text-slate-500 mb-1">Trạng thái</p>
+              <div className="grid grid-cols-4 gap-2">
+                {["all", "in_progress", "completed", "cancelled"].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setFilterStatus(st)}
+                    className={`px-2 py-1 rounded border text-xs ${
+                      filterStatus === st ? "bg-violet-600 text-white" : "bg-white"
+                    }`}
+                  >
+                    {st === "all"
+                      ? "Tất cả"
+                      : st === "in_progress"
+                      ? "Đang sạc"
+                      : st === "completed"
+                      ? "Hoàn thành"
+                      : "Đã hủy"}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            {/* PAYMENT */}
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Thanh toán</p>
+              <select
+                className="w-full border rounded-lg px-2 py-1 text-sm"
+                value={filterPayment}
+                onChange={(e) => setFilterPayment(e.target.value)}
+              >
+                <option value="all">Tất cả</option>
+                <option value="paid">Đã thanh toán</option>
+                <option value="pending">Chưa thanh toán</option>
+                <option value="failed">Thất bại</option>
+              </select>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* 📋 TABLE */}
-        <div className="overflow-x-auto border border-slate-200 rounded-lg">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Phiên sạc
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Trạm / Điểm sạc
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Thời gian
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Điện năng
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Chi phí
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Trạng thái
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Thanh toán
-                </th>
+        {/* LIST */}
+        <table className="w-full text-sm">
+          <thead className="bg-slate-100 border-b">
+            <tr>
+              <th className="px-6 py-3 text-left">Xe</th>
+              <th className="px-6 py-3 text-left">Trạm</th>
+              <th className="px-6 py-3 text-left">Bắt đầu</th>
+              <th className="px-6 py-3 text-center">Điện năng</th>
+              <th className="px-6 py-3 text-right">Tiền</th>
+              <th className="px-6 py-3 text-center">Trạng thái</th>
+              <th className="px-6 py-3 text-center">TT</th>
+              <th className="px-6 py-3 text-center">Hành động</th>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y">
+            {filteredSessions.map((s) => (
+              <tr
+                key={s._id}
+                className="hover:bg-slate-50 cursor-pointer"
+                onClick={() => setSelectedSession(s)}
+              >
+                <td className="px-6 py-4">
+                  <div className="font-semibold">{s.vehicle_name}</div>
+                  <div className="text-xs font-mono">{s.vehicle_number}</div>
+                </td>
+
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-slate-400" />
+                    {s.station_name}
+                  </div>
+                  <div className="text-xs text-slate-500 pl-4">
+                    {s.point_name}
+                  </div>
+                </td>
+
+                <td className="px-6 py-4 text-xs">
+                  {new Date(s.start_time).toLocaleString("vi-VN")}
+                </td>
+
+                <td className="px-6 py-4 text-center font-semibold">
+                  {s.total_kwh?.toFixed(2) || 0} kWh
+                </td>
+
+                <td className="px-6 py-4 text-right">
+                  {formatCurrency(s.total_price)}
+                </td>
+
+                <td className="px-6 py-4 text-center">{getStatusBadge(s.status)}</td>
+
+                <td className="px-6 py-4 text-center">
+                  {s.payment_status === "paid" ? (
+                    <span className="text-emerald-600 font-semibold">Đã TT</span>
+                  ) : (
+                    <span className="text-amber-600 font-semibold">Chưa TT</span>
+                  )}
+                </td>
+
+                <td className="px-6 py-4 text-center">
+                  <div className="flex justify-center gap-2">
+
+                    <button
+                      className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedSession(s);
+                      }}
+                    >
+                      <Eye className="w-5 h-5" />
+                    </button>
+{/* KẾT THÚC PHIÊN */}
+{s.status?.toLowerCase() === "in_progress" && (
+  <button
+    className="p-2 text-red-500 hover:text-white hover:bg-red-500 rounded-lg"
+    onClick={(e) => {
+      e.stopPropagation();
+      handleEndSession(s);
+    }}
+  >
+    Kết thúc phiên
+  </button>
+)}
+
+{/* THU TIỀN */}
+{s.status?.toLowerCase() === "waiting_payment" &&
+  s.payment_status?.toLowerCase() !== "paid" && (
+    <button
+      className="p-2 text-emerald-600 hover:text-white hover:bg-emerald-600 rounded-lg"
+      onClick={(e) => {
+        e.stopPropagation();
+        setCashSession(s);
+        setShowCashModal(true);
+      }}
+    >
+      Thu tiền
+    </button>
+)}
+
+                  </div>
+                </td>
               </tr>
-            </thead>
+            ))}
 
-            <tbody className="divide-y divide-slate-100">
-              {filteredSessions.map((s) => (
-                <tr key={s._id} className="hover:bg-slate-50">
-                  {/* Phiên sạc */}
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <p className="font-semibold text-slate-900 font-mono">
-                        {s.session_code}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {s.vehicle_name} • {s.vehicle_number}
-                      </p>
-                    </div>
-                  </td>
-
-                  {/* Trạm / Điểm sạc */}
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                        <MapPin className="w-4 h-4 text-slate-400" />
-                        {s.station_name || "Không rõ trạm"}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <Zap className="w-3 h-3" />
-                        {s.point_name || s.point_id || "Không rõ điểm"}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Thời gian */}
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Calendar className="w-4 h-4 text-slate-400" />
-                        {s.start_time
-                          ? new Date(s.start_time).toLocaleString("vi-VN")
-                          : "—"}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <Clock className="w-3 h-3" />
-                        {s.duration_time
-                          ? formatDuration(s.duration_time)
-                          : "Đang sạc"}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Điện năng */}
-                  <td className="px-6 py-4 text-center">
-                    <div className="inline-flex flex-col items-center">
-                      <p className="text-lg font-bold text-slate-900">
-                        {typeof s.total_kwh === "number"
-                          ? s.total_kwh.toFixed(2)
-                          : "0.00"}
-                      </p>
-                      <p className="text-xs text-slate-500">kWh</p>
-                    </div>
-                  </td>
-
-                  {/* Chi phí */}
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-semibold text-slate-900">
-                      {formatCurrency(s.total_price)}
-                    </div>
-                  </td>
-
-                  {/* Trạng thái */}
-                  <td className="px-6 py-4">{getStatusBadge(s.status)}</td>
-
-                  {/* Thanh toán */}
-                  <td className="px-6 py-4">
-                    {getPaymentBadge(s.payment_status)}
-                  </td>
-                </tr>
-              ))}
-
-              {filteredSessions.length === 0 && (
-                <tr>
-                  <td colSpan="7" className="py-10 text-center text-slate-500">
-                    Không tìm thấy phiên sạc phù hợp
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            {filteredSessions.length === 0 && (
+              <tr>
+                <td colSpan={8} className="p-10 text-center text-slate-500">
+                  Không tìm thấy phiên nào
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* MODAL */}
+      {selectedSession && (
+        <SessionDetailModal
+          session={selectedSession}
+          onClose={() => setSelectedSession(null)}
+        />
+      )}
+      {showCashModal && cashSession && (
+  <CashPaymentModal
+    open={showCashModal}
+    onOpenChange={setShowCashModal}
+    session={cashSession}
+  />
+)}
+
     </div>
   );
 };

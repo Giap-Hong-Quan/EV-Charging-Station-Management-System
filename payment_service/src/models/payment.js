@@ -5,7 +5,7 @@ const PaymentSchema = new mongoose.Schema(
   {
     paymentId: { type: String, required: true, unique: true },
     sessionId: { type: String, required: true },
-    userId: { type: String, required: true },
+    userId: { type: String, required: false  },
     stationId: { type: String, required: true },
     amount: { type: Number, required: true },
     method: { type: String, enum: ["COD", "VNPAY"], required: true },
